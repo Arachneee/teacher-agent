@@ -1,0 +1,34 @@
+# Backend (Gradle/Kotlin/Spring Boot)
+backend/build/
+backend/.gradle/
+backend/*.class
+backend/*.jar
+backend/*.war
+backend/out/
+backend/.idea/
+
+# Frontend (Next.js/Node)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env
+frontend/.env.local
+frontend/.env*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Claude
+.claude/
