@@ -39,6 +39,10 @@ npm run build  # 빌드
 npm run lint   # ESLint
 ```
 
+## General Rules
+
+- `doc/` 내 파일은 해당 작업에 직접 필요할 때만 읽는다.
+
 ## Commit Convention
 
 `doc/COMMIT.md` 참조. Conventional Commits 방식 사용.
