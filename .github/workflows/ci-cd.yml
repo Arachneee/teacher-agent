@@ -79,26 +79,26 @@ jobs:
         run: |
           scp -i ~/.ssh/deploy_key \
             backend/scripts/setup-ec2.sh \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/setup-ec2.sh
+            ec2-user@${{ secrets.EC2_HOST }}:~/setup-ec2.sh
 
           ssh -i ~/.ssh/deploy_key \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            ec2-user@${{ secrets.EC2_HOST }} \
             'if ! command -v java &> /dev/null; then chmod +x ~/setup-ec2.sh && ~/setup-ec2.sh; else echo "Java already installed: $(java -version 2>&1 | head -1)"; fi'
 
       - name: Deploy to EC2
         run: |
           ssh -i ~/.ssh/deploy_key \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            'mkdir -p /home/${{ secrets.EC2_USER }}/app'
+            ec2-user@${{ secrets.EC2_HOST }} \
+            'mkdir -p /home/ec2-user/app'
 
           scp -i ~/.ssh/deploy_key \
             artifacts/teacher-agent-backend-*-SNAPSHOT.jar \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/app/teacher-agent-backend.jar
+            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/app/teacher-agent-backend.jar
 
           scp -i ~/.ssh/deploy_key \
             backend/scripts/deploy.sh \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/app/deploy.sh
+            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/app/deploy.sh
 
           ssh -i ~/.ssh/deploy_key \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            'chmod +x /home/${{ secrets.EC2_USER }}/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=${{ secrets.INITIAL_TEACHER_PASSWORD }} /home/${{ secrets.EC2_USER }}/app/deploy.sh'
+            ec2-user@${{ secrets.EC2_HOST }} \
+            'chmod +x /home/ec2-user/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=${{ secrets.INITIAL_TEACHER_PASSWORD }} /home/ec2-user/app/deploy.sh'
