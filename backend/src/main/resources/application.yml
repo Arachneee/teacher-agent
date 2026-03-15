@@ -24,3 +24,11 @@ spring:
       chat:
         options:
           model: gpt-4o-mini
+
+cors:
+  allowed-origin-patterns: http://localhost:3000
+
+app:
+  initial-teacher:
+    username: ${INITIAL_TEACHER_USERNAME:admin}
+    password: ${INITIAL_TEACHER_PASSWORD:changeme}
