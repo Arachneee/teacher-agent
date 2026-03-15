@@ -1,65 +1,89 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Student, getStudents } from './lib/api';
+import StudentCard from './components/StudentCard';
+import AddStudentModal from './components/AddStudentModal';
 
 export default function Home() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getStudents()
+      .then(setStudents)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleAdd = (student: Student) => {
+    setStudents(prev => [...prev, student]);
+    setShowModal(false);
+  };
+
+  const handleUpdate = (updated: Student) => {
+    setStudents(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+  };
+
+  const handleDelete = (id: number) => {
+    setStudents(prev => prev.filter(s => s.id !== id));
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        {/* Header */}
+        <header className="mb-10">
+          <h1 className="text-4xl font-bold text-purple-500">🍎 학생 관리</h1>
+          <p className="text-gray-400 mt-2">나의 소중한 학생들을 관리해요</p>
+        </header>
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-3">
+            <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-400 rounded-full animate-spin" />
+            <p className="text-gray-400 text-sm">불러오는 중...</p>
+          </div>
+        ) : students.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-300">
+            <div className="text-7xl">👨‍🎓</div>
+            <p className="text-lg font-medium">아직 학생이 없어요</p>
+            <p className="text-sm">오른쪽 아래 + 버튼으로 추가해보세요!</p>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-gray-400 mb-6">
+              총{' '}
+              <span className="font-semibold text-purple-400">{students.length}</span>명의 학생
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {students.map(student => (
+                <StudentCard
+                  key={student.id}
+                  student={student}
+                  onUpdate={handleUpdate}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* FAB */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-pink-400 hover:bg-pink-500 active:scale-95 text-white text-3xl rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        aria-label="학생 추가"
+      >
+        +
+      </button>
+
+      {/* Modal */}
+      {showModal && (
+        <AddStudentModal onAdd={handleAdd} onClose={() => setShowModal(false)} />
+      )}
     </div>
   );
 }
