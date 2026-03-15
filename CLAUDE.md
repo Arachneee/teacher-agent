@@ -10,6 +10,7 @@ AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프
 
 - `backend/` — Spring Boot 4.0 (Java 25), JPA + H2(인메모리), Spring AI(OpenAI gpt-4o-mini) 연동
 - `frontend/` — Next.js 16 (App Router), React 19, Tailwind CSS 4, TypeScript
+- `infra/` — Terraform 기반 AWS 인프라 (EC2, 보안 그룹 등)
 - `doc/` — 프로젝트 문서 (COMMIT.md 등 Claude가 참조해야 할 파일)
 
 백엔드와 프론트엔드는 독립적으로 실행되며 API로 통신한다.
