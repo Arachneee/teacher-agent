@@ -45,6 +45,14 @@ setup_java_port_binding() {
         sudo dnf install -y libcap
         sudo setcap 'cap_net_bind_service=+ep' "$JAVA_REAL_PATH"
     fi
+
+    # setcap 적용 후 LD_LIBRARY_PATH가 무시되므로 libjli.so 경로를 ldconfig에 등록
+    JAVA_LIB_DIR=$(find /usr/lib/jvm -name "libjli.so" -exec dirname {} \; | head -1)
+    if [ -n "$JAVA_LIB_DIR" ]; then
+        echo "$JAVA_LIB_DIR" | sudo tee /etc/ld.so.conf.d/jdk.conf
+        sudo ldconfig
+        echo "Registered JDK library path: $JAVA_LIB_DIR"
+    fi
 }
 
 setup_java_port_binding
