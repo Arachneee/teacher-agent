@@ -9,4 +9,6 @@ public class Parameter {
     public static final String NAME = "name";
     public static final String MEMO = "memo";
     public static final String KEYWORDS = "keywords";
+    public static final String KEYWORD = "keyword";
+    public static final String STUDENT_ID = "studentId";
 }
