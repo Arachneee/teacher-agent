@@ -1,0 +1,12 @@
+package com.teacher.agent.util;
+
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
+public class Parameter {
+
+    public static final String ID = "id";
+    public static final String NAME = "name";
+    public static final String MEMO = "memo";
+    public static final String KEYWORDS = "keywords";
+}
