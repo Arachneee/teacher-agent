@@ -11,6 +11,7 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(indexes = @Index(name = "idx_feedback_student_id", columnList = "studentId"))
 public class Feedback extends BaseEntity {
 
     @Id
