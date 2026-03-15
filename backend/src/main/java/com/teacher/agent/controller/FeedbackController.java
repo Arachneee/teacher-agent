@@ -5,8 +5,10 @@ import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.service.FeedbackService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/feedbacks")
 @RequiredArgsConstructor
+@Validated
 public class FeedbackController {
 
     private final FeedbackService feedbackService;
@@ -24,35 +27,35 @@ public class FeedbackController {
     }
 
     @GetMapping
-    public ResponseEntity<List<FeedbackResponse>> getAll(@RequestParam Long studentId) {
+    public ResponseEntity<List<FeedbackResponse>> getAll(@RequestParam @Positive Long studentId) {
         return ResponseEntity.ok(feedbackService.getAll(studentId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FeedbackResponse> getOne(@PathVariable Long id) {
+    public ResponseEntity<FeedbackResponse> getOne(@PathVariable @Positive Long id) {
         return ResponseEntity.ok(feedbackService.getOne(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable @Positive Long id) {
         feedbackService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/generate")
-    public ResponseEntity<FeedbackResponse> generateAiContent(@PathVariable Long id) {
+    public ResponseEntity<FeedbackResponse> generateAiContent(@PathVariable @Positive Long id) {
         return ResponseEntity.ok(feedbackService.generateAiContent(id));
     }
 
     @PostMapping("/{id}/keywords")
     public ResponseEntity<FeedbackResponse> addKeyword(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestBody @Valid FeedbackKeywordCreateRequest request) {
         return ResponseEntity.status(201).body(feedbackService.addKeyword(id, request));
     }
 
     @DeleteMapping("/{id}/keywords/{keywordId}")
-    public ResponseEntity<Void> removeKeyword(@PathVariable Long id, @PathVariable Long keywordId) {
+    public ResponseEntity<Void> removeKeyword(@PathVariable @Positive Long id, @PathVariable @Positive Long keywordId) {
         feedbackService.removeKeyword(id, keywordId);
         return ResponseEntity.noContent().build();
     }

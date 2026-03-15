@@ -5,8 +5,10 @@ import com.teacher.agent.dto.StudentResponse;
 import com.teacher.agent.dto.StudentUpdateRequest;
 import com.teacher.agent.service.StudentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/students")
 @RequiredArgsConstructor
+@Validated
 public class StudentController {
 
     private final StudentService studentService;
@@ -29,17 +32,17 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<StudentResponse> getOne(@PathVariable Long id) {
+    public ResponseEntity<StudentResponse> getOne(@PathVariable @Positive Long id) {
         return ResponseEntity.ok(studentService.getOne(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StudentResponse> update(@PathVariable Long id, @RequestBody @Valid StudentUpdateRequest request) {
+    public ResponseEntity<StudentResponse> update(@PathVariable @Positive Long id, @RequestBody @Valid StudentUpdateRequest request) {
         return ResponseEntity.ok(studentService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable @Positive Long id) {
         studentService.delete(id);
         return ResponseEntity.noContent().build();
     }

@@ -8,6 +8,11 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.teacher.agent.util.Parameter.AI_CONTENT;
+import static com.teacher.agent.util.Parameter.STUDENT_ID;
+import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
+import static com.teacher.agent.util.ValidationUtil.checkPositive;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -29,7 +34,7 @@ public class Feedback extends BaseEntity {
 
     public static Feedback create(Long studentId) {
         Feedback feedback = new Feedback();
-        feedback.studentId = studentId;
+        feedback.studentId = checkPositive(studentId, STUDENT_ID);
         return feedback;
     }
 
@@ -38,7 +43,7 @@ public class Feedback extends BaseEntity {
     }
 
     public void updateAiContent(String aiContent) {
-        this.aiContent = aiContent;
+        this.aiContent = checkNotBlank(aiContent, AI_CONTENT);
     }
 
     public void removeKeyword(Long keywordId) {
