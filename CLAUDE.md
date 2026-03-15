@@ -51,7 +51,7 @@ npm run lint   # ESLint
 
 ## Commit Convention
 
-`doc/COMMIT.md` 참조. Conventional Commits 방식 사용.
+커밋 전 반드시 `doc/COMMIT.md`를 읽는다. Conventional Commits 방식 사용.
 
 - 형식: `<type>(<scope>): <subject>`
 - `Co-Authored-By: Claude` 줄을 커밋 메시지에 추가하지 않는다.
