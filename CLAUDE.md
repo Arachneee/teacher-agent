@@ -42,6 +42,7 @@ npm run lint   # ESLint
 ## General Rules
 
 - `doc/` 내 파일은 해당 작업에 직접 필요할 때만 읽는다.
+- 코드 수정 사항은 관련 context(CLAUDE.md 등)에도 반영한다.
 
 ## Commit Convention
 
