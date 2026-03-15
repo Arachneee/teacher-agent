@@ -44,6 +44,10 @@ npm run lint   # ESLint
 - `doc/` 내 파일은 해당 작업에 직접 필요할 때만 읽는다.
 - 코드 수정 사항은 관련 context(CLAUDE.md 등)에도 반영한다.
 
+## Coding Conventions
+
+- 변수명에 약어를 사용하지 않는다. 예: `fk` → `feedbackKeyword`, `req` → `request`
+
 ## Commit Convention
 
 `doc/COMMIT.md` 참조. Conventional Commits 방식 사용.
