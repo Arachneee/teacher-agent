@@ -1,17 +1,22 @@
 #!/bin/bash
 
 APP_NAME="teacher-agent"
-APP_DIR="/home/ubuntu/app"
+APP_DIR="/home/ec2-user/app"
 JAR_FILE="$APP_DIR/teacher-agent-backend.jar"
 LOG_FILE="$APP_DIR/app.log"
 
 install_java() {
     echo "Java not found. Installing JDK 25..."
-    sudo apt-get install -y wget apt-transport-https gpg
-    wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null
-    echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/adoptium.list
-    sudo apt-get update
-    sudo apt-get install -y temurin-25-jdk
+    sudo dnf install -y wget tar
+
+    wget -O /tmp/temurin-25.tar.gz \
+      "https://api.adoptium.net/v3/binary/latest/25/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
+    sudo mkdir -p /usr/lib/jvm
+    sudo tar -xzf /tmp/temurin-25.tar.gz -C /usr/lib/jvm
+    JAVA_DIR=$(ls /usr/lib/jvm | grep -i jdk-25)
+    sudo ln -sf /usr/lib/jvm/$JAVA_DIR/bin/java /usr/bin/java
+    sudo ln -sf /usr/lib/jvm/$JAVA_DIR/bin/keytool /usr/bin/keytool
+    rm -f /tmp/temurin-25.tar.gz
 
     if ! command -v java &> /dev/null; then
         echo "Failed to install Java!"
@@ -37,8 +42,7 @@ setup_java_port_binding() {
         echo "Successfully granted port binding capability to Java."
     else
         echo "Failed to set capability. Trying alternative method..."
-        sudo apt-get update
-        sudo apt-get install -y libcap2-bin
+        sudo dnf install -y libcap
         sudo setcap 'cap_net_bind_service=+ep' "$JAVA_REAL_PATH"
     fi
 }
