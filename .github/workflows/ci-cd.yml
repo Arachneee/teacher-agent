@@ -101,4 +101,4 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key \
             ec2-user@${{ secrets.EC2_HOST }} \
-            'chmod +x /home/ec2-user/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=${{ secrets.INITIAL_TEACHER_PASSWORD }} /home/ec2-user/app/deploy.sh'
+            'chmod +x /home/ec2-user/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=${{ secrets.INITIAL_TEACHER_PASSWORD }} OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} /home/ec2-user/app/deploy.sh'
