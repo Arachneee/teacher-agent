@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   DndContext,
+  DragCancelEvent,
   DragEndEvent,
+  DragStartEvent,
   PointerSensor,
   closestCenter,
   useSensor,
@@ -12,7 +14,6 @@ import {
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  arrayMove,
   rectSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
@@ -29,6 +30,34 @@ interface SortableStudentCardProps {
   onUpdate: (student: Student) => void;
   onDelete: (id: number) => void;
   onNavigate: (direction: 'prev' | 'next' | 'up' | 'down') => void;
+}
+
+const EMPTY_SLOT_PREFIX = 'empty-slot-';
+
+function SortableEmptySlot({ id, isDragActive }: { id: string; isDragActive: boolean }) {
+  const { setNodeRef, isOver, transform, transition } = useSortable({
+    id,
+    disabled: { draggable: true },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`h-full min-h-[200px] rounded-2xl border-2 border-dashed transition-colors ${
+        isDragActive
+          ? isOver
+            ? 'border-purple-300 bg-purple-50/50'
+            : 'border-gray-200'
+          : 'border-transparent'
+      }`}
+    />
+  );
 }
 
 function SortableStudentCard({
@@ -67,6 +96,7 @@ function SortableStudentCard({
 }
 
 const COLUMN_STORAGE_KEY = 'studentGridColumns';
+const GRID_ORDER_STORAGE_KEY = 'studentGridOrder';
 const MIN_COLUMNS = 1;
 const MAX_COLUMNS = 6;
 
@@ -74,10 +104,18 @@ export default function Home() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
+  const [gridSlots, setGridSlots] = useState<(number | null)[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [columnCount, setColumnCount] = useState(4);
+  const [isDragActive, setIsDragActive] = useState(false);
   const cardRefs = useRef<(StudentCardHandle | null)[]>([]);
+
+  const studentMap = useMemo(() => {
+    const map = new Map<number, Student>();
+    students.forEach(s => map.set(s.id, s));
+    return map;
+  }, [students]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -100,15 +138,51 @@ export default function Home() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
+  // Build gridSlots from students, restoring saved order if available
+  const buildGridSlots = useCallback((studentList: Student[]): (number | null)[] => {
+    const savedOrder = localStorage.getItem(GRID_ORDER_STORAGE_KEY);
+    if (savedOrder) {
+      try {
+        const parsed: (number | null)[] = JSON.parse(savedOrder);
+        const studentIds = new Set(studentList.map(s => s.id));
+        // Filter out deleted students but keep nulls
+        const filtered = parsed.filter(id => id === null || studentIds.has(id));
+        // Add any new students not in the saved order
+        const existingIds = new Set(filtered.filter((id): id is number => id !== null));
+        const newStudents = studentList.filter(s => !existingIds.has(s.id));
+        const result = [...filtered, ...newStudents.map(s => s.id)];
+        // Trim trailing nulls
+        while (result.length > 0 && result[result.length - 1] === null) {
+          result.pop();
+        }
+        return result;
+      } catch {
+        // Fall through to default
+      }
+    }
+    return studentList.map(s => s.id);
+  }, []);
+
+  // Save gridSlots to localStorage whenever it changes
+  useEffect(() => {
+    if (gridSlots.length > 0) {
+      localStorage.setItem(GRID_ORDER_STORAGE_KEY, JSON.stringify(gridSlots));
+    }
+  }, [gridSlots]);
+
   useEffect(() => {
     getStudents()
-      .then(setStudents)
+      .then(data => {
+        setStudents(data);
+        setGridSlots(buildGridSlots(data));
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [buildGridSlots]);
 
   const handleAdd = (student: Student) => {
     setStudents(prev => [...prev, student]);
+    setGridSlots(prev => [...prev, student.id]);
     setShowModal(false);
   };
 
@@ -118,17 +192,77 @@ export default function Home() {
 
   const handleDelete = (id: number) => {
     setStudents(prev => prev.filter(s => s.id !== id));
+    setGridSlots(prev => {
+      const result = prev.map(slotId => (slotId === id ? null : slotId));
+      // Trim trailing nulls
+      while (result.length > 0 && result[result.length - 1] === null) {
+        result.pop();
+      }
+      return result;
+    });
+  };
+
+  const handleDragStart = (_event: DragStartEvent) => {
+    setIsDragActive(true);
+  };
+
+  const handleDragCancel = (_event: DragCancelEvent) => {
+    setIsDragActive(false);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    setIsDragActive(false);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    setStudents(prev => {
-      const oldIndex = prev.findIndex(s => s.id === active.id);
-      const newIndex = prev.findIndex(s => s.id === over.id);
-      return arrayMove(prev, oldIndex, newIndex);
+
+    const activeId = active.id as number;
+
+    if (String(over.id).startsWith(EMPTY_SLOT_PREFIX)) {
+      // Dropped on an empty slot — move card to that slot position
+      const targetSlotIndex = parseInt(String(over.id).replace(EMPTY_SLOT_PREFIX, ''), 10);
+      setGridSlots(prev => {
+        const result = [...prev];
+        // Clear old position
+        const oldIndex = result.indexOf(activeId);
+        if (oldIndex !== -1) result[oldIndex] = null;
+        // Place at target
+        while (result.length <= targetSlotIndex) result.push(null);
+        result[targetSlotIndex] = activeId;
+        // Trim trailing nulls
+        while (result.length > 0 && result[result.length - 1] === null) {
+          result.pop();
+        }
+        return result;
+      });
+      return;
+    }
+
+    // Dropped on another card — swap positions
+    const overId = over.id as number;
+    setGridSlots(prev => {
+      const result = [...prev];
+      const activeIndex = result.indexOf(activeId);
+      const overIndex = result.indexOf(overId);
+      if (activeIndex !== -1 && overIndex !== -1) {
+        result[activeIndex] = overId;
+        result[overIndex] = activeId;
+      }
+      return result;
     });
   };
+
+  // Build display slots: gridSlots + trailing empty slots to fill the last row + 1 extra row
+  const displaySlots = useMemo(() => {
+    const slots = [...gridSlots];
+    const remainder = slots.length % columnCount;
+    if (remainder !== 0) {
+      const padding = columnCount - remainder;
+      for (let i = 0; i < padding; i++) slots.push(null);
+    }
+    // Add one extra row of empty slots below
+    for (let i = 0; i < columnCount; i++) slots.push(null);
+    return slots;
+  }, [gridSlots, columnCount]);
 
   if (authLoading || !user) {
     return (
@@ -202,30 +336,58 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={students.map(s => s.id)} strategy={rectSortingStrategy}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+              autoScroll={{ threshold: { x: 0.2, y: 0.2 }, interval: 5 }}
+            >
+              <SortableContext
+                items={displaySlots.map((slotId, i) => slotId !== null ? slotId : `${EMPTY_SLOT_PREFIX}${i}`)}
+                strategy={rectSortingStrategy}
+              >
                 <div
                   className="grid gap-12"
                   style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}
                 >
-                  {students.map((student, index) => (
-                    <SortableStudentCard
-                      key={student.id}
-                      student={student}
-                      index={index}
-                      cardRefs={cardRefs}
-                      onUpdate={handleUpdate}
-                      onDelete={handleDelete}
-                      onNavigate={direction => {
-                        const targetIndex =
-                          direction === 'prev' ? index - 1 :
-                          direction === 'next' ? index + 1 :
-                          direction === 'up' ? index - columnCount :
-                          index + columnCount;
-                        cardRefs.current[targetIndex]?.focusKeywordInput();
-                      }}
-                    />
-                  ))}
+                  {displaySlots.map((slotId, slotIndex) => {
+                    if (slotId === null) {
+                      return (
+                        <SortableEmptySlot
+                          key={`${EMPTY_SLOT_PREFIX}${slotIndex}`}
+                          id={`${EMPTY_SLOT_PREFIX}${slotIndex}`}
+                          isDragActive={isDragActive}
+                        />
+                      );
+                    }
+                    const student = studentMap.get(slotId);
+                    if (!student) return null;
+                    const studentIndex = students.findIndex(s => s.id === slotId);
+                    return (
+                      <SortableStudentCard
+                        key={student.id}
+                        student={student}
+                        index={studentIndex}
+                        cardRefs={cardRefs}
+                        onUpdate={handleUpdate}
+                        onDelete={handleDelete}
+                        onNavigate={direction => {
+                          const targetSlotIndex =
+                            direction === 'prev' ? slotIndex - 1 :
+                            direction === 'next' ? slotIndex + 1 :
+                            direction === 'up' ? slotIndex - columnCount :
+                            slotIndex + columnCount;
+                          const targetSlotId = displaySlots[targetSlotIndex];
+                          if (targetSlotId != null) {
+                            const targetStudentIndex = students.findIndex(s => s.id === targetSlotId);
+                            cardRefs.current[targetStudentIndex]?.focusKeywordInput();
+                          }
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </SortableContext>
             </DndContext>
