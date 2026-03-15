@@ -1,2 +1,7 @@
 cors:
   allowed-origin-patterns: https://*.vercel.app
+
+spring:
+  h2:
+    console:
+      enabled: false

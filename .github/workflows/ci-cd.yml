@@ -83,4 +83,4 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            'chmod +x /home/${{ secrets.EC2_USER }}/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod /home/${{ secrets.EC2_USER }}/app/deploy.sh'
+            'chmod +x /home/${{ secrets.EC2_USER }}/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=${{ secrets.INITIAL_TEACHER_PASSWORD }} /home/${{ secrets.EC2_USER }}/app/deploy.sh'
