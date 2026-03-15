@@ -118,6 +118,11 @@ resource "aws_instance" "this" {
 
   associate_public_ip_address = true
 
+  # standard: 크레딧 소진 시 버스트 중단 (unlimited은 버스트 초과분 과금)
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
   root_block_device {
     volume_size = 30
     volume_type = "gp3"
