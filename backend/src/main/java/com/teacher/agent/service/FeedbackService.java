@@ -2,6 +2,7 @@ package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackRepository;
+import com.teacher.agent.domain.Student;
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.dto.FeedbackCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
@@ -21,19 +22,20 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final StudentRepository studentRepository;
+    private final FeedbackAiService feedbackAiService;
 
     @Transactional
     public FeedbackResponse create(FeedbackCreateRequest request) {
         findStudentById(request.studentId());
         Feedback feedback = feedbackRepository.findByStudentId(request.studentId())
                 .orElseGet(() -> feedbackRepository.save(Feedback.create(request.studentId())));
-        return FeedbackResponse.from(feedback);
+        return FeedbackResponse.withKeywords(feedback);
     }
 
     public List<FeedbackResponse> getAll(Long studentId) {
         findStudentById(studentId);
         return feedbackRepository.findAllByStudentId(studentId).stream()
-                .map(FeedbackResponse::from)
+                .map(FeedbackResponse::withKeywords)
                 .toList();
     }
 
@@ -51,6 +53,7 @@ public class FeedbackService {
     public FeedbackResponse addKeyword(Long feedbackId, FeedbackKeywordCreateRequest request) {
         Feedback feedback = findById(feedbackId);
         feedback.addKeyword(request.keyword());
+        feedbackRepository.flush();
         return FeedbackResponse.withKeywords(feedback);
     }
 
@@ -64,13 +67,25 @@ public class FeedbackService {
         }
     }
 
+    @Transactional
+    public FeedbackResponse generateAiContent(Long feedbackId) {
+        Feedback feedback = findById(feedbackId);
+        if (feedback.getKeywords().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "키워드가 없습니다. 먼저 키워드를 추가해주세요.");
+        }
+        Student student = findStudentById(feedback.getStudentId());
+        String aiContent = feedbackAiService.generateFeedbackContent(feedback, student.getName());
+        feedback.updateAiContent(aiContent);
+        return FeedbackResponse.withKeywords(feedback);
+    }
+
     private Feedback findById(Long id) {
         return feedbackRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Feedback not found: " + id));
     }
 
-    private void findStudentById(Long studentId) {
-        studentRepository.findById(studentId)
+    private Student findStudentById(Long studentId) {
+        return studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found: " + studentId));
     }
 }

@@ -15,17 +15,6 @@ public record FeedbackResponse(
         LocalDateTime updatedAt
 ) {
 
-    public static FeedbackResponse from(Feedback feedback) {
-        return new FeedbackResponse(
-                feedback.getId(),
-                feedback.getStudentId(),
-                feedback.getAiContent(),
-                List.of(),
-                feedback.getCreatedAt(),
-                feedback.getUpdatedAt()
-        );
-    }
-
     public static FeedbackResponse withKeywords(Feedback feedback) {
         List<KeywordItem> keywordItems = feedback.getKeywords().stream()
                 .map(KeywordItem::from)

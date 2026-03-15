@@ -39,6 +39,11 @@ public class FeedbackController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{id}/generate")
+    public ResponseEntity<FeedbackResponse> generateAiContent(@PathVariable Long id) {
+        return ResponseEntity.ok(feedbackService.generateAiContent(id));
+    }
+
     @PostMapping("/{id}/keywords")
     public ResponseEntity<FeedbackResponse> addKeyword(
             @PathVariable Long id,

@@ -36,6 +36,10 @@ public class Feedback extends BaseEntity {
         keywords.add(FeedbackKeyword.create(this, keyword));
     }
 
+    public void updateAiContent(String aiContent) {
+        this.aiContent = aiContent;
+    }
+
     public void removeKeyword(Long keywordId) {
         boolean removed = keywords.removeIf(feedbackKeyword -> feedbackKeyword.getId().equals(keywordId));
         if (!removed) {
