@@ -33,6 +33,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.ai:spring-ai-starter-model-openai")
     runtimeOnly("com.h2database:h2")
+    runtimeOnly("io.netty:netty-resolver-dns-native-macos") {
+        artifact { classifier = "osx-aarch64" }
+    }
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
@@ -47,4 +50,8 @@ dependencyManagement {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
