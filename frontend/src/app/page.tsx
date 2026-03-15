@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   DndContext,
   DragEndEvent,
@@ -19,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Student, getStudents } from './lib/api';
 import StudentCard, { StudentCardHandle } from './components/StudentCard';
 import AddStudentModal from './components/AddStudentModal';
+import { useAuth } from './context/AuthContext';
 
 interface SortableStudentCardProps {
   student: Student;
@@ -69,11 +71,19 @@ const MIN_COLUMNS = 1;
 const MAX_COLUMNS = 6;
 
 export default function Home() {
+  const { user, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [columnCount, setColumnCount] = useState(4);
   const cardRefs = useRef<(StudentCardHandle | null)[]>([]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/login');
+    }
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     const saved = localStorage.getItem(COLUMN_STORAGE_KEY);
@@ -120,13 +130,32 @@ export default function Home() {
     });
   };
 
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
       <div className="mx-auto px-6 py-10" style={{ maxWidth: `${columnCount * 18}rem` }}>
         {/* Header */}
-        <header className="mb-10">
-          <h1 className="text-4xl font-bold text-purple-500">🍎 학생 관리</h1>
-          <p className="text-gray-400 mt-2">나의 소중한 학생들을 관리해요</p>
+        <header className="mb-10 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-purple-500">🍎 학생 관리</h1>
+            <p className="text-gray-400 mt-2">나의 소중한 학생들을 관리해요</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400">{user.username}</span>
+            <button
+              onClick={logout}
+              className="text-sm text-gray-400 hover:text-purple-500 transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
         </header>
 
         {/* Content */}

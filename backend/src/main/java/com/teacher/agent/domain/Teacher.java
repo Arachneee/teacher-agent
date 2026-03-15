@@ -5,6 +5,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import static com.teacher.agent.util.Parameter.PASSWORD;
+import static com.teacher.agent.util.Parameter.USERNAME;
+import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -22,8 +26,12 @@ public class Teacher extends BaseEntity {
 
     public static Teacher create(String username, String encodedPassword) {
         Teacher teacher = new Teacher();
-        teacher.username = username;
-        teacher.password = encodedPassword;
+        teacher.username = checkNotBlank(username, USERNAME);
+        teacher.password = checkNotBlank(encodedPassword, PASSWORD);
         return teacher;
+    }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = checkNotBlank(encodedPassword, PASSWORD);
     }
 }
