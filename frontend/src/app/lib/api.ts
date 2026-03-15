@@ -85,3 +85,9 @@ export async function removeKeyword(feedbackId: number, keywordId: number): Prom
   });
   if (!res.ok) throw new Error('키워드를 삭제하지 못했어요');
 }
+
+export async function generateAiContent(feedbackId: number): Promise<Feedback> {
+  const res = await fetch(`${BASE_URL}/feedbacks/${feedbackId}/generate`, { method: 'POST' });
+  if (!res.ok) throw new Error('AI 문자를 생성하지 못했어요');
+  return res.json();
+}
