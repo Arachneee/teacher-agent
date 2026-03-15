@@ -140,7 +140,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-      <div className="mx-auto px-6 py-10" style={{ maxWidth: `${columnCount * 18}rem` }}>
+      <div className="mx-auto px-6 py-10" style={{ maxWidth: `${columnCount * 24}rem` }}>
         {/* Header */}
         <header className="mb-10 flex items-start justify-between">
           <div>
@@ -205,7 +205,7 @@ export default function Home() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={students.map(s => s.id)} strategy={rectSortingStrategy}>
                 <div
-                  className="grid gap-5"
+                  className="grid gap-12"
                   style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}
                 >
                   {students.map((student, index) => (
