@@ -6,7 +6,7 @@ import { login } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -19,7 +19,7 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
-      const authResponse = await login(username, password);
+      const authResponse = await login(userId, password);
       setUser(authResponse);
       router.push('/');
     } catch {
@@ -40,14 +40,14 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-md p-8 flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <label htmlFor="username" className="text-sm font-medium text-gray-600">
+            <label htmlFor="userId" className="text-sm font-medium text-gray-600">
               아이디
             </label>
             <input
-              id="username"
+              id="userId"
               type="text"
-              value={username}
-              onChange={event => setUsername(event.target.value)}
+              value={userId}
+              onChange={event => setUserId(event.target.value)}
               placeholder="아이디를 입력하세요"
               required
               autoFocus

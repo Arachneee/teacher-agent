@@ -15,13 +15,13 @@ public class TeacherUserDetailsService implements UserDetailsService {
     private final TeacherRepository teacherRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return teacherRepository.findByUsername(username)
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        return teacherRepository.findByUserId(userId)
                 .map(teacher -> User.builder()
-                        .username(teacher.getUsername())
+                        .username(teacher.getUserId())
                         .password(teacher.getPassword())
                         .roles("TEACHER")
                         .build())
-                .orElseThrow(() -> new UsernameNotFoundException("Teacher not found: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("Teacher not found: " + userId));
     }
 }

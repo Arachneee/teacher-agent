@@ -24,7 +24,7 @@ export interface Feedback {
 }
 
 export interface AuthResponse {
-  username: string;
+  userId: string;
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
@@ -40,12 +40,12 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 
 // Auth
 
-export async function login(username: string, password: string): Promise<AuthResponse> {
+export async function login(userId: string, password: string): Promise<AuthResponse> {
   const response = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ userId, password }),
   });
   if (!response.ok) throw new Error('로그인에 실패했어요');
   return response.json();

@@ -1,5 +1,6 @@
 package com.teacher.agent.controller;
 
+import com.teacher.agent.domain.TeacherRepository;
 import com.teacher.agent.dto.AuthResponse;
 import com.teacher.agent.dto.LoginRequest;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
+    private final TeacherRepository teacherRepository;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     @PostMapping("/login")
@@ -31,13 +33,13 @@ public class AuthController {
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(request.username(), request.password());
+                new UsernamePasswordAuthenticationToken(request.userId(), request.password());
         Authentication authentication = authenticationManager.authenticate(authToken);
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
         securityContextRepository.saveContext(securityContext, httpRequest, httpResponse);
-        return ResponseEntity.ok(new AuthResponse(authentication.getName()));
+        return ResponseEntity.ok(buildAuthResponse(authentication.getName()));
     }
 
     @PostMapping("/logout")
@@ -55,6 +57,12 @@ public class AuthController {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.ok(new AuthResponse(authentication.getName()));
+        return ResponseEntity.ok(buildAuthResponse(authentication.getName()));
+    }
+
+    private AuthResponse buildAuthResponse(String userId) {
+        return teacherRepository.findByUserId(userId)
+                .map(AuthResponse::from)
+                .orElseGet(() -> new AuthResponse(userId, null, null));
     }
 }

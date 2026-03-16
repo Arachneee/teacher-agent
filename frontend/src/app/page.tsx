@@ -236,7 +236,7 @@ export default function Home() {
             <p className="text-gray-400 mt-2">나의 소중한 학생들을 관리해요</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-400">{user.username}</span>
+            <span className="text-sm text-gray-400">{user.userId}</span>
             <button
               onClick={logout}
               className="text-sm text-gray-400 hover:text-purple-500 transition-colors"

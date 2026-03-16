@@ -35,5 +35,7 @@ cors:
 
 app:
   initial-teacher:
-    username: ${INITIAL_TEACHER_USERNAME:admin}
+    user-id: ${INITIAL_TEACHER_USER_ID:admin}
     password: ${INITIAL_TEACHER_PASSWORD:123}
+    name: ${INITIAL_TEACHER_NAME:관리자}
+    subject: ${INITIAL_TEACHER_SUBJECT:}
