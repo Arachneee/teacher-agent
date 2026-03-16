@@ -67,4 +67,9 @@ public class FeedbackController {
         feedbackService.removeKeyword(id, keywordId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/like")
+    public ResponseEntity<FeedbackResponse> like(@PathVariable @Positive Long id) {
+        return ResponseEntity.status(201).body(feedbackService.like(id));
+    }
 }

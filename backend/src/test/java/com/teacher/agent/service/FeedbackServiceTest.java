@@ -1,9 +1,8 @@
 package com.teacher.agent.service;
 
-import com.teacher.agent.domain.FeedbackRepository;
-import com.teacher.agent.domain.Student;
-import com.teacher.agent.domain.StudentRepository;
+import com.teacher.agent.domain.*;
 import com.teacher.agent.dto.*;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +34,9 @@ class FeedbackServiceTest {
     @Autowired
     private FeedbackRepository feedbackRepository;
 
+    @Autowired
+    private EntityManager entityManager;
+
     @MockitoBean
     private FeedbackAiService feedbackAiService;
 
@@ -60,6 +62,7 @@ class FeedbackServiceTest {
         assertThat(response.studentId()).isEqualTo(studentId);
         assertThat(response.keywords()).isEmpty();
         assertThat(response.aiContent()).isNull();
+        assertThat(response.liked()).isFalse();
     }
 
     @Test
@@ -208,5 +211,117 @@ class FeedbackServiceTest {
         assertThatThrownBy(() -> feedbackService.generateAiContent(created.id()))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("키워드");
+    }
+
+    @Test
+    void 피드백에_좋아요를_누른다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+        feedbackService.update(created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+
+        FeedbackResponse liked = feedbackService.like(created.id());
+
+        assertThat(liked.liked()).isTrue();
+    }
+
+    @Test
+    void AI_콘텐츠가_없으면_좋아요에_실패한다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+
+        assertThatThrownBy(() -> feedbackService.like(created.id()))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("AI 콘텐츠");
+    }
+
+    @Test
+    void 같은_내용에_좋아요를_중복으로_누르면_실패한다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+        feedbackService.update(created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        feedbackService.like(created.id());
+
+        assertThatThrownBy(() -> feedbackService.like(created.id()))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("이미 좋아요");
+    }
+
+    @Test
+    void 좋아요_후_수정하면_다시_좋아요할_수_있다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+        feedbackService.update(created.id(), new FeedbackUpdateRequest("원본 내용"));
+        feedbackService.like(created.id());
+
+        FeedbackResponse updated = feedbackService.update(created.id(), new FeedbackUpdateRequest("수정된 내용"));
+        assertThat(updated.liked()).isFalse();
+
+        FeedbackResponse reLiked = feedbackService.like(created.id());
+        assertThat(reLiked.liked()).isTrue();
+    }
+
+    @Test
+    void 좋아요_후_AI_재생성하면_다시_좋아요할_수_있다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+        feedbackService.addKeyword(created.id(), new FeedbackKeywordCreateRequest("성실함"));
+        given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동")))
+                .willReturn("AI가 생성한 피드백");
+        feedbackService.generateAiContent(created.id());
+        feedbackService.like(created.id());
+
+        given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동")))
+                .willReturn("새로 생성한 피드백");
+        FeedbackResponse regenerated = feedbackService.generateAiContent(created.id());
+        assertThat(regenerated.liked()).isFalse();
+
+        FeedbackResponse reLiked = feedbackService.like(created.id());
+        assertThat(reLiked.liked()).isTrue();
+    }
+
+    @Test
+    @Transactional
+    void 좋아요_이력은_누적_저장된다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+        feedbackService.update(created.id(), new FeedbackUpdateRequest("버전 1"));
+        feedbackService.like(created.id());
+        feedbackService.update(created.id(), new FeedbackUpdateRequest("버전 2"));
+        feedbackService.like(created.id());
+
+        Feedback feedback = feedbackRepository.findById(created.id()).orElseThrow();
+        assertThat(feedback.getLikes()).hasSize(2);
+    }
+
+    @Test
+    @Transactional
+    void 좋아요_시_스냅샷이_저장된다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+        feedbackService.addKeyword(created.id(), new FeedbackKeywordCreateRequest("성실함"));
+        feedbackService.update(created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        feedbackService.like(created.id());
+
+        Feedback feedback = feedbackRepository.findById(created.id()).orElseThrow();
+        FeedbackLike feedbackLike = feedback.getLikes().get(0);
+        assertThat(feedbackLike.getAiContentSnapshot()).isEqualTo("AI 피드백 내용");
+        assertThat(feedbackLike.getKeywordsSnapshot()).isEqualTo("성실함");
+    }
+
+    @Test
+    void 피드백_삭제_시_좋아요_이력도_삭제된다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+        feedbackService.update(created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        feedbackService.like(created.id());
+
+        feedbackService.delete(created.id());
+
+        Long likeCount = entityManager.createQuery("SELECT COUNT(fl) FROM FeedbackLike fl", Long.class)
+                .getSingleResult();
+        assertThat(likeCount).isZero();
+    }
+
+    @Test
+    void 수정_사항이_없으면_좋아요_상태가_유지된다() {
+        FeedbackResponse created = feedbackService.create(new FeedbackCreateRequest(studentId));
+        feedbackService.update(created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        feedbackService.like(created.id());
+
+        FeedbackResponse fetched = feedbackService.getOne(created.id());
+
+        assertThat(fetched.liked()).isTrue();
     }
 }

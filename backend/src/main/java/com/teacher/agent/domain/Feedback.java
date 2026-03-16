@@ -32,6 +32,10 @@ public class Feedback extends BaseEntity {
     @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<FeedbackKeyword> keywords = new ArrayList<>();
 
+    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
+    private List<FeedbackLike> likes = new ArrayList<>();
+
     public static Feedback create(Long studentId) {
         Feedback feedback = new Feedback();
         feedback.studentId = checkPositive(studentId, STUDENT_ID);
@@ -55,5 +59,26 @@ public class Feedback extends BaseEntity {
         if (!removed) {
             throw new IllegalArgumentException("FeedbackKeyword not found: " + keywordId);
         }
+    }
+
+    public void like() {
+        if (aiContent == null || aiContent.isBlank()) {
+            throw new IllegalStateException("AI 콘텐츠가 없으면 좋아요를 할 수 없습니다.");
+        }
+        if (isLiked()) {
+            throw new IllegalStateException("이미 좋아요를 누른 상태입니다.");
+        }
+        String keywordsSnapshot = keywords.stream()
+                .map(FeedbackKeyword::getKeyword)
+                .reduce((a, b) -> a + "," + b)
+                .orElse("");
+        likes.add(FeedbackLike.create(this, aiContent, keywordsSnapshot));
+    }
+
+    public boolean isLiked() {
+        if (likes.isEmpty() || aiContent == null) {
+            return false;
+        }
+        return likes.getLast().getAiContentSnapshot().equals(aiContent);
     }
 }

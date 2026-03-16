@@ -92,4 +92,55 @@ class FeedbackTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("999");
     }
+
+    @Test
+    void 좋아요를_추가한다() {
+        Feedback feedback = Feedback.create(1L);
+        feedback.updateAiContent("AI 피드백");
+
+        feedback.like();
+
+        assertThat(feedback.getLikes()).hasSize(1);
+        assertThat(feedback.isLiked()).isTrue();
+    }
+
+    @Test
+    void AI_콘텐츠가_없으면_좋아요에_실패한다() {
+        Feedback feedback = Feedback.create(1L);
+
+        assertThatThrownBy(() -> feedback.like())
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void 같은_내용에_좋아요를_중복으로_누르면_실패한다() {
+        Feedback feedback = Feedback.create(1L);
+        feedback.updateAiContent("AI 피드백");
+        feedback.like();
+
+        assertThatThrownBy(() -> feedback.like())
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void 내용_수정_후_다시_좋아요할_수_있다() {
+        Feedback feedback = Feedback.create(1L);
+        feedback.updateAiContent("버전 1");
+        feedback.like();
+
+        feedback.updateAiContent("버전 2");
+
+        assertThat(feedback.isLiked()).isFalse();
+        feedback.like();
+        assertThat(feedback.isLiked()).isTrue();
+        assertThat(feedback.getLikes()).hasSize(2);
+    }
+
+    @Test
+    void 좋아요가_없으면_isLiked는_false를_반환한다() {
+        Feedback feedback = Feedback.create(1L);
+        feedback.updateAiContent("AI 피드백");
+
+        assertThat(feedback.isLiked()).isFalse();
+    }
 }

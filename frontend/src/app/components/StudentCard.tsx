@@ -54,6 +54,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
     handleRemoveKeyword,
     handleGenerate,
     handleUpdateAiContent,
+    handleLike,
   } = useFeedback(student.id);
 
   const avatarColor = AVATAR_COLORS[student.id % AVATAR_COLORS.length];
@@ -238,6 +239,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
           isEditingAiContent={isEditingAiContent}
           onGenerate={handleGenerate}
           onUpdateAiContent={handleUpdateAiContent}
+          onLike={handleLike}
         />
       )}
     </div>

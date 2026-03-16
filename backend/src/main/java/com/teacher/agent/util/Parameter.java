@@ -15,4 +15,7 @@ public class Parameter {
     public static final String USER_ID = "userId";
     public static final String PASSWORD = "password";
     public static final String SUBJECT = "subject";
+    public static final String FEEDBACK_ID = "feedbackId";
+    public static final String AI_CONTENT_SNAPSHOT = "aiContentSnapshot";
+    public static final String KEYWORDS_SNAPSHOT = "keywordsSnapshot";
 }

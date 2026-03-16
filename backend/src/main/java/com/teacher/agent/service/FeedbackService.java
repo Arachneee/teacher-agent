@@ -1,9 +1,6 @@
 package com.teacher.agent.service;
 
-import com.teacher.agent.domain.Feedback;
-import com.teacher.agent.domain.FeedbackRepository;
-import com.teacher.agent.domain.Student;
-import com.teacher.agent.domain.StudentRepository;
+import com.teacher.agent.domain.*;
 import com.teacher.agent.dto.FeedbackCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
@@ -15,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,18 +28,18 @@ public class FeedbackService {
         findStudentById(request.studentId());
         Feedback feedback = feedbackRepository.findByStudentId(request.studentId())
                 .orElseGet(() -> feedbackRepository.save(Feedback.create(request.studentId())));
-        return FeedbackResponse.withKeywords(feedback);
+        return toResponse(feedback);
     }
 
     public List<FeedbackResponse> getAll(Long studentId) {
         findStudentById(studentId);
         return feedbackRepository.findAllByStudentId(studentId).stream()
-                .map(FeedbackResponse::withKeywords)
+                .map(this::toResponse)
                 .toList();
     }
 
     public FeedbackResponse getOne(Long id) {
-        return FeedbackResponse.withKeywords(findById(id));
+        return toResponse(findById(id));
     }
 
     @Transactional
@@ -52,7 +50,7 @@ public class FeedbackService {
         } else {
             feedback.updateAiContent(request.aiContent());
         }
-        return FeedbackResponse.withKeywords(feedback);
+        return toResponse(feedback);
     }
 
     @Transactional
@@ -66,7 +64,7 @@ public class FeedbackService {
         Feedback feedback = findById(feedbackId);
         feedback.addKeyword(request.keyword());
         feedbackRepository.flush();
-        return FeedbackResponse.withKeywords(feedback);
+        return toResponse(feedback);
     }
 
     @Transactional
@@ -88,7 +86,23 @@ public class FeedbackService {
         Student student = findStudentById(feedback.getStudentId());
         String aiContent = feedbackAiService.generateFeedbackContent(feedback, student.getName());
         feedback.updateAiContent(aiContent);
-        return FeedbackResponse.withKeywords(feedback);
+        return toResponse(feedback);
+    }
+
+    @Transactional
+    public FeedbackResponse like(Long feedbackId) {
+        Feedback feedback = findById(feedbackId);
+        try {
+            feedback.like();
+        } catch (IllegalStateException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+        }
+        feedbackRepository.flush();
+        return FeedbackResponse.withKeywords(feedback, true);
+    }
+
+    private FeedbackResponse toResponse(Feedback feedback) {
+        return FeedbackResponse.withKeywords(feedback, feedback.isLiked());
     }
 
     private Feedback findById(Long id) {

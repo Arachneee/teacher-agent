@@ -9,9 +9,10 @@ interface Props {
   isEditingAiContent: boolean;
   onGenerate: () => void;
   onUpdateAiContent: (content: string) => void;
+  onLike: () => void;
 }
 
-export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiContent, onGenerate, onUpdateAiContent }: Props) {
+export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiContent, onGenerate, onUpdateAiContent, onLike }: Props) {
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -39,9 +40,26 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
             onChange={event => onUpdateAiContent(event.target.value)}
             className="w-full text-sm text-gray-700 leading-relaxed bg-transparent outline-none resize-none pr-8 overflow-hidden"
           />
-          <span className="absolute bottom-2 right-2 text-xs text-indigo-300 select-none">
-            {feedback.aiContent.length}자
-          </span>
+          <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
+            <span className="text-xs text-indigo-300 select-none">
+              {feedback.aiContent.length}자
+            </span>
+            <button
+              onClick={onLike}
+              disabled={feedback.liked}
+              className={`w-7 h-7 flex items-center justify-center rounded-xl transition-colors duration-150 ${
+                feedback.liked
+                  ? 'bg-indigo-100 text-indigo-500'
+                  : 'bg-white hover:bg-indigo-100 text-indigo-300'
+              }`}
+              aria-label={feedback.liked ? '좋아요 완료' : '좋아요'}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill={feedback.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+                <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+              </svg>
+            </button>
+          </div>
           <button
             onClick={handleCopy}
             className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-xl bg-white hover:bg-indigo-100 text-indigo-400 transition-colors duration-150"

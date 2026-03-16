@@ -7,6 +7,7 @@ import {
   createFeedback,
   generateAiContent,
   getFeedbacks,
+  likeFeedback,
   removeKeyword,
   updateFeedback,
 } from '../lib/api';
@@ -41,7 +42,7 @@ export function useFeedback(studentId: number) {
   }, []);
 
   const handleUpdateAiContent = (content: string) => {
-    setFeedback(prev => prev ? { ...prev, aiContent: content || null } : null);
+    setFeedback(prev => prev ? { ...prev, aiContent: content || null, liked: false } : null);
     setIsEditingAiContent(true);
 
     if (debounceTimerRef.current) {
@@ -49,6 +50,7 @@ export function useFeedback(studentId: number) {
     }
 
     debounceTimerRef.current = setTimeout(async () => {
+      debounceTimerRef.current = null;
       const feedbackId = feedbackIdRef.current;
       if (feedbackId === null) return;
       try {
@@ -117,5 +119,18 @@ export function useFeedback(studentId: number) {
     }
   };
 
-  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleRemoveKeyword, handleGenerate, handleUpdateAiContent };
+  const handleLike = async () => {
+    if (!feedback || feedback.liked) return;
+    try {
+      const updated = await likeFeedback(feedback.id);
+      const mergedFeedback = debounceTimerRef.current !== null
+        ? { ...updated, aiContent: feedback?.aiContent ?? updated.aiContent }
+        : updated;
+      setFeedback(mergedFeedback);
+    } catch {
+      setErrorMessage('좋아요 처리에 실패했어요');
+    }
+  };
+
+  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleRemoveKeyword, handleGenerate, handleUpdateAiContent, handleLike };
 }

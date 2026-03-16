@@ -11,11 +11,12 @@ public record FeedbackResponse(
         Long studentId,
         String aiContent,
         List<KeywordItem> keywords,
+        boolean liked,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
 
-    public static FeedbackResponse withKeywords(Feedback feedback) {
+    public static FeedbackResponse withKeywords(Feedback feedback, boolean liked) {
         List<KeywordItem> keywordItems = feedback.getKeywords().stream()
                 .map(KeywordItem::from)
                 .toList();
@@ -24,6 +25,7 @@ public record FeedbackResponse(
                 feedback.getStudentId(),
                 feedback.getAiContent(),
                 keywordItems,
+                liked,
                 feedback.getCreatedAt(),
                 feedback.getUpdatedAt()
         );

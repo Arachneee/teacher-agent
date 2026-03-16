@@ -19,6 +19,7 @@ export interface Feedback {
   studentId: number;
   aiContent: string | null;
   keywords: FeedbackKeyword[];
+  liked: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -150,5 +151,13 @@ export async function generateAiContent(feedbackId: number): Promise<Feedback> {
     method: 'POST',
   });
   if (!res.ok) throw new Error('AI 문자를 생성하지 못했어요');
+  return res.json();
+}
+
+export async function likeFeedback(feedbackId: number): Promise<Feedback> {
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/like`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error('좋아요 처리에 실패했어요');
   return res.json();
 }
