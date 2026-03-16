@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import static com.teacher.agent.util.Parameter.*;
 import static com.teacher.agent.util.ValidationUtil.*;
@@ -32,6 +35,9 @@ public class Lesson extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Attendee> attendees = new ArrayList<>();
+
     public static Lesson create(Long teacherId, String title, LocalDateTime startTime, LocalDateTime endTime) {
         Lesson lesson = new Lesson();
         lesson.teacherId = checkPositive(teacherId, TEACHER_ID);
@@ -40,6 +46,21 @@ public class Lesson extends BaseEntity {
         lesson.endTime = checkNotNull(endTime, END_TIME);
         checkArgument(endTime.isAfter(startTime), END_TIME);
         return lesson;
+    }
+
+    public void addAttendee(Long studentId) {
+        boolean isDuplicate = attendees.stream().anyMatch(attendee -> attendee.getStudentId().equals(studentId));
+        if (isDuplicate) {
+            throw new IllegalArgumentException("Attendee already exists: " + studentId);
+        }
+        attendees.add(Attendee.create(this, studentId));
+    }
+
+    public void removeAttendee(Long attendeeId) {
+        boolean removed = attendees.removeIf(attendee -> Objects.equals(attendee.getId(), attendeeId));
+        if (!removed) {
+            throw new IllegalArgumentException("Attendee not found: " + attendeeId);
+        }
     }
 
     public void update(String title, LocalDateTime startTime, LocalDateTime endTime) {
