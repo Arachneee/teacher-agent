@@ -15,7 +15,7 @@ public record TeacherResponse(
     public static TeacherResponse from(Teacher teacher) {
         return new TeacherResponse(
                 teacher.getId(),
-                teacher.getUserId(),
+                teacher.getUserId().value(),
                 teacher.getName(),
                 teacher.getSubject(),
                 teacher.getCreatedAt(),

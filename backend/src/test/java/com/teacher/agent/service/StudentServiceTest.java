@@ -1,10 +1,14 @@
 package com.teacher.agent.service;
 
 import com.teacher.agent.domain.StudentRepository;
+import com.teacher.agent.domain.Teacher;
+import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.StudentCreateRequest;
 import com.teacher.agent.dto.StudentResponse;
 import com.teacher.agent.dto.StudentUpdateRequest;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -29,14 +33,29 @@ class StudentServiceTest {
     @Autowired
     private StudentRepository studentRepository;
 
+    @Autowired
+    private TeacherRepository teacherRepository;
+
+    private UserId userId;
+    private UserId otherUserId;
+
+    @BeforeEach
+    void setUp() {
+        Teacher teacher = teacherRepository.save(Teacher.create("teacher1", "encoded", "선생님1", "수학"));
+        Teacher otherTeacher = teacherRepository.save(Teacher.create("teacher2", "encoded", "선생님2", "영어"));
+        userId = teacher.getUserId();
+        otherUserId = otherTeacher.getUserId();
+    }
+
     @AfterEach
     void tearDown() {
         studentRepository.deleteAllInBatch();
+        teacherRepository.deleteAllInBatch();
     }
 
     @Test
     void 학생을_생성한다() {
-        StudentResponse response = studentService.create(new StudentCreateRequest("홍길동", "성실한 학생"));
+        StudentResponse response = studentService.create(userId, new StudentCreateRequest("홍길동", "성실한 학생"));
 
         assertThat(response.id()).isNotNull();
         assertThat(response.name()).isEqualTo("홍길동");
@@ -46,20 +65,21 @@ class StudentServiceTest {
     }
 
     @Test
-    void 전체_학생_목록을_조회한다() {
-        studentService.create(new StudentCreateRequest("홍길동", null));
-        studentService.create(new StudentCreateRequest("김철수", null));
+    void 내_학생_목록을_조회한다() {
+        studentService.create(userId, new StudentCreateRequest("홍길동", null));
+        studentService.create(userId, new StudentCreateRequest("김철수", null));
+        studentService.create(otherUserId, new StudentCreateRequest("다른선생학생", null));
 
-        List<StudentResponse> students = studentService.getAll();
+        List<StudentResponse> students = studentService.getAll(userId);
 
         assertThat(students).hasSize(2);
     }
 
     @Test
     void 학생을_단건_조회한다() {
-        StudentResponse created = studentService.create(new StudentCreateRequest("홍길동", "메모"));
+        StudentResponse created = studentService.create(userId, new StudentCreateRequest("홍길동", "메모"));
 
-        StudentResponse found = studentService.getOne(created.id());
+        StudentResponse found = studentService.getOne(userId, created.id());
 
         assertThat(found.id()).isEqualTo(created.id());
         assertThat(found.name()).isEqualTo("홍길동");
@@ -67,16 +87,24 @@ class StudentServiceTest {
     }
 
     @Test
+    void 다른_선생님_학생_조회_시_예외가_발생한다() {
+        StudentResponse created = studentService.create(userId, new StudentCreateRequest("홍길동", "메모"));
+
+        assertThatThrownBy(() -> studentService.getOne(otherUserId, created.id()))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
     void 존재하지_않는_학생_조회_시_예외가_발생한다() {
-        assertThatThrownBy(() -> studentService.getOne(999L))
+        assertThatThrownBy(() -> studentService.getOne(userId, 999L))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
     void 학생_정보를_수정한다() {
-        StudentResponse created = studentService.create(new StudentCreateRequest("홍길동", "메모"));
+        StudentResponse created = studentService.create(userId, new StudentCreateRequest("홍길동", "메모"));
 
-        StudentResponse updated = studentService.update(created.id(), new StudentUpdateRequest("김철수", "새 메모"));
+        StudentResponse updated = studentService.update(userId, created.id(), new StudentUpdateRequest("김철수", "새 메모"));
 
         assertThat(updated.id()).isEqualTo(created.id());
         assertThat(updated.name()).isEqualTo("김철수");
@@ -84,24 +112,40 @@ class StudentServiceTest {
     }
 
     @Test
+    void 다른_선생님_학생_수정_시_예외가_발생한다() {
+        StudentResponse created = studentService.create(userId, new StudentCreateRequest("홍길동", "메모"));
+
+        assertThatThrownBy(() -> studentService.update(otherUserId, created.id(), new StudentUpdateRequest("이름", "메모")))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
     void 존재하지_않는_학생_수정_시_예외가_발생한다() {
-        assertThatThrownBy(() -> studentService.update(999L, new StudentUpdateRequest("이름", "메모")))
+        assertThatThrownBy(() -> studentService.update(userId, 999L, new StudentUpdateRequest("이름", "메모")))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
     void 학생을_삭제한다() {
-        StudentResponse created = studentService.create(new StudentCreateRequest("홍길동", null));
+        StudentResponse created = studentService.create(userId, new StudentCreateRequest("홍길동", null));
 
-        studentService.delete(created.id());
+        studentService.delete(userId, created.id());
 
-        assertThatThrownBy(() -> studentService.getOne(created.id()))
+        assertThatThrownBy(() -> studentService.getOne(userId, created.id()))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void 다른_선생님_학생_삭제_시_예외가_발생한다() {
+        StudentResponse created = studentService.create(userId, new StudentCreateRequest("홍길동", null));
+
+        assertThatThrownBy(() -> studentService.delete(otherUserId, created.id()))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
     void 존재하지_않는_학생_삭제_시_예외가_발생한다() {
-        assertThatThrownBy(() -> studentService.delete(999L))
+        assertThatThrownBy(() -> studentService.delete(userId, 999L))
                 .isInstanceOf(ResponseStatusException.class);
     }
 }

@@ -2,6 +2,7 @@ package com.teacher.agent.config;
 
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.UserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -32,7 +33,7 @@ public class DataInitializer implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         String encodedPassword = passwordEncoder.encode(initialPassword);
-        teacherRepository.findByUserId(initialUserId)
+        teacherRepository.findByUserId(new UserId(initialUserId))
                 .ifPresentOrElse(
                         teacher -> teacher.updatePassword(encodedPassword),
                         () -> teacherRepository.save(Teacher.create(initialUserId, encodedPassword, initialName, initialSubject))

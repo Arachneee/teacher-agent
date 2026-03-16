@@ -6,6 +6,7 @@ import com.teacher.agent.domain.Student;
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.AttendeeCreateRequest;
 import com.teacher.agent.dto.AttendeeResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -49,11 +50,13 @@ class AttendeeServiceTest {
 
     private Teacher teacher;
     private Student student;
+    private UserId userId;
 
     @BeforeEach
     void setUp() {
-        teacher = teacherRepository.save(Teacher.create("testteacher", "encodedPassword"));
-        student = studentRepository.save(Student.create("홍길동", "메모"));
+        teacher = teacherRepository.save(Teacher.create("testteacher", "encodedPassword", "테스트 선생님", ""));
+        userId = teacher.getUserId();
+        student = studentRepository.save(Student.create(teacher.getId(), "홍길동", "메모"));
     }
 
     @AfterEach
@@ -71,7 +74,7 @@ class AttendeeServiceTest {
     void 수업에_학생을_추가한다() {
         Lesson lesson = saveLesson();
 
-        AttendeeResponse response = attendeeService.add(teacher.getUsername(), lesson.getId(),
+        AttendeeResponse response = attendeeService.add(userId, lesson.getId(),
                 new AttendeeCreateRequest(student.getId()));
 
         assertThat(response.id()).isNotNull();
@@ -82,7 +85,7 @@ class AttendeeServiceTest {
 
     @Test
     void 존재하지_않는_수업에_학생_추가_시_예외가_발생한다() {
-        assertThatThrownBy(() -> attendeeService.add(teacher.getUsername(), 999L,
+        assertThatThrownBy(() -> attendeeService.add(userId, 999L,
                 new AttendeeCreateRequest(student.getId())))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> assertThat(((ResponseStatusException) exception).getStatusCode())
@@ -91,10 +94,10 @@ class AttendeeServiceTest {
 
     @Test
     void 다른_교사의_수업에_학생_추가_시_예외가_발생한다() {
-        Teacher otherTeacher = teacherRepository.save(Teacher.create("otherteacher", "encodedPassword"));
+        Teacher otherTeacher = teacherRepository.save(Teacher.create("otherteacher", "encodedPassword", "다른 선생님", ""));
         Lesson lesson = saveLesson();
 
-        assertThatThrownBy(() -> attendeeService.add(otherTeacher.getUsername(), lesson.getId(),
+        assertThatThrownBy(() -> attendeeService.add(otherTeacher.getUserId(), lesson.getId(),
                 new AttendeeCreateRequest(student.getId())))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> assertThat(((ResponseStatusException) exception).getStatusCode())
@@ -105,7 +108,7 @@ class AttendeeServiceTest {
     void 존재하지_않는_학생_추가_시_예외가_발생한다() {
         Lesson lesson = saveLesson();
 
-        assertThatThrownBy(() -> attendeeService.add(teacher.getUsername(), lesson.getId(),
+        assertThatThrownBy(() -> attendeeService.add(userId, lesson.getId(),
                 new AttendeeCreateRequest(999L)))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> assertThat(((ResponseStatusException) exception).getStatusCode())
@@ -115,9 +118,9 @@ class AttendeeServiceTest {
     @Test
     void 이미_추가된_학생_추가_시_예외가_발생한다() {
         Lesson lesson = saveLesson();
-        attendeeService.add(teacher.getUsername(), lesson.getId(), new AttendeeCreateRequest(student.getId()));
+        attendeeService.add(userId, lesson.getId(), new AttendeeCreateRequest(student.getId()));
 
-        assertThatThrownBy(() -> attendeeService.add(teacher.getUsername(), lesson.getId(),
+        assertThatThrownBy(() -> attendeeService.add(userId, lesson.getId(),
                 new AttendeeCreateRequest(student.getId())))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> assertThat(((ResponseStatusException) exception).getStatusCode())
@@ -127,9 +130,9 @@ class AttendeeServiceTest {
     @Test
     void 수업의_참가자_목록을_조회한다() {
         Lesson lesson = saveLesson();
-        Student anotherStudent = studentRepository.save(Student.create("김철수", null));
-        attendeeService.add(teacher.getUsername(), lesson.getId(), new AttendeeCreateRequest(student.getId()));
-        attendeeService.add(teacher.getUsername(), lesson.getId(), new AttendeeCreateRequest(anotherStudent.getId()));
+        Student anotherStudent = studentRepository.save(Student.create(teacher.getId(), "김철수", null));
+        attendeeService.add(userId, lesson.getId(), new AttendeeCreateRequest(student.getId()));
+        attendeeService.add(userId, lesson.getId(), new AttendeeCreateRequest(anotherStudent.getId()));
 
         List<AttendeeResponse> attendees = attendeeService.getAll(lesson.getId());
 
@@ -140,9 +143,9 @@ class AttendeeServiceTest {
     void 다른_수업의_참가자는_조회되지_않는다() {
         Lesson lesson1 = saveLesson();
         Lesson lesson2 = lessonRepository.save(Lesson.create(teacher.getId(), "영어", START, END));
-        Student anotherStudent = studentRepository.save(Student.create("김철수", null));
-        attendeeService.add(teacher.getUsername(), lesson1.getId(), new AttendeeCreateRequest(student.getId()));
-        attendeeService.add(teacher.getUsername(), lesson2.getId(), new AttendeeCreateRequest(anotherStudent.getId()));
+        Student anotherStudent = studentRepository.save(Student.create(teacher.getId(), "김철수", null));
+        attendeeService.add(userId, lesson1.getId(), new AttendeeCreateRequest(student.getId()));
+        attendeeService.add(userId, lesson2.getId(), new AttendeeCreateRequest(anotherStudent.getId()));
 
         List<AttendeeResponse> attendees = attendeeService.getAll(lesson1.getId());
 
@@ -153,10 +156,10 @@ class AttendeeServiceTest {
     @Test
     void 수업_참가자를_삭제한다() {
         Lesson lesson = saveLesson();
-        AttendeeResponse added = attendeeService.add(teacher.getUsername(), lesson.getId(),
+        AttendeeResponse added = attendeeService.add(userId, lesson.getId(),
                 new AttendeeCreateRequest(student.getId()));
 
-        attendeeService.remove(teacher.getUsername(), lesson.getId(), added.id());
+        attendeeService.remove(userId, lesson.getId(), added.id());
 
         List<AttendeeResponse> attendees = attendeeService.getAll(lesson.getId());
         assertThat(attendees).isEmpty();
@@ -166,7 +169,7 @@ class AttendeeServiceTest {
     void 존재하지_않는_참가자_삭제_시_예외가_발생한다() {
         Lesson lesson = saveLesson();
 
-        assertThatThrownBy(() -> attendeeService.remove(teacher.getUsername(), lesson.getId(), 999L))
+        assertThatThrownBy(() -> attendeeService.remove(userId, lesson.getId(), 999L))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> assertThat(((ResponseStatusException) exception).getStatusCode())
                         .isEqualTo(NOT_FOUND));
@@ -174,12 +177,12 @@ class AttendeeServiceTest {
 
     @Test
     void 다른_교사의_수업_참가자_삭제_시_예외가_발생한다() {
-        Teacher otherTeacher = teacherRepository.save(Teacher.create("otherteacher2", "encodedPassword"));
+        Teacher otherTeacher = teacherRepository.save(Teacher.create("otherteacher2", "encodedPassword", "다른 선생님2", ""));
         Lesson lesson = saveLesson();
-        AttendeeResponse added = attendeeService.add(teacher.getUsername(), lesson.getId(),
+        AttendeeResponse added = attendeeService.add(userId, lesson.getId(),
                 new AttendeeCreateRequest(student.getId()));
 
-        assertThatThrownBy(() -> attendeeService.remove(otherTeacher.getUsername(), lesson.getId(), added.id()))
+        assertThatThrownBy(() -> attendeeService.remove(otherTeacher.getUserId(), lesson.getId(), added.id()))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> assertThat(((ResponseStatusException) exception).getStatusCode())
                         .isEqualTo(FORBIDDEN));

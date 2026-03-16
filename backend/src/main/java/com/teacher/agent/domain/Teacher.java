@@ -18,8 +18,9 @@ public class Teacher extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Convert(converter = UserIdConverter.class)
     @Column(nullable = false, unique = true)
-    private String userId;
+    private UserId userId;
 
     @Column(nullable = false)
     private String password;
@@ -31,7 +32,7 @@ public class Teacher extends BaseEntity {
 
     public static Teacher create(String userId, String encodedPassword, String name, String subject) {
         Teacher teacher = new Teacher();
-        teacher.userId = checkNotBlank(userId, USER_ID);
+        teacher.userId = new UserId(checkNotBlank(userId, USER_ID));
         teacher.password = checkNotBlank(encodedPassword, PASSWORD);
         teacher.name = checkNotBlank(name, NAME);
         teacher.subject = checkMaxLength(subject, 100, SUBJECT);

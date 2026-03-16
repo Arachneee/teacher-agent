@@ -2,6 +2,7 @@ package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.TeacherResponse;
 import com.teacher.agent.dto.TeacherUpdateRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class TeacherService {
     }
 
     private Teacher findByUserId(String userId) {
-        return teacherRepository.findByUserId(userId)
+        return teacherRepository.findByUserId(new UserId(userId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found: " + userId));
     }
 }

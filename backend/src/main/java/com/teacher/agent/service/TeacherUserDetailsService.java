@@ -1,6 +1,7 @@
 package com.teacher.agent.service;
 
 import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.UserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,9 +17,9 @@ public class TeacherUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        return teacherRepository.findByUserId(userId)
+        return teacherRepository.findByUserId(new UserId(userId))
                 .map(teacher -> User.builder()
-                        .username(teacher.getUserId())
+                        .username(teacher.getUserId().value())
                         .password(teacher.getPassword())
                         .roles("TEACHER")
                         .build())

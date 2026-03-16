@@ -11,7 +11,7 @@ class TeacherTest {
     void 교사를_생성한다() {
         Teacher teacher = Teacher.create("teacher1", "encodedPassword", "김선생", "수학");
 
-        assertThat(teacher.getUserId()).isEqualTo("teacher1");
+        assertThat(teacher.getUserId()).isEqualTo(new UserId("teacher1"));
         assertThat(teacher.getPassword()).isEqualTo("encodedPassword");
         assertThat(teacher.getName()).isEqualTo("김선생");
         assertThat(teacher.getSubject()).isEqualTo("수학");

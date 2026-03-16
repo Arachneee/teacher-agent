@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.teacher.agent.util.Parameter.AI_CONTENT;
+import static com.teacher.agent.util.Parameter.LESSON_ID;
 import static com.teacher.agent.util.Parameter.STUDENT_ID;
 import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
 import static com.teacher.agent.util.ValidationUtil.checkPositive;
@@ -26,6 +27,9 @@ public class Feedback extends BaseEntity {
     @Column(nullable = false)
     private Long studentId;
 
+    @Column(nullable = false)
+    private Long lessonId;
+
     @Column(columnDefinition = "TEXT")
     private String aiContent;
 
@@ -36,9 +40,10 @@ public class Feedback extends BaseEntity {
     @OrderBy("id ASC")
     private List<FeedbackLike> likes = new ArrayList<>();
 
-    public static Feedback create(Long studentId) {
+    public static Feedback create(Long studentId, Long lessonId) {
         Feedback feedback = new Feedback();
         feedback.studentId = checkPositive(studentId, STUDENT_ID);
+        feedback.lessonId = checkPositive(lessonId, LESSON_ID);
         return feedback;
     }
 

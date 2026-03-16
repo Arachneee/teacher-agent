@@ -9,7 +9,7 @@ class FeedbackLikeTest {
 
     @Test
     void 피드백_좋아요를_생성한다() {
-        Feedback feedback = Feedback.create(1L);
+        Feedback feedback = Feedback.create(1L, 1L);
         FeedbackLike feedbackLike = FeedbackLike.create(feedback, "AI 피드백 내용", "[\"성실함\",\"리더십\"]");
 
         assertThat(feedbackLike.getFeedback()).isEqualTo(feedback);
@@ -25,7 +25,7 @@ class FeedbackLikeTest {
 
     @Test
     void aiContentSnapshot이_null이면_생성에_실패한다() {
-        Feedback feedback = Feedback.create(1L);
+        Feedback feedback = Feedback.create(1L, 1L);
 
         assertThatThrownBy(() -> FeedbackLike.create(feedback, null, "[]"))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -33,7 +33,7 @@ class FeedbackLikeTest {
 
     @Test
     void aiContentSnapshot이_빈_문자열이면_생성에_실패한다() {
-        Feedback feedback = Feedback.create(1L);
+        Feedback feedback = Feedback.create(1L, 1L);
 
         assertThatThrownBy(() -> FeedbackLike.create(feedback, "", "[]"))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -41,7 +41,7 @@ class FeedbackLikeTest {
 
     @Test
     void keywordsSnapshot이_null이면_생성에_실패한다() {
-        Feedback feedback = Feedback.create(1L);
+        Feedback feedback = Feedback.create(1L, 1L);
 
         assertThatThrownBy(() -> FeedbackLike.create(feedback, "내용", null))
                 .isInstanceOf(IllegalArgumentException.class);

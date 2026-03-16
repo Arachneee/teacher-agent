@@ -1,6 +1,7 @@
 package com.teacher.agent.controller;
 
 import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.AuthResponse;
 import com.teacher.agent.dto.LoginRequest;
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,7 +62,7 @@ public class AuthController {
     }
 
     private AuthResponse buildAuthResponse(String userId) {
-        return teacherRepository.findByUserId(userId)
+        return teacherRepository.findByUserId(new UserId(userId))
                 .map(AuthResponse::from)
                 .orElseGet(() -> new AuthResponse(userId, null, null));
     }

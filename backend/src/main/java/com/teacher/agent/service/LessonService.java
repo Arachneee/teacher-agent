@@ -70,7 +70,7 @@ public class LessonService {
     }
 
     private Teacher findTeacherByUserId(UserId userId) {
-        return teacherRepository.findByUserId(userId.value())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found: " + userId.value()));
+        return teacherRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found: " + userId));
     }
 }

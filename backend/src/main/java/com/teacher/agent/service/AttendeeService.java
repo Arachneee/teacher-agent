@@ -6,6 +6,7 @@ import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.AttendeeCreateRequest;
 import com.teacher.agent.dto.AttendeeResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,10 @@ public class AttendeeService {
     private final StudentRepository studentRepository;
 
     @Transactional
-    public AttendeeResponse add(String username, Long lessonId, AttendeeCreateRequest request) {
-        Lesson lesson = findLessonByIdAndVerifyOwner(lessonId, username);
-        findStudentById(request.studentId());
+    public AttendeeResponse add(UserId userId, Long lessonId, AttendeeCreateRequest request) {
+        Lesson lesson = findLessonByIdAndVerifyOwner(lessonId, userId);
+        Teacher teacher = findTeacherByUserId(userId);
+        findStudentByIdAndTeacher(request.studentId(), teacher.getId());
         try {
             lesson.addAttendee(request.studentId());
         } catch (IllegalArgumentException exception) {
@@ -47,8 +49,8 @@ public class AttendeeService {
     }
 
     @Transactional
-    public void remove(String username, Long lessonId, Long attendeeId) {
-        Lesson lesson = findLessonByIdAndVerifyOwner(lessonId, username);
+    public void remove(UserId userId, Long lessonId, Long attendeeId) {
+        Lesson lesson = findLessonByIdAndVerifyOwner(lessonId, userId);
         try {
             lesson.removeAttendee(attendeeId);
         } catch (IllegalArgumentException exception) {
@@ -61,22 +63,22 @@ public class AttendeeService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lesson not found: " + lessonId));
     }
 
-    private Lesson findLessonByIdAndVerifyOwner(Long lessonId, String username) {
+    private Lesson findLessonByIdAndVerifyOwner(Long lessonId, UserId userId) {
         Lesson lesson = findLessonById(lessonId);
-        Teacher teacher = findTeacherByUsername(username);
+        Teacher teacher = findTeacherByUserId(userId);
         if (!lesson.getTeacherId().equals(teacher.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Lesson does not belong to this teacher");
         }
         return lesson;
     }
 
-    private Teacher findTeacherByUsername(String username) {
-        return teacherRepository.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found: " + username));
+    private Teacher findTeacherByUserId(UserId userId) {
+        return teacherRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found: " + userId.value()));
     }
 
-    private void findStudentById(Long studentId) {
-        studentRepository.findById(studentId)
+    private void findStudentByIdAndTeacher(Long studentId, Long teacherId) {
+        studentRepository.findByIdAndTeacherId(studentId, teacherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found: " + studentId));
     }
 }

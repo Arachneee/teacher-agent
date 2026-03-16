@@ -9,6 +9,7 @@ import java.util.List;
 public record FeedbackResponse(
         Long id,
         Long studentId,
+        Long lessonId,
         String aiContent,
         List<KeywordItem> keywords,
         boolean liked,
@@ -23,6 +24,7 @@ public record FeedbackResponse(
         return new FeedbackResponse(
                 feedback.getId(),
                 feedback.getStudentId(),
+                feedback.getLessonId(),
                 feedback.getAiContent(),
                 keywordItems,
                 liked,
