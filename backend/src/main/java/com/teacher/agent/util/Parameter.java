@@ -18,4 +18,8 @@ public class Parameter {
     public static final String FEEDBACK_ID = "feedbackId";
     public static final String AI_CONTENT_SNAPSHOT = "aiContentSnapshot";
     public static final String KEYWORDS_SNAPSHOT = "keywordsSnapshot";
+    public static final String TEACHER_ID = "teacherId";
+    public static final String TITLE = "title";
+    public static final String START_TIME = "startTime";
+    public static final String END_TIME = "endTime";
 }
