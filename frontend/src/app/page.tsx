@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   DndContext,
@@ -22,6 +22,7 @@ import { Student, getStudents } from './lib/api';
 import StudentCard, { StudentCardHandle } from './components/StudentCard';
 import AddStudentModal from './components/AddStudentModal';
 import { useAuth } from './context/AuthContext';
+import { MAX_COLUMNS, MIN_COLUMNS, useGridLayout } from './hooks/useGridLayout';
 
 interface SortableStudentCardProps {
   student: Student;
@@ -95,25 +96,28 @@ function SortableStudentCard({
   );
 }
 
-const COLUMN_STORAGE_KEY = 'studentGridColumns';
-const GRID_ORDER_STORAGE_KEY = 'studentGridOrder';
-const MIN_COLUMNS = 1;
-const MAX_COLUMNS = 6;
-
 export default function Home() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
-  const [gridSlots, setGridSlots] = useState<(number | null)[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [columnCount, setColumnCount] = useState(4);
   const [isDragActive, setIsDragActive] = useState(false);
   const cardRefs = useRef<(StudentCardHandle | null)[]>([]);
 
+  const {
+    gridSlots,
+    setGridSlots,
+    columnCount,
+    handleColumnCountChange,
+    initializeGridSlots,
+    addStudentToGrid,
+    removeStudentFromGrid,
+  } = useGridLayout();
+
   const studentMap = useMemo(() => {
     const map = new Map<number, Student>();
-    students.forEach(s => map.set(s.id, s));
+    students.forEach(student => map.set(student.id, student));
     return map;
   }, [students]);
 
@@ -123,83 +127,33 @@ export default function Home() {
     }
   }, [authLoading, user, router]);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(COLUMN_STORAGE_KEY);
-    if (saved) setColumnCount(Number(saved));
-  }, []);
-
-  const handleColumnCountChange = (next: number) => {
-    const clamped = Math.min(MAX_COLUMNS, Math.max(MIN_COLUMNS, next));
-    setColumnCount(clamped);
-    localStorage.setItem(COLUMN_STORAGE_KEY, String(clamped));
-  };
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
-
-  // Build gridSlots from students, restoring saved order if available
-  const buildGridSlots = useCallback((studentList: Student[]): (number | null)[] => {
-    const savedOrder = localStorage.getItem(GRID_ORDER_STORAGE_KEY);
-    if (savedOrder) {
-      try {
-        const parsed: (number | null)[] = JSON.parse(savedOrder);
-        const studentIds = new Set(studentList.map(s => s.id));
-        // Filter out deleted students but keep nulls
-        const filtered = parsed.filter(id => id === null || studentIds.has(id));
-        // Add any new students not in the saved order
-        const existingIds = new Set(filtered.filter((id): id is number => id !== null));
-        const newStudents = studentList.filter(s => !existingIds.has(s.id));
-        const result = [...filtered, ...newStudents.map(s => s.id)];
-        // Trim trailing nulls
-        while (result.length > 0 && result[result.length - 1] === null) {
-          result.pop();
-        }
-        return result;
-      } catch {
-        // Fall through to default
-      }
-    }
-    return studentList.map(s => s.id);
-  }, []);
-
-  // Save gridSlots to localStorage whenever it changes
-  useEffect(() => {
-    if (gridSlots.length > 0) {
-      localStorage.setItem(GRID_ORDER_STORAGE_KEY, JSON.stringify(gridSlots));
-    }
-  }, [gridSlots]);
 
   useEffect(() => {
     getStudents()
       .then(data => {
         setStudents(data);
-        setGridSlots(buildGridSlots(data));
+        initializeGridSlots(data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [buildGridSlots]);
+  }, [initializeGridSlots]);
 
   const handleAdd = (student: Student) => {
     setStudents(prev => [...prev, student]);
-    setGridSlots(prev => [...prev, student.id]);
+    addStudentToGrid(student.id);
     setShowModal(false);
   };
 
   const handleUpdate = (updated: Student) => {
-    setStudents(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+    setStudents(prev => prev.map(student => (student.id === updated.id ? updated : student)));
   };
 
   const handleDelete = (id: number) => {
-    setStudents(prev => prev.filter(s => s.id !== id));
-    setGridSlots(prev => {
-      const result = prev.map(slotId => (slotId === id ? null : slotId));
-      // Trim trailing nulls
-      while (result.length > 0 && result[result.length - 1] === null) {
-        result.pop();
-      }
-      return result;
-    });
+    setStudents(prev => prev.filter(student => student.id !== id));
+    removeStudentFromGrid(id);
   };
 
   const handleDragStart = (_event: DragStartEvent) => {
@@ -364,7 +318,7 @@ export default function Home() {
                     }
                     const student = studentMap.get(slotId);
                     if (!student) return null;
-                    const studentIndex = students.findIndex(s => s.id === slotId);
+                    const studentIndex = students.findIndex(student => student.id === slotId);
                     return (
                       <SortableStudentCard
                         key={student.id}
@@ -381,7 +335,7 @@ export default function Home() {
                             slotIndex + columnCount;
                           const targetSlotId = displaySlots[targetSlotIndex];
                           if (targetSlotId != null) {
-                            const targetStudentIndex = students.findIndex(s => s.id === targetSlotId);
+                            const targetStudentIndex = students.findIndex(student => student.id === targetSlotId);
                             cardRefs.current[targetStudentIndex]?.focusKeywordInput();
                           }
                         }}

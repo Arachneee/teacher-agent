@@ -1,25 +1,13 @@
 'use client';
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import {
-  Feedback,
-  Student,
-  addKeyword,
-  createFeedback,
-  deleteStudent,
-  generateAiContent,
-  getFeedbacks,
-  removeKeyword,
-  updateStudent,
-} from '../lib/api';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { Student, deleteStudent, updateStudent } from '../lib/api';
+import { useFeedback } from '../hooks/useFeedback';
+import AiFeedbackSection from './AiFeedbackSection';
+import KeywordsSection from './KeywordsSection';
 
 export interface StudentCardHandle {
   focusKeywordInput: () => void;
-}
-
-async function fetchLatestFeedback(studentId: number): Promise<Feedback | null> {
-  const feedbacks = await getFeedbacks(studentId);
-  return feedbacks.length > 0 ? feedbacks[0] : null;
 }
 
 const AVATAR_COLORS = [
@@ -45,38 +33,41 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
   { student, onUpdate, onDelete, onNavigate, dragHandleProps },
   ref
 ) {
+  const keywordInputRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({
     focusKeywordInput: () => keywordInputRef.current?.focus(),
   }));
+
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(student.name);
   const [memo, setMemo] = useState(student.memo || '');
-  const [loading, setLoading] = useState(false);
-
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');
-  const [aiGenerating, setAiGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const keywordSubmittingRef = useRef(false);
-  const keywordInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    feedback,
+    aiGenerating,
+    errorMessage: feedbackErrorMessage,
+    handleAddKeyword,
+    handleRemoveKeyword,
+    handleGenerate,
+  } = useFeedback(student.id);
 
   const avatarColor = AVATAR_COLORS[student.id % AVATAR_COLORS.length];
 
-  useEffect(() => {
-    fetchLatestFeedback(student.id).then(setFeedback).catch(console.error);
-  }, [student.id]);
-
   const handleSave = async () => {
     if (!name.trim()) return;
-    setLoading(true);
+    setSaving(true);
+    setEditErrorMessage(null);
     try {
       const updated = await updateStudent(student.id, name.trim(), memo.trim());
       onUpdate(updated);
       setEditing(false);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      setEditErrorMessage('학생 정보를 저장하지 못했어요');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -84,6 +75,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
     setName(student.name);
     setMemo(student.memo || '');
     setEditing(false);
+    setEditErrorMessage(null);
   };
 
   const handleDelete = async () => {
@@ -91,65 +83,19 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
     try {
       await deleteStudent(student.id);
       onDelete(student.id);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      setEditErrorMessage('학생을 삭제하지 못했어요');
     }
   };
 
-  const handleAddKeyword = async () => {
+  const handleAddKeywordWithInput = async () => {
     const trimmed = keywordInput.trim();
-    if (!trimmed || keywordSubmittingRef.current) return;
-    keywordSubmittingRef.current = true;
+    if (!trimmed) return;
     setKeywordInput('');
-    try {
-      let feedbackId = feedback?.id;
-      if (!feedbackId) {
-        const created = await createFeedback(student.id);
-        feedbackId = created.id;
-      }
-      await addKeyword(feedbackId, trimmed);
-      setFeedback(await fetchLatestFeedback(student.id));
-    } catch (e) {
-      console.error(e);
+    const success = await handleAddKeyword(trimmed);
+    if (!success) {
       setKeywordInput(trimmed);
-    } finally {
-      keywordSubmittingRef.current = false;
     }
-  };
-
-  const handleRemoveKeyword = async (keywordId: number) => {
-    if (!feedback) return;
-    const previousFeedback = feedback;
-    setFeedback(prev =>
-      prev ? { ...prev, keywords: prev.keywords.filter(k => k.id !== keywordId) } : null
-    );
-    try {
-      await removeKeyword(feedback.id, keywordId);
-      setFeedback(await fetchLatestFeedback(student.id));
-    } catch (e) {
-      console.error(e);
-      setFeedback(previousFeedback);
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!feedback || feedback.keywords.length === 0 || aiGenerating) return;
-    setAiGenerating(true);
-    try {
-      const updated = await generateAiContent(feedback.id);
-      setFeedback(updated);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setAiGenerating(false);
-    }
-  };
-
-  const handleCopy = async () => {
-    if (!feedback?.aiContent) return;
-    await navigator.clipboard.writeText(feedback.aiContent);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const formatDate = (iso: string) =>
@@ -174,7 +120,8 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
           </svg>
         </div>
       )}
-      {/* Avatar */}
+
+      {/* Avatar + Name */}
       <div className="flex items-center gap-3">
         <div
           className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold shrink-0 ${avatarColor}`}
@@ -186,7 +133,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
             {editing ? (
               <input
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={event => setName(event.target.value)}
                 className="flex-1 min-w-0 text-lg font-semibold text-gray-800 bg-purple-50 rounded-xl px-3 py-1 outline-none focus:ring-2 focus:ring-purple-300"
                 placeholder="이름"
                 autoFocus
@@ -225,12 +172,17 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
         </div>
       </div>
 
+      {/* Edit / Delete Error */}
+      {editErrorMessage && (
+        <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{editErrorMessage}</p>
+      )}
+
       {/* Memo */}
       <div className={editing ? 'flex-1 flex flex-col' : ''}>
         {editing ? (
           <textarea
             value={memo}
-            onChange={e => setMemo(e.target.value)}
+            onChange={event => setMemo(event.target.value)}
             className="flex-1 w-full text-sm text-gray-600 bg-purple-50 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-purple-300 resize-none"
             placeholder="메모를 입력하세요 (선택)"
             maxLength={500}
@@ -244,53 +196,20 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
 
       {/* Keywords */}
       {!editing && (
-        <div className="flex-1 flex flex-col gap-2">
-          <p className="text-xs font-semibold text-gray-400 tracking-wide">수업 키워드</p>
-          {feedback && feedback.keywords.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {feedback.keywords.map(k => (
-                <span
-                  key={k.id}
-                  className="inline-flex items-center gap-1 bg-pink-50 text-pink-500 text-xs font-medium px-2.5 py-1 rounded-full"
-                >
-                  {k.keyword}
-                  <button
-                    onClick={() => handleRemoveKeyword(k.id)}
-                    className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-pink-200 transition-colors text-sm leading-none"
-                    aria-label={`${k.keyword} 삭제`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-          <input
-            ref={keywordInputRef}
-            value={keywordInput}
-            onChange={e => setKeywordInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-                handleAddKeyword();
-              } else if (keywordInput === '' && e.key === 'ArrowLeft') {
-                e.preventDefault();
-                onNavigate?.('prev');
-              } else if (keywordInput === '' && e.key === 'ArrowRight') {
-                e.preventDefault();
-                onNavigate?.('next');
-              } else if (keywordInput === '' && e.key === 'ArrowUp') {
-                e.preventDefault();
-                onNavigate?.('up');
-              } else if (keywordInput === '' && e.key === 'ArrowDown') {
-                e.preventDefault();
-                onNavigate?.('down');
-              }
-            }}
-            className="mt-auto w-full text-sm bg-pink-50 text-gray-700 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-pink-200 placeholder:text-gray-300 transition-colors"
-            placeholder="키워드 입력 후 Enter ↵"
-            maxLength={100}
-          />
-        </div>
+        <KeywordsSection
+          keywords={feedback?.keywords ?? []}
+          keywordInput={keywordInput}
+          onKeywordInputChange={setKeywordInput}
+          onAddKeyword={handleAddKeywordWithInput}
+          onRemoveKeyword={handleRemoveKeyword}
+          onNavigate={onNavigate}
+          inputRef={keywordInputRef}
+        />
+      )}
+
+      {/* Feedback Error */}
+      {feedbackErrorMessage && !editing && (
+        <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{feedbackErrorMessage}</p>
       )}
 
       {/* Actions */}
@@ -298,10 +217,10 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
         <div className="mt-auto flex gap-2">
           <button
             onClick={handleSave}
-            disabled={loading || !name.trim()}
+            disabled={saving || !name.trim()}
             className="flex-1 bg-purple-400 hover:bg-purple-500 disabled:bg-purple-200 text-white text-sm font-medium py-2 rounded-2xl transition-colors duration-150"
           >
-            {loading ? '저장 중...' : '저장'}
+            {saving ? '저장 중...' : '저장'}
           </button>
           <button
             onClick={handleCancel}
@@ -311,42 +230,11 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {feedback?.aiContent && (
-            <div className="relative bg-indigo-50 rounded-2xl p-3">
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap pr-8">
-                {feedback.aiContent}
-              </p>
-              <button
-                onClick={handleCopy}
-                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-xl bg-white hover:bg-indigo-100 text-indigo-400 transition-colors duration-150"
-                aria-label="복사"
-              >
-                {copied ? (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          )}
-          <button
-            onClick={handleGenerate}
-            disabled={aiGenerating || !feedback || feedback.keywords.length === 0}
-            className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 disabled:opacity-50 text-indigo-500 text-sm font-medium py-2.5 rounded-2xl transition-colors duration-150 flex items-center justify-center gap-2"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              <path d="M9 9h.01M12 9h.01M15 9h.01" strokeWidth="2.5" />
-            </svg>
-            {aiGenerating ? '생성 중...' : feedback?.aiContent ? '다시 생성' : 'AI 학부모 문자 생성'}
-          </button>
-        </div>
+        <AiFeedbackSection
+          feedback={feedback}
+          aiGenerating={aiGenerating}
+          onGenerate={handleGenerate}
+        />
       )}
     </div>
   );

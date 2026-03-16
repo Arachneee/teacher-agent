@@ -12,16 +12,18 @@ export default function AddStudentModal({ onAdd, onClose }: Props) {
   const [name, setName] = useState('');
   const [memo, setMemo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!name.trim()) return;
     setLoading(true);
+    setErrorMessage(null);
     try {
       const student = await createStudent(name.trim(), memo.trim());
       onAdd(student);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      setErrorMessage('학생을 추가하지 못했어요. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -30,7 +32,7 @@ export default function AddStudentModal({ onAdd, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={e => e.target === e.currentTarget && onClose()}
+      onClick={event => event.target === event.currentTarget && onClose()}
     >
       <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
         <div className="text-center mb-6">
@@ -46,7 +48,7 @@ export default function AddStudentModal({ onAdd, onClose }: Props) {
             </label>
             <input
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={event => setName(event.target.value)}
               className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300 placeholder-gray-300"
               placeholder="학생 이름을 입력하세요"
               autoFocus
@@ -60,7 +62,7 @@ export default function AddStudentModal({ onAdd, onClose }: Props) {
             </label>
             <textarea
               value={memo}
-              onChange={e => setMemo(e.target.value)}
+              onChange={event => setMemo(event.target.value)}
               className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300 placeholder-gray-300 resize-none"
               placeholder="학생에 대한 메모를 남겨요 (선택)"
               rows={4}
@@ -68,6 +70,10 @@ export default function AddStudentModal({ onAdd, onClose }: Props) {
             />
             <p className="text-xs text-gray-300 text-right mt-1">{memo.length}/500</p>
           </div>
+
+          {errorMessage && (
+            <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{errorMessage}</p>
+          )}
 
           <div className="flex gap-3 mt-2">
             <button

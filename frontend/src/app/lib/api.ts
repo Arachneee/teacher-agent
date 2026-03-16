@@ -30,7 +30,9 @@ export interface AuthResponse {
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   const res = await fetch(url, { credentials: 'include', ...options });
   if (res.status === 401) {
-    window.location.href = '/login';
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
     throw new Error('세션이 만료됐어요. 다시 로그인해주세요.');
   }
   return res;
