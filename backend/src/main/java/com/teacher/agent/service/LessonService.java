@@ -4,6 +4,7 @@ import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
@@ -24,14 +25,14 @@ public class LessonService {
     private final TeacherRepository teacherRepository;
 
     @Transactional
-    public LessonResponse create(String username, LessonCreateRequest request) {
-        Teacher teacher = findTeacherByUsername(username);
+    public LessonResponse create(UserId userId, LessonCreateRequest request) {
+        Teacher teacher = findTeacherByUserId(userId);
         Lesson lesson = request.toEntity(teacher.getId());
         return LessonResponse.from(lessonRepository.save(lesson));
     }
 
-    public List<LessonResponse> getAllByTeacher(String username) {
-        Teacher teacher = findTeacherByUsername(username);
+    public List<LessonResponse> getAllByTeacher(UserId userId) {
+        Teacher teacher = findTeacherByUserId(userId);
         return lessonRepository.findAllByTeacherId(teacher.getId()).stream()
                 .map(LessonResponse::from)
                 .toList();
@@ -42,15 +43,15 @@ public class LessonService {
     }
 
     @Transactional
-    public LessonResponse update(String username, Long id, LessonUpdateRequest request) {
-        Lesson lesson = findByIdAndVerifyOwner(id, username);
+    public LessonResponse update(UserId userId, Long id, LessonUpdateRequest request) {
+        Lesson lesson = findByIdAndVerifyOwner(id, userId);
         lesson.update(request.title(), request.startTime(), request.endTime());
         return LessonResponse.from(lesson);
     }
 
     @Transactional
-    public void delete(String username, Long id) {
-        findByIdAndVerifyOwner(id, username);
+    public void delete(UserId userId, Long id) {
+        findByIdAndVerifyOwner(id, userId);
         lessonRepository.deleteById(id);
     }
 
@@ -59,17 +60,17 @@ public class LessonService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lesson not found: " + id));
     }
 
-    private Lesson findByIdAndVerifyOwner(Long id, String username) {
+    private Lesson findByIdAndVerifyOwner(Long id, UserId userId) {
         Lesson lesson = findById(id);
-        Teacher teacher = findTeacherByUsername(username);
+        Teacher teacher = findTeacherByUserId(userId);
         if (!lesson.getTeacherId().equals(teacher.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Lesson does not belong to this teacher");
         }
         return lesson;
     }
 
-    private Teacher findTeacherByUsername(String username) {
-        return teacherRepository.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found: " + username));
+    private Teacher findTeacherByUserId(UserId userId) {
+        return teacherRepository.findByUserId(userId.value())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found: " + userId.value()));
     }
 }
