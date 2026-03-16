@@ -3,6 +3,7 @@ package com.teacher.agent.controller;
 import com.teacher.agent.dto.FeedbackCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
+import com.teacher.agent.dto.FeedbackUpdateRequest;
 import com.teacher.agent.service.FeedbackService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -34,6 +35,13 @@ public class FeedbackController {
     @GetMapping("/{id}")
     public ResponseEntity<FeedbackResponse> getOne(@PathVariable @Positive Long id) {
         return ResponseEntity.ok(feedbackService.getOne(id));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<FeedbackResponse> update(
+            @PathVariable @Positive Long id,
+            @RequestBody @Valid FeedbackUpdateRequest request) {
+        return ResponseEntity.ok(feedbackService.update(id, request));
     }
 
     @DeleteMapping("/{id}")

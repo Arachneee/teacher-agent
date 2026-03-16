@@ -8,13 +8,17 @@ import {
   generateAiContent,
   getFeedbacks,
   removeKeyword,
+  updateFeedback,
 } from '../lib/api';
 
 export function useFeedback(studentId: number) {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isEditingAiContent, setIsEditingAiContent] = useState(false);
   const keywordSubmittingRef = useRef(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedbackIdRef = useRef<number | null>(null);
 
   const loadLatestFeedback = useCallback(async (): Promise<Feedback | null> => {
     const feedbacks = await getFeedbacks(studentId);
@@ -22,8 +26,40 @@ export function useFeedback(studentId: number) {
   }, [studentId]);
 
   useEffect(() => {
-    loadLatestFeedback().then(setFeedback).catch(console.error);
+    loadLatestFeedback().then((loaded) => {
+      setFeedback(loaded);
+      feedbackIdRef.current = loaded?.id ?? null;
+    }).catch(console.error);
   }, [loadLatestFeedback]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleUpdateAiContent = (content: string) => {
+    setFeedback(prev => prev ? { ...prev, aiContent: content || null } : null);
+    setIsEditingAiContent(true);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      const feedbackId = feedbackIdRef.current;
+      if (feedbackId === null) return;
+      try {
+        await updateFeedback(feedbackId, content);
+      } catch {
+        // 조용히 실패
+      } finally {
+        setIsEditingAiContent(false);
+      }
+    }, 1000);
+  };
 
   const handleAddKeyword = async (keyword: string): Promise<boolean> => {
     if (!keyword || keywordSubmittingRef.current) return false;
@@ -36,7 +72,12 @@ export function useFeedback(studentId: number) {
         feedbackId = created.id;
       }
       await addKeyword(feedbackId, keyword);
-      setFeedback(await loadLatestFeedback());
+      const loaded = await loadLatestFeedback();
+      const mergedFeedback = loaded && debounceTimerRef.current !== null
+        ? { ...loaded, aiContent: feedback?.aiContent ?? loaded.aiContent }
+        : loaded;
+      setFeedback(mergedFeedback);
+      feedbackIdRef.current = mergedFeedback?.id ?? null;
       return true;
     } catch (error) {
       setErrorMessage('키워드를 추가하지 못했어요');
@@ -76,5 +117,5 @@ export function useFeedback(studentId: number) {
     }
   };
 
-  return { feedback, aiGenerating, errorMessage, handleAddKeyword, handleRemoveKeyword, handleGenerate };
+  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleRemoveKeyword, handleGenerate, handleUpdateAiContent };
 }

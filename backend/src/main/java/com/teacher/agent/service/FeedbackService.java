@@ -7,6 +7,7 @@ import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.dto.FeedbackCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
+import com.teacher.agent.dto.FeedbackUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,17 @@ public class FeedbackService {
 
     public FeedbackResponse getOne(Long id) {
         return FeedbackResponse.withKeywords(findById(id));
+    }
+
+    @Transactional
+    public FeedbackResponse update(Long feedbackId, FeedbackUpdateRequest request) {
+        Feedback feedback = findById(feedbackId);
+        if (request.aiContent() == null || request.aiContent().isBlank()) {
+            feedback.clearAiContent();
+        } else {
+            feedback.updateAiContent(request.aiContent());
+        }
+        return FeedbackResponse.withKeywords(feedback);
     }
 
     @Transactional

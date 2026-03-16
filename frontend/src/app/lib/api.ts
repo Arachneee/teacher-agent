@@ -135,6 +135,16 @@ export async function removeKeyword(feedbackId: number, keywordId: number): Prom
   if (!res.ok) throw new Error('키워드를 삭제하지 못했어요');
 }
 
+export async function updateFeedback(feedbackId: number, aiContent: string | null): Promise<Feedback> {
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ aiContent }),
+  });
+  if (!res.ok) throw new Error('피드백을 수정하지 못했어요');
+  return res.json();
+}
+
 export async function generateAiContent(feedbackId: number): Promise<Feedback> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/generate`, {
     method: 'POST',

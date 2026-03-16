@@ -46,6 +46,10 @@ public class Feedback extends BaseEntity {
         this.aiContent = checkNotBlank(aiContent, AI_CONTENT);
     }
 
+    public void clearAiContent() {
+        this.aiContent = null;
+    }
+
     public void removeKeyword(Long keywordId) {
         boolean removed = keywords.removeIf(feedbackKeyword -> feedbackKeyword.getId().equals(keywordId));
         if (!removed) {
