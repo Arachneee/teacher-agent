@@ -14,4 +14,8 @@ public class Parameter {
     public static final String AI_CONTENT = "aiContent";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
+    public static final String TEACHER_ID = "teacherId";
+    public static final String TITLE = "title";
+    public static final String START_TIME = "startTime";
+    public static final String END_TIME = "endTime";
 }
