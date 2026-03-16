@@ -38,8 +38,8 @@ public class LessonService {
                 .toList();
     }
 
-    public LessonResponse getOne(Long id) {
-        return LessonResponse.from(findById(id));
+    public LessonResponse getOne(UserId userId, Long id) {
+        return LessonResponse.from(findByIdAndVerifyOwner(id, userId));
     }
 
     @Transactional

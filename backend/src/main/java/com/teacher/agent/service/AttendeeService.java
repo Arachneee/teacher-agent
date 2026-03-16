@@ -41,8 +41,8 @@ public class AttendeeService {
         return AttendeeResponse.from(attendees.get(attendees.size() - 1));
     }
 
-    public List<AttendeeResponse> getAll(Long lessonId) {
-        Lesson lesson = findLessonById(lessonId);
+    public List<AttendeeResponse> getAll(UserId userId, Long lessonId) {
+        Lesson lesson = findLessonByIdAndVerifyOwner(lessonId, userId);
         return lesson.getAttendees().stream()
                 .map(AttendeeResponse::from)
                 .toList();

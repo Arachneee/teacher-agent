@@ -94,7 +94,7 @@ class LessonServiceTest {
         LessonResponse created = lessonService.create(teacher.getUserId(),
                 new LessonCreateRequest("수학", START, END));
 
-        LessonResponse found = lessonService.getOne(created.id());
+        LessonResponse found = lessonService.getOne(teacher.getUserId(), created.id());
 
         assertThat(found.id()).isEqualTo(created.id());
         assertThat(found.title()).isEqualTo("수학");
@@ -102,7 +102,7 @@ class LessonServiceTest {
 
     @Test
     void 존재하지_않는_수업_조회_시_예외가_발생한다() {
-        assertThatThrownBy(() -> lessonService.getOne(999L))
+        assertThatThrownBy(() -> lessonService.getOne(teacher.getUserId(), 999L))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
@@ -136,7 +136,7 @@ class LessonServiceTest {
 
         lessonService.delete(teacher.getUserId(), created.id());
 
-        assertThatThrownBy(() -> lessonService.getOne(created.id()))
+        assertThatThrownBy(() -> lessonService.getOne(teacher.getUserId(), created.id()))
                 .isInstanceOf(ResponseStatusException.class);
     }
 

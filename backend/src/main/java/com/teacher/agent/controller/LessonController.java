@@ -34,8 +34,8 @@ public class LessonController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<LessonResponse> getOne(@PathVariable @Positive Long id) {
-        return ResponseEntity.ok(lessonService.getOne(id));
+    public ResponseEntity<LessonResponse> getOne(UserId userId, @PathVariable @Positive Long id) {
+        return ResponseEntity.ok(lessonService.getOne(userId, id));
     }
 
     @PutMapping("/{id}")

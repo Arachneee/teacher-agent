@@ -29,8 +29,8 @@ public class AttendeeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AttendeeResponse>> getAll(@PathVariable @Positive Long lessonId) {
-        return ResponseEntity.ok(attendeeService.getAll(lessonId));
+    public ResponseEntity<List<AttendeeResponse>> getAll(UserId userId, @PathVariable @Positive Long lessonId) {
+        return ResponseEntity.ok(attendeeService.getAll(userId, lessonId));
     }
 
     @DeleteMapping("/{attendeeId}")

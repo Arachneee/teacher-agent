@@ -134,7 +134,7 @@ class AttendeeServiceTest {
         attendeeService.add(userId, lesson.getId(), new AttendeeCreateRequest(student.getId()));
         attendeeService.add(userId, lesson.getId(), new AttendeeCreateRequest(anotherStudent.getId()));
 
-        List<AttendeeResponse> attendees = attendeeService.getAll(lesson.getId());
+        List<AttendeeResponse> attendees = attendeeService.getAll(userId, lesson.getId());
 
         assertThat(attendees).hasSize(2);
     }
@@ -147,7 +147,7 @@ class AttendeeServiceTest {
         attendeeService.add(userId, lesson1.getId(), new AttendeeCreateRequest(student.getId()));
         attendeeService.add(userId, lesson2.getId(), new AttendeeCreateRequest(anotherStudent.getId()));
 
-        List<AttendeeResponse> attendees = attendeeService.getAll(lesson1.getId());
+        List<AttendeeResponse> attendees = attendeeService.getAll(userId, lesson1.getId());
 
         assertThat(attendees).hasSize(1);
         assertThat(attendees.get(0).studentId()).isEqualTo(student.getId());
@@ -161,7 +161,7 @@ class AttendeeServiceTest {
 
         attendeeService.remove(userId, lesson.getId(), added.id());
 
-        List<AttendeeResponse> attendees = attendeeService.getAll(lesson.getId());
+        List<AttendeeResponse> attendees = attendeeService.getAll(userId, lesson.getId());
         assertThat(attendees).isEmpty();
     }
 
