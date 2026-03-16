@@ -5,9 +5,4 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
-public record LessonUpdateRequest(
-        @NotBlank String title,
-        @NotNull LocalDateTime startTime,
-        @NotNull LocalDateTime endTime
-) {
-}
+public record LessonUpdateRequest(@NotBlank String title,@NotNull LocalDateTime startTime,@NotNull LocalDateTime endTime){}

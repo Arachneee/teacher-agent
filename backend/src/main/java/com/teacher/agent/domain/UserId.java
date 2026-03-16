@@ -1,4 +1,3 @@
 package com.teacher.agent.domain;
 
-public record UserId(String value) {
-}
+public record UserId(String value){}

@@ -20,35 +20,33 @@ import java.util.List;
 @Validated
 public class LessonController {
 
-    private final LessonService lessonService;
+  private final LessonService lessonService;
 
-    @PostMapping
-    public ResponseEntity<LessonResponse> create(UserId userId,
-                                                  @RequestBody @Valid LessonCreateRequest request) {
-        return ResponseEntity.status(201).body(lessonService.create(userId, request));
-    }
+  @PostMapping
+  public ResponseEntity<LessonResponse> create(UserId userId,
+      @RequestBody @Valid LessonCreateRequest request) {
+    return ResponseEntity.status(201).body(lessonService.create(userId, request));
+  }
 
-    @GetMapping
-    public ResponseEntity<List<LessonResponse>> getAll(UserId userId) {
-        return ResponseEntity.ok(lessonService.getAllByTeacher(userId));
-    }
+  @GetMapping
+  public ResponseEntity<List<LessonResponse>> getAll(UserId userId) {
+    return ResponseEntity.ok(lessonService.getAllByTeacher(userId));
+  }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<LessonResponse> getOne(UserId userId, @PathVariable @Positive Long id) {
-        return ResponseEntity.ok(lessonService.getOne(userId, id));
-    }
+  @GetMapping("/{id}")
+  public ResponseEntity<LessonResponse> getOne(UserId userId, @PathVariable @Positive Long id) {
+    return ResponseEntity.ok(lessonService.getOne(userId, id));
+  }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<LessonResponse> update(UserId userId,
-                                                  @PathVariable @Positive Long id,
-                                                  @RequestBody @Valid LessonUpdateRequest request) {
-        return ResponseEntity.ok(lessonService.update(userId, id, request));
-    }
+  @PutMapping("/{id}")
+  public ResponseEntity<LessonResponse> update(UserId userId, @PathVariable @Positive Long id,
+      @RequestBody @Valid LessonUpdateRequest request) {
+    return ResponseEntity.ok(lessonService.update(userId, id, request));
+  }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(UserId userId,
-                                        @PathVariable @Positive Long id) {
-        lessonService.delete(userId, id);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(UserId userId, @PathVariable @Positive Long id) {
+    lessonService.delete(userId, id);
+    return ResponseEntity.noContent().build();
+  }
 }

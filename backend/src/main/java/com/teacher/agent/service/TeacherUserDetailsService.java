@@ -13,16 +13,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TeacherUserDetailsService implements UserDetailsService {
 
-    private final TeacherRepository teacherRepository;
+  private final TeacherRepository teacherRepository;
 
-    @Override
-    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        return teacherRepository.findByUserId(new UserId(userId))
-                .map(teacher -> User.builder()
-                        .username(teacher.getUserId().value())
-                        .password(teacher.getPassword())
-                        .roles("TEACHER")
-                        .build())
-                .orElseThrow(() -> new UsernameNotFoundException("Teacher not found: " + userId));
-    }
+  @Override
+  public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+    return teacherRepository.findByUserId(new UserId(userId))
+        .map(teacher -> User.builder().username(teacher.getUserId().value())
+            .password(teacher.getPassword()).roles("TEACHER").build())
+        .orElseThrow(() -> new UsernameNotFoundException("Teacher not found: " + userId));
+  }
 }

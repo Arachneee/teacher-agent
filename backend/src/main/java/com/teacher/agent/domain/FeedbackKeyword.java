@@ -12,21 +12,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FeedbackKeyword extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(nullable = false)
-    private Feedback feedback;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(nullable = false)
+  private Feedback feedback;
 
-    @Column(nullable = false)
-    private String keyword;
+  @Column(nullable = false)
+  private String keyword;
 
-    public static FeedbackKeyword create(Feedback feedback, String keyword) {
-        FeedbackKeyword feedbackKeyword = new FeedbackKeyword();
-        feedbackKeyword.feedback = checkNotNull(feedback, "feedback");
-        feedbackKeyword.keyword = checkNotBlank(checkMaxLength(keyword, 100, KEYWORD), KEYWORD);
-        return feedbackKeyword;
-    }
+  public static FeedbackKeyword create(Feedback feedback, String keyword) {
+    FeedbackKeyword feedbackKeyword = new FeedbackKeyword();
+    feedbackKeyword.feedback = checkNotNull(feedback, "feedback");
+    feedbackKeyword.keyword = checkNotBlank(checkMaxLength(keyword, 100, KEYWORD), KEYWORD);
+    return feedbackKeyword;
+  }
 }

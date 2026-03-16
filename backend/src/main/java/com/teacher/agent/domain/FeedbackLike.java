@@ -14,25 +14,26 @@ import static com.teacher.agent.util.ValidationUtil.*;
 @Table(indexes = @Index(name = "idx_feedback_like_feedback_id_id", columnList = "feedback_id, id"))
 public class FeedbackLike extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(nullable = false)
-    private Feedback feedback;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(nullable = false)
+  private Feedback feedback;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String aiContentSnapshot;
+  @Column(columnDefinition = "TEXT", nullable = false)
+  private String aiContentSnapshot;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String keywordsSnapshot;
+  @Column(columnDefinition = "TEXT", nullable = false)
+  private String keywordsSnapshot;
 
-    public static FeedbackLike create(Feedback feedback, String aiContentSnapshot, String keywordsSnapshot) {
-        FeedbackLike feedbackLike = new FeedbackLike();
-        feedbackLike.feedback = checkNotNull(feedback, "feedback");
-        feedbackLike.aiContentSnapshot = checkNotBlank(aiContentSnapshot, AI_CONTENT_SNAPSHOT);
-        feedbackLike.keywordsSnapshot = checkNotNull(keywordsSnapshot, KEYWORDS_SNAPSHOT);
-        return feedbackLike;
-    }
+  public static FeedbackLike create(Feedback feedback, String aiContentSnapshot,
+      String keywordsSnapshot) {
+    FeedbackLike feedbackLike = new FeedbackLike();
+    feedbackLike.feedback = checkNotNull(feedback, "feedback");
+    feedbackLike.aiContentSnapshot = checkNotBlank(aiContentSnapshot, AI_CONTENT_SNAPSHOT);
+    feedbackLike.keywordsSnapshot = checkNotNull(keywordsSnapshot, KEYWORDS_SNAPSHOT);
+    return feedbackLike;
+  }
 }

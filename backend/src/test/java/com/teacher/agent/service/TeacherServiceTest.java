@@ -21,66 +21,66 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Import(TeacherService.class)
 class TeacherServiceTest {
 
-    @Autowired
-    private TeacherService teacherService;
+  @Autowired
+  private TeacherService teacherService;
 
-    @Autowired
-    private TeacherRepository teacherRepository;
+  @Autowired
+  private TeacherRepository teacherRepository;
 
-    @AfterEach
-    void tearDown() {
-        teacherRepository.deleteAllInBatch();
-    }
+  @AfterEach
+  void tearDown() {
+    teacherRepository.deleteAllInBatch();
+  }
 
-    private Teacher createTeacher(String userId, String name, String subject) {
-        return teacherRepository.save(Teacher.create(userId, "encodedPassword", name, subject));
-    }
+  private Teacher createTeacher(String userId, String name, String subject) {
+    return teacherRepository.save(Teacher.create(userId, "encodedPassword", name, subject));
+  }
 
-    @Test
-    void 사용자_아이디로_교사를_조회한다() {
-        createTeacher("teacher1", "김선생", "수학");
+  @Test
+  void 사용자_아이디로_교사를_조회한다() {
+    createTeacher("teacher1", "김선생", "수학");
 
-        TeacherResponse response = teacherService.getByUserId("teacher1");
+    TeacherResponse response = teacherService.getByUserId("teacher1");
 
-        assertThat(response.id()).isNotNull();
-        assertThat(response.userId()).isEqualTo("teacher1");
-        assertThat(response.name()).isEqualTo("김선생");
-        assertThat(response.subject()).isEqualTo("수학");
-        assertThat(response.createdAt()).isNotNull();
-        assertThat(response.updatedAt()).isNotNull();
-    }
+    assertThat(response.id()).isNotNull();
+    assertThat(response.userId()).isEqualTo("teacher1");
+    assertThat(response.name()).isEqualTo("김선생");
+    assertThat(response.subject()).isEqualTo("수학");
+    assertThat(response.createdAt()).isNotNull();
+    assertThat(response.updatedAt()).isNotNull();
+  }
 
-    @Test
-    void 존재하지_않는_사용자_아이디로_조회_시_예외가_발생한다() {
-        assertThatThrownBy(() -> teacherService.getByUserId("nonexistent"))
-                .isInstanceOf(ResponseStatusException.class);
-    }
+  @Test
+  void 존재하지_않는_사용자_아이디로_조회_시_예외가_발생한다() {
+    assertThatThrownBy(() -> teacherService.getByUserId("nonexistent"))
+        .isInstanceOf(ResponseStatusException.class);
+  }
 
-    @Test
-    void 교사_프로필을_수정한다() {
-        createTeacher("teacher1", "김선생", "수학");
+  @Test
+  void 교사_프로필을_수정한다() {
+    createTeacher("teacher1", "김선생", "수학");
 
-        TeacherResponse response = teacherService.updateByUserId(
-                "teacher1", new TeacherUpdateRequest("박선생", "영어"));
+    TeacherResponse response =
+        teacherService.updateByUserId("teacher1", new TeacherUpdateRequest("박선생", "영어"));
 
-        assertThat(response.name()).isEqualTo("박선생");
-        assertThat(response.subject()).isEqualTo("영어");
-    }
+    assertThat(response.name()).isEqualTo("박선생");
+    assertThat(response.subject()).isEqualTo("영어");
+  }
 
-    @Test
-    void 교사_프로필_수정_시_과목을_null로_변경할_수_있다() {
-        createTeacher("teacher1", "김선생", "수학");
+  @Test
+  void 교사_프로필_수정_시_과목을_null로_변경할_수_있다() {
+    createTeacher("teacher1", "김선생", "수학");
 
-        TeacherResponse response = teacherService.updateByUserId(
-                "teacher1", new TeacherUpdateRequest("김선생", null));
+    TeacherResponse response =
+        teacherService.updateByUserId("teacher1", new TeacherUpdateRequest("김선생", null));
 
-        assertThat(response.subject()).isNull();
-    }
+    assertThat(response.subject()).isNull();
+  }
 
-    @Test
-    void 존재하지_않는_교사의_프로필_수정_시_예외가_발생한다() {
-        assertThatThrownBy(() -> teacherService.updateByUserId(
-                "nonexistent", new TeacherUpdateRequest("박선생", "영어")))
-                .isInstanceOf(ResponseStatusException.class);
-    }
+  @Test
+  void 존재하지_않는_교사의_프로필_수정_시_예외가_발생한다() {
+    assertThatThrownBy(
+        () -> teacherService.updateByUserId("nonexistent", new TeacherUpdateRequest("박선생", "영어")))
+        .isInstanceOf(ResponseStatusException.class);
+  }
 }

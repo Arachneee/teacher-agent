@@ -1,0 +1,15 @@
+#!/bin/sh
+# Run Spotless check before commit (backend Java files only)
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Check if any Java files are staged
+if git diff --cached --name-only | grep -q '^backend/.*\.java$'; then
+  echo "Running Spotless check..."
+  cd "$REPO_ROOT/backend" && ./gradlew spotlessCheck --quiet
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "Spotless check failed. Run './gradlew spotlessApply' in backend/ to auto-fix."
+    exit 1
+  fi
+fi

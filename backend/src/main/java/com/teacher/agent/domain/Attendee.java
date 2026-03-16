@@ -14,27 +14,25 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(uniqueConstraints = @UniqueConstraint(
-        name = "uk_attendee_lesson_student",
-        columnNames = {"lesson_id", "student_id"}
-))
+@Table(uniqueConstraints = @UniqueConstraint(name = "uk_attendee_lesson_student",
+    columnNames = {"lesson_id", "student_id"}))
 public class Attendee extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(nullable = false)
-    private Lesson lesson;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(nullable = false)
+  private Lesson lesson;
 
-    @Column(nullable = false)
-    private Long studentId;
+  @Column(nullable = false)
+  private Long studentId;
 
-    public static Attendee create(Lesson lesson, Long studentId) {
-        Attendee attendee = new Attendee();
-        attendee.lesson = checkNotNull(lesson, LESSON_ID);
-        attendee.studentId = checkPositive(studentId, STUDENT_ID);
-        return attendee;
-    }
+  public static Attendee create(Lesson lesson, Long studentId) {
+    Attendee attendee = new Attendee();
+    attendee.lesson = checkNotNull(lesson, LESSON_ID);
+    attendee.studentId = checkPositive(studentId, STUDENT_ID);
+    return attendee;
+  }
 }

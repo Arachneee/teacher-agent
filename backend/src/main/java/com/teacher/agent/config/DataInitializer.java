@@ -14,29 +14,27 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private final TeacherRepository teacherRepository;
-    private final PasswordEncoder passwordEncoder;
+  private final TeacherRepository teacherRepository;
+  private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.initial-teacher.user-id}")
-    private String initialUserId;
+  @Value("${app.initial-teacher.user-id}")
+  private String initialUserId;
 
-    @Value("${app.initial-teacher.password}")
-    private String initialPassword;
+  @Value("${app.initial-teacher.password}")
+  private String initialPassword;
 
-    @Value("${app.initial-teacher.name}")
-    private String initialName;
+  @Value("${app.initial-teacher.name}")
+  private String initialName;
 
-    @Value("${app.initial-teacher.subject:}")
-    private String initialSubject;
+  @Value("${app.initial-teacher.subject:}")
+  private String initialSubject;
 
-    @Override
-    @Transactional
-    public void run(String... args) {
-        String encodedPassword = passwordEncoder.encode(initialPassword);
-        teacherRepository.findByUserId(new UserId(initialUserId))
-                .ifPresentOrElse(
-                        teacher -> teacher.updatePassword(encodedPassword),
-                        () -> teacherRepository.save(Teacher.create(initialUserId, encodedPassword, initialName, initialSubject))
-                );
-    }
+  @Override
+  @Transactional
+  public void run(String... args) {
+    String encodedPassword = passwordEncoder.encode(initialPassword);
+    teacherRepository.findByUserId(new UserId(initialUserId))
+        .ifPresentOrElse(teacher -> teacher.updatePassword(encodedPassword), () -> teacherRepository
+            .save(Teacher.create(initialUserId, encodedPassword, initialName, initialSubject)));
+  }
 }

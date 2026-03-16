@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "4.0.3"
     id("io.spring.dependency-management") version "1.1.7"
+    id("com.diffplug.spotless") version "7.0.3"
 }
 
 group = "com.teacher"
@@ -42,6 +43,13 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom("org.springframework.ai:spring-ai-bom:${property("springAiVersion")}")
+    }
+}
+
+spotless {
+    java {
+        eclipse().configFile("config/eclipse-java-google-style.xml")
+        target("src/**/*.java")
     }
 }
 
