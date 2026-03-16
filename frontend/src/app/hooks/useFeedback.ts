@@ -110,8 +110,8 @@ export function useFeedback(studentId: number) {
     setAiGenerating(true);
     setErrorMessage(null);
     try {
-      const updated = await generateAiContent(feedback.id);
-      setFeedback(updated);
+      await generateAiContent(feedback.id);
+      setFeedback(await loadLatestFeedback());
     } catch (error) {
       setErrorMessage('AI 문자를 생성하지 못했어요');
     } finally {
@@ -122,11 +122,13 @@ export function useFeedback(studentId: number) {
   const handleLike = async () => {
     if (!feedback || feedback.liked) return;
     try {
-      const updated = await likeFeedback(feedback.id);
-      const mergedFeedback = debounceTimerRef.current !== null
-        ? { ...updated, aiContent: feedback?.aiContent ?? updated.aiContent }
-        : updated;
+      await likeFeedback(feedback.id);
+      const loaded = await loadLatestFeedback();
+      const mergedFeedback = loaded && debounceTimerRef.current !== null
+        ? { ...loaded, aiContent: feedback?.aiContent ?? loaded.aiContent }
+        : loaded;
       setFeedback(mergedFeedback);
+      feedbackIdRef.current = mergedFeedback?.id ?? null;
     } catch {
       setErrorMessage('좋아요 처리에 실패했어요');
     }

@@ -23,7 +23,7 @@ const AVATAR_COLORS = [
 
 interface Props {
   student: Student;
-  onUpdate: (student: Student) => void;
+  onUpdate: () => void;
   onDelete: (id: number) => void;
   onNavigate?: (direction: 'prev' | 'next' | 'up' | 'down') => void;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
@@ -64,8 +64,8 @@ const StudentCard = forwardRef<StudentCardHandle, Props>(function StudentCard(
     setSaving(true);
     setEditErrorMessage(null);
     try {
-      const updated = await updateStudent(student.id, name.trim(), memo.trim());
-      onUpdate(updated);
+      await updateStudent(student.id, name.trim(), memo.trim());
+      onUpdate();
       setEditing(false);
     } catch (error) {
       setEditErrorMessage('학생 정보를 저장하지 못했어요');

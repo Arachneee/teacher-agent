@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Student, createStudent } from '../lib/api';
+import { createStudent } from '../lib/api';
 
 interface Props {
-  onAdd: (student: Student) => void;
+  onAdd: () => void;
   onClose: () => void;
 }
 
@@ -20,8 +20,8 @@ export default function AddStudentModal({ onAdd, onClose }: Props) {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const student = await createStudent(name.trim(), memo.trim());
-      onAdd(student);
+      await createStudent(name.trim(), memo.trim());
+      onAdd();
     } catch (error) {
       setErrorMessage('학생을 추가하지 못했어요. 다시 시도해주세요.');
     } finally {

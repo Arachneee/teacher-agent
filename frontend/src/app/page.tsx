@@ -28,7 +28,7 @@ interface SortableStudentCardProps {
   student: Student;
   index: number;
   cardRefs: React.MutableRefObject<(StudentCardHandle | null)[]>;
-  onUpdate: (student: Student) => void;
+  onUpdate: () => void;
   onDelete: (id: number) => void;
   onNavigate: (direction: 'prev' | 'next' | 'up' | 'down') => void;
 }
@@ -141,14 +141,17 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, [initializeGridSlots]);
 
-  const handleAdd = (student: Student) => {
-    setStudents(prev => [...prev, student]);
-    addStudentToGrid(student.id);
+  const handleAdd = async () => {
+    const data = await getStudents();
+    const newStudents = data.filter(student => !students.some(existing => existing.id === student.id));
+    newStudents.forEach(student => addStudentToGrid(student.id));
+    setStudents(data);
     setShowModal(false);
   };
 
-  const handleUpdate = (updated: Student) => {
-    setStudents(prev => prev.map(student => (student.id === updated.id ? updated : student)));
+  const handleUpdate = async () => {
+    const data = await getStudents();
+    setStudents(data);
   };
 
   const handleDelete = (id: number) => {
