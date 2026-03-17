@@ -49,6 +49,8 @@ dependencyManagement {
 spotless {
     java {
         eclipse().configFile("config/eclipse-java-google-style.xml")
+        removeUnusedImports()
+        importOrder("\\#", "")
         target("src/**/*.java")
     }
 }

@@ -1,3 +1,4 @@
 package com.teacher.agent.dto;
 
-public record FeedbackUpdateRequest(String aiContent){}
+public record FeedbackUpdateRequest(String aiContent) {
+}

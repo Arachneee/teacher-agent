@@ -1,5 +1,7 @@
 package com.teacher.agent.service;
 
+import static com.teacher.agent.util.RepositoryUtil.findByIdOrThrow;
+
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
@@ -15,8 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import static com.teacher.agent.util.RepositoryUtil.findByIdOrThrow;
 
 @Service
 @RequiredArgsConstructor

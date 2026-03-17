@@ -1,18 +1,17 @@
 package com.teacher.agent.service;
 
+import static com.teacher.agent.util.RepositoryUtil.findByIdOrThrow;
+import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrThrow;
+
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.FeedbackResponse;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
-import static com.teacher.agent.util.RepositoryUtil.findByIdOrThrow;
-import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrThrow;
 
 @Service
 @RequiredArgsConstructor

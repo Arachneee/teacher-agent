@@ -1,5 +1,7 @@
 package com.teacher.agent.service;
 
+import static com.teacher.agent.util.RepositoryUtil.findTeacherByUserIdOrThrow;
+
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
 import com.teacher.agent.domain.UserId;
@@ -9,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.teacher.agent.util.RepositoryUtil.findTeacherByUserIdOrThrow;
-
 @Service
 @RequiredArgsConstructor
 public class TeacherCommandService {
@@ -18,8 +18,8 @@ public class TeacherCommandService {
   private final TeacherRepository teacherRepository;
 
   @Transactional
-  public TeacherResponse updateByUserId(String userId, TeacherUpdateRequest request) {
-    Teacher teacher = findTeacherByUserIdOrThrow(teacherRepository, new UserId(userId));
+  public TeacherResponse updateByUserId(UserId userId, TeacherUpdateRequest request) {
+    Teacher teacher = findTeacherByUserIdOrThrow(teacherRepository, userId);
     teacher.updateProfile(request.name(), request.subject());
     return TeacherResponse.from(teacher);
   }

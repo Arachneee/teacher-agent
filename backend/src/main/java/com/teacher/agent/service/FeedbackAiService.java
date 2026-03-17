@@ -2,14 +2,13 @@ package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackKeyword;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
 
 @Service
 public class FeedbackAiService {

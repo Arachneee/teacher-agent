@@ -1,15 +1,15 @@
 package com.teacher.agent.domain;
 
-import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import static com.teacher.agent.util.Parameter.LESSON_ID;
 import static com.teacher.agent.util.Parameter.STUDENT_ID;
 import static com.teacher.agent.util.ValidationUtil.checkNotNull;
 import static com.teacher.agent.util.ValidationUtil.checkPositive;
 import static jakarta.persistence.GenerationType.IDENTITY;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter

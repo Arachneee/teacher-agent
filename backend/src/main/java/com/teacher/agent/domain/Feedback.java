@@ -1,18 +1,17 @@
 package com.teacher.agent.domain;
 
-import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.teacher.agent.util.Parameter.AI_CONTENT;
 import static com.teacher.agent.util.Parameter.LESSON_ID;
 import static com.teacher.agent.util.Parameter.STUDENT_ID;
 import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
 import static com.teacher.agent.util.ValidationUtil.checkPositive;
+
+import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter

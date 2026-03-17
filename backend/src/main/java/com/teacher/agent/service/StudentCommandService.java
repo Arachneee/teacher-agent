@@ -1,5 +1,7 @@
 package com.teacher.agent.service;
 
+import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrThrow;
+
 import com.teacher.agent.domain.Student;
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.UserId;
@@ -9,8 +11,6 @@ import com.teacher.agent.dto.StudentUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrThrow;
 
 @Service
 @RequiredArgsConstructor

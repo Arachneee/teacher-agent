@@ -1,16 +1,15 @@
 package com.teacher.agent.service;
 
+import static com.teacher.agent.util.RepositoryUtil.findLessonByIdAndUserIdOrThrow;
+
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.LessonResponse;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
-import static com.teacher.agent.util.RepositoryUtil.findLessonByIdAndUserIdOrThrow;
 
 @Service
 @RequiredArgsConstructor

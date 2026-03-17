@@ -1,8 +1,7 @@
 package com.teacher.agent.util;
 
-import lombok.experimental.UtilityClass;
-
 import java.util.Collection;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ValidationUtil {

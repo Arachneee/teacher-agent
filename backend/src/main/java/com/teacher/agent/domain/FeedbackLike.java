@@ -1,12 +1,12 @@
 package com.teacher.agent.domain;
 
+import static com.teacher.agent.util.Parameter.*;
+import static com.teacher.agent.util.ValidationUtil.*;
+
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import static com.teacher.agent.util.Parameter.*;
-import static com.teacher.agent.util.ValidationUtil.*;
 
 @Entity
 @Getter

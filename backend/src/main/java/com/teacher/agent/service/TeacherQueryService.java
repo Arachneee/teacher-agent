@@ -17,12 +17,13 @@ public class TeacherQueryService {
 
   private final TeacherRepository teacherRepository;
 
-  public TeacherResponse getByUserId(String userId) {
+  public TeacherResponse getByUserId(UserId userId) {
     return TeacherResponse.from(findByUserId(userId));
   }
 
-  Teacher findByUserId(String userId) {
-    return teacherRepository.findByUserId(new UserId(userId)).orElseThrow(
-        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found: " + userId));
+  Teacher findByUserId(UserId userId) {
+    return teacherRepository.findByUserId(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Teacher not found: " + userId.value()));
   }
 }

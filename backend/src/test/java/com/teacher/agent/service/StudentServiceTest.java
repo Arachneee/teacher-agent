@@ -1,5 +1,8 @@
 package com.teacher.agent.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
@@ -7,6 +10,7 @@ import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.StudentCreateRequest;
 import com.teacher.agent.dto.StudentResponse;
 import com.teacher.agent.dto.StudentUpdateRequest;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,11 +20,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
