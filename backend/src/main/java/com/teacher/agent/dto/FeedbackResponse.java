@@ -5,8 +5,15 @@ import com.teacher.agent.domain.FeedbackKeyword;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record FeedbackResponse(Long id, Long studentId, Long lessonId, String aiContent,
-    List<KeywordItem> keywords, boolean liked, LocalDateTime createdAt, LocalDateTime updatedAt) {
+public record FeedbackResponse(
+    Long id,
+    Long studentId,
+    Long lessonId,
+    String aiContent,
+    List<KeywordItem> keywords,
+    boolean liked,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt) {
 
   public static FeedbackResponse withKeywords(Feedback feedback, boolean liked) {
     List<KeywordItem> keywordItems =
