@@ -11,62 +11,63 @@ class LessonTest {
 
   private static final LocalDateTime START = LocalDateTime.of(2026, 3, 16, 9, 0);
   private static final LocalDateTime END = LocalDateTime.of(2026, 3, 16, 10, 0);
+  private static final UserId USER_ID = new UserId("teacher1");
 
   @Test
   void 수업을_생성한다() {
-    Lesson lesson = Lesson.create(1L, "수학 1교시", START, END);
+    Lesson lesson = Lesson.create(USER_ID, "수학 1교시", START, END);
 
-    assertThat(lesson.getTeacherId()).isEqualTo(1L);
+    assertThat(lesson.getUserId()).isEqualTo(USER_ID);
     assertThat(lesson.getTitle()).isEqualTo("수학 1교시");
     assertThat(lesson.getStartTime()).isEqualTo(START);
     assertThat(lesson.getEndTime()).isEqualTo(END);
   }
 
   @Test
-  void teacherId가_0이면_생성에_실패한다() {
-    assertThatThrownBy(() -> Lesson.create(0L, "수학", START, END))
+  void userId가_null이면_생성에_실패한다() {
+    assertThatThrownBy(() -> Lesson.create(null, "수학", START, END))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  void teacherId가_음수면_생성에_실패한다() {
-    assertThatThrownBy(() -> Lesson.create(-1L, "수학", START, END))
+  void userId_값이_빈_문자열이면_생성에_실패한다() {
+    assertThatThrownBy(() -> Lesson.create(new UserId(""), "수학", START, END))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void 제목이_null이면_생성에_실패한다() {
-    assertThatThrownBy(() -> Lesson.create(1L, null, START, END))
+    assertThatThrownBy(() -> Lesson.create(USER_ID, null, START, END))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void 제목이_빈_문자열이면_생성에_실패한다() {
-    assertThatThrownBy(() -> Lesson.create(1L, "", START, END))
+    assertThatThrownBy(() -> Lesson.create(USER_ID, "", START, END))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void 제목이_공백이면_생성에_실패한다() {
-    assertThatThrownBy(() -> Lesson.create(1L, "   ", START, END))
+    assertThatThrownBy(() -> Lesson.create(USER_ID, "   ", START, END))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void 시작시간이_null이면_생성에_실패한다() {
-    assertThatThrownBy(() -> Lesson.create(1L, "수학", null, END))
+    assertThatThrownBy(() -> Lesson.create(USER_ID, "수학", null, END))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void 종료시간이_null이면_생성에_실패한다() {
-    assertThatThrownBy(() -> Lesson.create(1L, "수학", START, null))
+    assertThatThrownBy(() -> Lesson.create(USER_ID, "수학", START, null))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void 종료시간이_시작시간보다_같으면_생성에_실패한다() {
-    assertThatThrownBy(() -> Lesson.create(1L, "수학", START, START))
+    assertThatThrownBy(() -> Lesson.create(USER_ID, "수학", START, START))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -74,13 +75,13 @@ class LessonTest {
   void 종료시간이_시작시간보다_이전이면_생성에_실패한다() {
     LocalDateTime beforeStart = START.minusHours(1);
 
-    assertThatThrownBy(() -> Lesson.create(1L, "수학", START, beforeStart))
+    assertThatThrownBy(() -> Lesson.create(USER_ID, "수학", START, beforeStart))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void 수업_정보를_수정한다() {
-    Lesson lesson = Lesson.create(1L, "수학", START, END);
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
     LocalDateTime newStart = LocalDateTime.of(2026, 3, 17, 14, 0);
     LocalDateTime newEnd = LocalDateTime.of(2026, 3, 17, 15, 0);
 
@@ -93,7 +94,7 @@ class LessonTest {
 
   @Test
   void 수정_시_제목이_빈_문자열이면_실패한다() {
-    Lesson lesson = Lesson.create(1L, "수학", START, END);
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
 
     assertThatThrownBy(() -> lesson.update("", START, END))
         .isInstanceOf(IllegalArgumentException.class);
@@ -101,7 +102,7 @@ class LessonTest {
 
   @Test
   void 수정_시_종료시간이_시작시간보다_이전이면_실패한다() {
-    Lesson lesson = Lesson.create(1L, "수학", START, END);
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
     LocalDateTime beforeStart = START.minusHours(1);
 
     assertThatThrownBy(() -> lesson.update("수학", START, beforeStart))

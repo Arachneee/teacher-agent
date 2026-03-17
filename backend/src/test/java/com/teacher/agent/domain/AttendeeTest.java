@@ -12,8 +12,10 @@ class AttendeeTest {
   private static final LocalDateTime START = LocalDateTime.of(2026, 3, 16, 9, 0);
   private static final LocalDateTime END = LocalDateTime.of(2026, 3, 16, 10, 0);
 
+  private static final UserId USER_ID = new UserId("teacher1");
+
   private Lesson createLesson() {
-    return Lesson.create(1L, "수학", START, END);
+    return Lesson.create(USER_ID, "수학", START, END);
   }
 
   @Test

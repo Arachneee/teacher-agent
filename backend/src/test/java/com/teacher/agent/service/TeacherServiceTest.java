@@ -18,11 +18,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-@Import(TeacherService.class)
+@Import({TeacherQueryService.class, TeacherCommandService.class})
 class TeacherServiceTest {
 
   @Autowired
-  private TeacherService teacherService;
+  private TeacherQueryService teacherQueryService;
+
+  @Autowired
+  private TeacherCommandService teacherCommandService;
 
   @Autowired
   private TeacherRepository teacherRepository;
@@ -40,7 +43,7 @@ class TeacherServiceTest {
   void 사용자_아이디로_교사를_조회한다() {
     createTeacher("teacher1", "김선생", "수학");
 
-    TeacherResponse response = teacherService.getByUserId("teacher1");
+    TeacherResponse response = teacherQueryService.getByUserId("teacher1");
 
     assertThat(response.id()).isNotNull();
     assertThat(response.userId()).isEqualTo("teacher1");
@@ -52,7 +55,7 @@ class TeacherServiceTest {
 
   @Test
   void 존재하지_않는_사용자_아이디로_조회_시_예외가_발생한다() {
-    assertThatThrownBy(() -> teacherService.getByUserId("nonexistent"))
+    assertThatThrownBy(() -> teacherQueryService.getByUserId("nonexistent"))
         .isInstanceOf(ResponseStatusException.class);
   }
 
@@ -61,7 +64,7 @@ class TeacherServiceTest {
     createTeacher("teacher1", "김선생", "수학");
 
     TeacherResponse response =
-        teacherService.updateByUserId("teacher1", new TeacherUpdateRequest("박선생", "영어"));
+        teacherCommandService.updateByUserId("teacher1", new TeacherUpdateRequest("박선생", "영어"));
 
     assertThat(response.name()).isEqualTo("박선생");
     assertThat(response.subject()).isEqualTo("영어");
@@ -72,15 +75,14 @@ class TeacherServiceTest {
     createTeacher("teacher1", "김선생", "수학");
 
     TeacherResponse response =
-        teacherService.updateByUserId("teacher1", new TeacherUpdateRequest("김선생", null));
+        teacherCommandService.updateByUserId("teacher1", new TeacherUpdateRequest("김선생", null));
 
     assertThat(response.subject()).isNull();
   }
 
   @Test
   void 존재하지_않는_교사의_프로필_수정_시_예외가_발생한다() {
-    assertThatThrownBy(
-        () -> teacherService.updateByUserId("nonexistent", new TeacherUpdateRequest("박선생", "영어")))
-        .isInstanceOf(ResponseStatusException.class);
+    assertThatThrownBy(() -> teacherCommandService.updateByUserId("nonexistent",
+        new TeacherUpdateRequest("박선생", "영어"))).isInstanceOf(ResponseStatusException.class);
   }
 }

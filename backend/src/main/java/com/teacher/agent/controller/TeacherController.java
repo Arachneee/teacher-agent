@@ -2,7 +2,8 @@ package com.teacher.agent.controller;
 
 import com.teacher.agent.dto.TeacherResponse;
 import com.teacher.agent.dto.TeacherUpdateRequest;
-import com.teacher.agent.service.TeacherService;
+import com.teacher.agent.service.TeacherCommandService;
+import com.teacher.agent.service.TeacherQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,16 +15,18 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class TeacherController {
 
-  private final TeacherService teacherService;
+  private final TeacherQueryService teacherQueryService;
+  private final TeacherCommandService teacherCommandService;
 
   @GetMapping("/me")
   public ResponseEntity<TeacherResponse> getMe(Authentication authentication) {
-    return ResponseEntity.ok(teacherService.getByUserId(authentication.getName()));
+    return ResponseEntity.ok(teacherQueryService.getByUserId(authentication.getName()));
   }
 
   @PutMapping("/me")
   public ResponseEntity<TeacherResponse> updateMe(Authentication authentication,
       @RequestBody @Valid TeacherUpdateRequest request) {
-    return ResponseEntity.ok(teacherService.updateByUserId(authentication.getName(), request));
+    return ResponseEntity
+        .ok(teacherCommandService.updateByUserId(authentication.getName(), request));
   }
 }

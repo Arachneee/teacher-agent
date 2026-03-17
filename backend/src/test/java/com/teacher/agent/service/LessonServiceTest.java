@@ -3,7 +3,6 @@ package com.teacher.agent.service;
 import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
@@ -25,11 +24,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-@Import(LessonService.class)
+@Import({LessonQueryService.class, LessonCommandService.class})
 class LessonServiceTest {
 
   @Autowired
-  private LessonService lessonService;
+  private LessonQueryService lessonQueryService;
+
+  @Autowired
+  private LessonCommandService lessonCommandService;
 
   @Autowired
   private LessonRepository lessonRepository;
@@ -56,11 +58,11 @@ class LessonServiceTest {
 
   @Test
   void 수업을_생성한다() {
-    LessonResponse response =
-        lessonService.create(teacher.getUserId(), new LessonCreateRequest("수학 1교시", START, END));
+    LessonResponse response = lessonCommandService.create(teacher.getUserId(),
+        new LessonCreateRequest("수학 1교시", START, END));
 
     assertThat(response.id()).isNotNull();
-    assertThat(response.teacherId()).isEqualTo(teacher.getId());
+    assertThat(response.userId()).isEqualTo(teacher.getUserId().value());
     assertThat(response.title()).isEqualTo("수학 1교시");
     assertThat(response.startTime()).isEqualTo(START);
     assertThat(response.endTime()).isEqualTo(END);
@@ -70,11 +72,11 @@ class LessonServiceTest {
 
   @Test
   void 해당_교사의_수업_목록을_조회한다() {
-    lessonService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
-    lessonService.create(teacher.getUserId(),
+    lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+    lessonCommandService.create(teacher.getUserId(),
         new LessonCreateRequest("영어", START.plusHours(2), END.plusHours(2)));
 
-    List<LessonResponse> lessons = lessonService.getAllByTeacher(teacher.getUserId());
+    List<LessonResponse> lessons = lessonQueryService.getAllByTeacher(teacher.getUserId());
 
     assertThat(lessons).hasSize(2);
   }
@@ -83,10 +85,11 @@ class LessonServiceTest {
   void 다른_교사의_수업은_조회되지_않는다() {
     Teacher otherTeacher =
         teacherRepository.save(Teacher.create("otherteacher", "encodedPassword", "다른교사", null));
-    lessonService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
-    lessonService.create(otherTeacher.getUserId(), new LessonCreateRequest("영어", START, END));
+    lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+    lessonCommandService.create(otherTeacher.getUserId(),
+        new LessonCreateRequest("영어", START, END));
 
-    List<LessonResponse> lessons = lessonService.getAllByTeacher(teacher.getUserId());
+    List<LessonResponse> lessons = lessonQueryService.getAllByTeacher(teacher.getUserId());
 
     assertThat(lessons).hasSize(1);
     assertThat(lessons.get(0).title()).isEqualTo("수학");
@@ -95,9 +98,9 @@ class LessonServiceTest {
   @Test
   void 수업을_단건_조회한다() {
     LessonResponse created =
-        lessonService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+        lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
 
-    LessonResponse found = lessonService.getOne(teacher.getUserId(), created.id());
+    LessonResponse found = lessonQueryService.getOne(teacher.getUserId(), created.id());
 
     assertThat(found.id()).isEqualTo(created.id());
     assertThat(found.title()).isEqualTo("수학");
@@ -105,18 +108,18 @@ class LessonServiceTest {
 
   @Test
   void 존재하지_않는_수업_조회_시_예외가_발생한다() {
-    assertThatThrownBy(() -> lessonService.getOne(teacher.getUserId(), 999L))
+    assertThatThrownBy(() -> lessonQueryService.getOne(teacher.getUserId(), 999L))
         .isInstanceOf(ResponseStatusException.class);
   }
 
   @Test
   void 수업_정보를_수정한다() {
     LessonResponse created =
-        lessonService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+        lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
     LocalDateTime newStart = LocalDateTime.of(2026, 3, 17, 14, 0);
     LocalDateTime newEnd = LocalDateTime.of(2026, 3, 17, 15, 0);
 
-    LessonResponse updated = lessonService.update(teacher.getUserId(), created.id(),
+    LessonResponse updated = lessonCommandService.update(teacher.getUserId(), created.id(),
         new LessonUpdateRequest("영어 2교시", newStart, newEnd));
 
     assertThat(updated.id()).isEqualTo(created.id());
@@ -127,24 +130,24 @@ class LessonServiceTest {
 
   @Test
   void 존재하지_않는_수업_수정_시_예외가_발생한다() {
-    assertThatThrownBy(() -> lessonService.update(teacher.getUserId(), 999L,
+    assertThatThrownBy(() -> lessonCommandService.update(teacher.getUserId(), 999L,
         new LessonUpdateRequest("수학", START, END))).isInstanceOf(ResponseStatusException.class);
   }
 
   @Test
   void 수업을_삭제한다() {
     LessonResponse created =
-        lessonService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+        lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
 
-    lessonService.delete(teacher.getUserId(), created.id());
+    lessonCommandService.delete(teacher.getUserId(), created.id());
 
-    assertThatThrownBy(() -> lessonService.getOne(teacher.getUserId(), created.id()))
+    assertThatThrownBy(() -> lessonQueryService.getOne(teacher.getUserId(), created.id()))
         .isInstanceOf(ResponseStatusException.class);
   }
 
   @Test
   void 존재하지_않는_수업_삭제_시_예외가_발생한다() {
-    assertThatThrownBy(() -> lessonService.delete(teacher.getUserId(), 999L))
+    assertThatThrownBy(() -> lessonCommandService.delete(teacher.getUserId(), 999L))
         .isInstanceOf(ResponseStatusException.class);
   }
 
@@ -153,9 +156,9 @@ class LessonServiceTest {
     Teacher otherTeacher =
         teacherRepository.save(Teacher.create("otherteacher2", "encodedPassword", "다른교사2", null));
     LessonResponse created =
-        lessonService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+        lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
 
-    assertThatThrownBy(() -> lessonService.update(otherTeacher.getUserId(), created.id(),
+    assertThatThrownBy(() -> lessonCommandService.update(otherTeacher.getUserId(), created.id(),
         new LessonUpdateRequest("영어", START, END))).isInstanceOf(ResponseStatusException.class);
   }
 
@@ -164,15 +167,10 @@ class LessonServiceTest {
     Teacher otherTeacher =
         teacherRepository.save(Teacher.create("otherteacher3", "encodedPassword", "다른교사3", null));
     LessonResponse created =
-        lessonService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+        lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
 
-    assertThatThrownBy(() -> lessonService.delete(otherTeacher.getUserId(), created.id()))
+    assertThatThrownBy(() -> lessonCommandService.delete(otherTeacher.getUserId(), created.id()))
         .isInstanceOf(ResponseStatusException.class);
   }
 
-  @Test
-  void 존재하지_않는_교사로_수업_생성_시_예외가_발생한다() {
-    assertThatThrownBy(() -> lessonService.create(new UserId("nonexistent"),
-        new LessonCreateRequest("수학", START, END))).isInstanceOf(ResponseStatusException.class);
-  }
 }

@@ -2,6 +2,7 @@ package com.teacher.agent.domain;
 
 import static com.teacher.agent.util.Parameter.*;
 import static com.teacher.agent.util.ValidationUtil.*;
+
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(indexes = @Index(name = "idx_student_teacher_id", columnList = "teacherId"))
+@Table(indexes = @Index(name = "idx_student_user_id", columnList = "userId"))
 public class Student extends BaseEntity {
 
   @Id
@@ -18,7 +19,7 @@ public class Student extends BaseEntity {
   private Long id;
 
   @Column(nullable = false)
-  private Long teacherId;
+  private UserId userId;
 
   @Column(nullable = false)
   private String name;
@@ -26,9 +27,10 @@ public class Student extends BaseEntity {
   @Column(columnDefinition = "TEXT")
   private String memo;
 
-  public static Student create(Long teacherId, String name, String memo) {
+  public static Student create(UserId userId, String name, String memo) {
     Student student = new Student();
-    student.teacherId = checkPositive(teacherId, TEACHER_ID);
+    checkNotNull(userId, USER_ID);
+    student.userId = new UserId(checkNotBlank(userId.value(), USER_ID));
     student.name = checkNotBlank(name, NAME);
     student.memo = checkMaxLength(memo, 500, MEMO);
     return student;
