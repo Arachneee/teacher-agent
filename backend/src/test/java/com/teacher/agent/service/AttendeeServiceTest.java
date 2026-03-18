@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
+import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.Student;
@@ -46,6 +47,9 @@ class AttendeeServiceTest {
   @Autowired
   private StudentRepository studentRepository;
 
+  @Autowired
+  private FeedbackRepository feedbackRepository;
+
   private static final LocalDateTime START = LocalDateTime.of(2026, 3, 16, 9, 0);
   private static final LocalDateTime END = LocalDateTime.of(2026, 3, 16, 10, 0);
 
@@ -63,6 +67,7 @@ class AttendeeServiceTest {
 
   @AfterEach
   void tearDown() {
+    feedbackRepository.deleteAll();
     lessonRepository.deleteAll();
     studentRepository.deleteAllInBatch();
     teacherRepository.deleteAllInBatch();

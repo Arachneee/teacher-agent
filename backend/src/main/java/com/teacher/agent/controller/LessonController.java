@@ -2,9 +2,11 @@ package com.teacher.agent.controller;
 
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.LessonCreateRequest;
+import com.teacher.agent.dto.LessonDetailResponse;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
 import com.teacher.agent.service.LessonCommandService;
+import com.teacher.agent.service.LessonDetailQueryService;
 import com.teacher.agent.service.LessonQueryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -22,6 +24,7 @@ public class LessonController {
 
   private final LessonQueryService lessonQueryService;
   private final LessonCommandService lessonCommandService;
+  private final LessonDetailQueryService lessonDetailQueryService;
 
   @PostMapping
   public ResponseEntity<LessonResponse> create(UserId userId,
@@ -37,6 +40,12 @@ public class LessonController {
   @GetMapping("/{id}")
   public ResponseEntity<LessonResponse> getOne(UserId userId, @PathVariable @Positive Long id) {
     return ResponseEntity.ok(lessonQueryService.getOne(userId, id));
+  }
+
+  @GetMapping("/{id}/detail")
+  public ResponseEntity<LessonDetailResponse> getDetail(UserId userId,
+      @PathVariable @Positive Long id) {
+    return ResponseEntity.ok(lessonDetailQueryService.getDetail(userId, id));
   }
 
   @PutMapping("/{id}")

@@ -16,12 +16,33 @@ export interface FeedbackKeyword {
 
 export interface Feedback {
   id: number;
-  studentId: number;
+  attendeeId: number;
   aiContent: string | null;
   keywords: FeedbackKeyword[];
   liked: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Lesson {
+  id: number;
+  title: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface AttendeeStudent {
+  id: number;
+  name: string;
+  memo: string;
+}
+
+export interface Attendee {
+  id: number;
+  lessonId: number;
+  student: AttendeeStudent;
+  feedback: Feedback | null;
+  createdAt: string;
 }
 
 export interface AuthResponse {
@@ -102,19 +123,79 @@ export async function deleteStudent(id: number): Promise<void> {
   if (!res.ok) throw new Error('학생을 삭제하지 못했어요');
 }
 
+// Lessons
+
+export async function getLessons(): Promise<Lesson[]> {
+  const res = await fetchWithAuth(`${BASE_URL}/lessons`);
+  if (!res.ok) throw new Error('수업 목록을 불러오지 못했어요');
+  return res.json();
+}
+
+export async function createLesson(title: string, startTime: string, endTime: string): Promise<Lesson> {
+  const res = await fetchWithAuth(`${BASE_URL}/lessons`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, startTime, endTime }),
+  });
+  if (!res.ok) throw new Error('수업을 추가하지 못했어요');
+  return res.json();
+}
+
+export async function updateLesson(id: number, title: string, startTime: string, endTime: string): Promise<Lesson> {
+  const res = await fetchWithAuth(`${BASE_URL}/lessons/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, startTime, endTime }),
+  });
+  if (!res.ok) throw new Error('수업을 수정하지 못했어요');
+  return res.json();
+}
+
+export async function deleteLesson(id: number): Promise<void> {
+  const res = await fetchWithAuth(`${BASE_URL}/lessons/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('수업을 삭제하지 못했어요');
+}
+
+// Attendees
+
+export async function getAttendees(lessonId: number): Promise<Attendee[]> {
+  const res = await fetchWithAuth(`${BASE_URL}/lessons/${lessonId}/attendees`);
+  if (!res.ok) throw new Error('수강생 목록을 불러오지 못했어요');
+  return res.json();
+}
+
+export async function addAttendee(lessonId: number, studentId: number): Promise<Attendee> {
+  const res = await fetchWithAuth(`${BASE_URL}/lessons/${lessonId}/attendees`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ studentId }),
+  });
+  if (!res.ok) throw new Error('수강생을 추가하지 못했어요');
+  return res.json();
+}
+
+export async function removeAttendee(lessonId: number, attendeeId: number): Promise<void> {
+  const res = await fetchWithAuth(`${BASE_URL}/lessons/${lessonId}/attendees/${attendeeId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('수강생을 제거하지 못했어요');
+}
+
 // Feedbacks
 
-export async function getFeedbacks(studentId: number): Promise<Feedback[]> {
-  const res = await fetchWithAuth(`${BASE_URL}/feedbacks?studentId=${studentId}`);
+export async function getFeedbacks(attendeeId: number): Promise<Feedback[]> {
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks?attendeeId=${attendeeId}`);
   if (!res.ok) throw new Error('피드백 목록을 불러오지 못했어요');
   return res.json();
 }
 
-export async function createFeedback(studentId: number): Promise<Feedback> {
+export async function createFeedback(attendeeId: number): Promise<Feedback> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ studentId }),
+    body: JSON.stringify({ attendeeId }),
   });
   if (!res.ok) throw new Error('피드백을 생성하지 못했어요');
   return res.json();

@@ -98,7 +98,6 @@ class FeedbackTest {
 
     feedback.like();
 
-    assertThat(feedback.getLikes()).hasSize(1);
     assertThat(feedback.isLiked()).isTrue();
   }
 
@@ -129,7 +128,6 @@ class FeedbackTest {
     assertThat(feedback.isLiked()).isFalse();
     feedback.like();
     assertThat(feedback.isLiked()).isTrue();
-    assertThat(feedback.getLikes()).hasSize(2);
   }
 
   @Test

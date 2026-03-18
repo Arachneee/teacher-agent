@@ -1,12 +1,12 @@
 'use client';
 
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { Student, deleteStudent, updateStudent } from '../lib/api';
+import { Attendee, updateStudent } from '../lib/api';
 import { useFeedback } from '../hooks/useFeedback';
 import AiFeedbackSection from './AiFeedbackSection';
 import KeywordsSection from './KeywordsSection';
 
-export interface StudentCardHandle {
+export interface AttendeeCardHandle {
   focusKeywordInput: () => void;
 }
 
@@ -22,15 +22,13 @@ const AVATAR_COLORS = [
 ];
 
 interface Props {
-  student: Student;
+  attendee: Attendee;
   onUpdate: () => void;
-  onDelete: (id: number) => void;
-  onNavigate?: (direction: 'prev' | 'next' | 'up' | 'down') => void;
-  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
+  onRemove: (attendeeId: number) => void;
 }
 
-const StudentCard = forwardRef<StudentCardHandle, Props>((
-  { student, onUpdate, onDelete, onNavigate, dragHandleProps },
+const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
+  { attendee, onUpdate, onRemove },
   ref
 ) => {
   const keywordInputRef = useRef<HTMLInputElement>(null);
@@ -39,8 +37,8 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   }));
 
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(student.name);
-  const [memo, setMemo] = useState(student.memo || '');
+  const [name, setName] = useState(attendee.student.name);
+  const [memo, setMemo] = useState(attendee.student.memo || '');
   const [saving, setSaving] = useState(false);
   const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');
@@ -55,19 +53,19 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
     handleGenerate,
     handleUpdateAiContent,
     handleLike,
-  } = useFeedback(student.id);
+  } = useFeedback(attendee.id, attendee.feedback);
 
-  const avatarColor = AVATAR_COLORS[student.id % AVATAR_COLORS.length];
+  const avatarColor = AVATAR_COLORS[attendee.student.id % AVATAR_COLORS.length];
 
   const handleSave = async () => {
     if (!name.trim()) return;
     setSaving(true);
     setEditErrorMessage(null);
     try {
-      await updateStudent(student.id, name.trim(), memo.trim());
+      await updateStudent(attendee.student.id, name.trim(), memo.trim());
       onUpdate();
       setEditing(false);
-    } catch (error) {
+    } catch {
       setEditErrorMessage('학생 정보를 저장하지 못했어요');
     } finally {
       setSaving(false);
@@ -75,20 +73,15 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   };
 
   const handleCancel = () => {
-    setName(student.name);
-    setMemo(student.memo || '');
+    setName(attendee.student.name);
+    setMemo(attendee.student.memo || '');
     setEditing(false);
     setEditErrorMessage(null);
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`${student.name} 학생을 삭제할까요?`)) return;
-    try {
-      await deleteStudent(student.id);
-      onDelete(student.id);
-    } catch (error) {
-      setEditErrorMessage('학생을 삭제하지 못했어요');
-    }
+  const handleRemoveClick = async () => {
+    if (!confirm(`${attendee.student.name} 학생을 이 수업에서 제거할까요?`)) return;
+    onRemove(attendee.id);
   };
 
   const handleAddKeywordWithInput = async () => {
@@ -106,30 +99,12 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
 
   return (
     <div className="h-full bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4">
-      {/* Drag Handle */}
-      {dragHandleProps && (
-        <div
-          {...dragHandleProps}
-          className="flex justify-center items-center h-4 cursor-grab active:cursor-grabbing -mt-2 -mx-2"
-          aria-label="드래그하여 순서 변경"
-        >
-          <svg width="20" height="8" viewBox="0 0 20 8" fill="none" className="text-gray-300">
-            <circle cx="4" cy="2" r="1.5" fill="currentColor" />
-            <circle cx="10" cy="2" r="1.5" fill="currentColor" />
-            <circle cx="16" cy="2" r="1.5" fill="currentColor" />
-            <circle cx="4" cy="6" r="1.5" fill="currentColor" />
-            <circle cx="10" cy="6" r="1.5" fill="currentColor" />
-            <circle cx="16" cy="6" r="1.5" fill="currentColor" />
-          </svg>
-        </div>
-      )}
-
       {/* Avatar + Name */}
       <div className="flex items-center gap-3">
         <div
           className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold shrink-0 ${avatarColor}`}
         >
-          {student.name.charAt(0)}
+          {attendee.student.name.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">
@@ -142,7 +117,9 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
                 autoFocus
               />
             ) : (
-              <p className="flex-1 min-w-0 text-lg font-semibold text-gray-800 truncate">{student.name}</p>
+              <p className="flex-1 min-w-0 text-lg font-semibold text-gray-800 truncate">
+                {attendee.student.name}
+              </p>
             )}
             {!editing && (
               <div className="flex items-center gap-1 shrink-0">
@@ -157,9 +134,9 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
                   </svg>
                 </button>
                 <button
-                  onClick={handleDelete}
+                  onClick={handleRemoveClick}
                   className="w-7 h-7 flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-400 transition-colors duration-150"
-                  aria-label="삭제"
+                  aria-label="수업에서 제거"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6" />
@@ -171,11 +148,11 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-400">{formatDate(student.createdAt)} 등록</p>
+          <p className="text-xs text-gray-400">{formatDate(attendee.createdAt)} 등록</p>
         </div>
       </div>
 
-      {/* Edit / Delete Error */}
+      {/* Edit / Remove Error */}
       {editErrorMessage && (
         <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{editErrorMessage}</p>
       )}
@@ -192,7 +169,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
           />
         ) : (
           <p className="text-sm text-gray-500 leading-relaxed whitespace-pre-wrap break-words min-h-[3rem]">
-            {student.memo || <span className="text-gray-300 italic">메모 없음</span>}
+            {attendee.student.memo || <span className="text-gray-300 italic">메모 없음</span>}
           </p>
         )}
       </div>
@@ -205,7 +182,6 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
           onKeywordInputChange={setKeywordInput}
           onAddKeyword={handleAddKeywordWithInput}
           onRemoveKeyword={handleRemoveKeyword}
-          onNavigate={onNavigate}
           inputRef={keywordInputRef}
         />
       )}
@@ -246,4 +222,4 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   );
 });
 
-export default StudentCard;
+export default AttendeeCard;

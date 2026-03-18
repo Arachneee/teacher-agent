@@ -1,0 +1,191 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Attendee, Lesson, getAttendees, getLessons, removeAttendee } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
+import AttendeeCard from '../../components/AttendeeCard';
+import AddAttendeeModal from '../../components/AddAttendeeModal';
+
+const DEFAULT_COLUMNS = 3;
+const MIN_COLUMNS = 1;
+const MAX_COLUMNS = 6;
+
+export default function LessonDetailPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const params = useParams();
+  const lessonId = parseInt(params.lessonId as string, 10);
+
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [attendees, setAttendees] = useState<Attendee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [columnCount, setColumnCount] = useState(DEFAULT_COLUMNS);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/login');
+    }
+  }, [authLoading, user, router]);
+
+  const fetchData = () => {
+    Promise.all([getLessons(), getAttendees(lessonId)])
+      .then(([lessons, attendeeList]) => {
+        const found = lessons.find(lesson => lesson.id === lessonId) ?? null;
+        setLesson(found);
+        setAttendees(attendeeList);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [lessonId]);
+
+  const handleRemoveAttendee = async (attendeeId: number) => {
+    try {
+      await removeAttendee(lessonId, attendeeId);
+      setAttendees(prev => prev.filter(attendee => attendee.id !== attendeeId));
+    } catch {
+      // 실패 시 목록 재조회
+      getAttendees(lessonId).then(setAttendees).catch(console.error);
+    }
+  };
+
+  const handleUpdate = () => {
+    getAttendees(lessonId).then(setAttendees).catch(console.error);
+  };
+
+  const handleAdd = () => {
+    setShowModal(false);
+    setLoading(true);
+    fetchData();
+  };
+
+  const existingStudentIds = useMemo(
+    () => new Set(attendees.map(attendee => attendee.student.id)),
+    [attendees]
+  );
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+      <div className="mx-auto px-6 py-10" style={{ maxWidth: `${columnCount * 24}rem` }}>
+        {/* Header */}
+        <header className="mb-10">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-purple-500 transition-colors mb-4"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            수업 목록으로
+          </button>
+          <div className="flex items-start justify-between">
+            <div>
+              {loading ? (
+                <div className="h-10 w-48 bg-purple-100 rounded-2xl animate-pulse" />
+              ) : (
+                <h1 className="text-4xl font-bold text-purple-500">
+                  {lesson?.title ?? '수업'}
+                </h1>
+              )}
+              <p className="text-gray-400 mt-2">수강생을 관리해요</p>
+            </div>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-sm text-gray-400">{user.userId}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-3">
+            <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-400 rounded-full animate-spin" />
+            <p className="text-gray-400 text-sm">불러오는 중...</p>
+          </div>
+        ) : attendees.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-300">
+            <div className="text-7xl">👨‍🎓</div>
+            <p className="text-lg font-medium">아직 수강생이 없어요</p>
+            <p className="text-sm">오른쪽 아래 + 버튼으로 추가해보세요!</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-sm text-gray-400">
+                총 <span className="font-semibold text-purple-400">{attendees.length}</span>명의 수강생
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">열 수</span>
+                <div className="flex items-center gap-1 bg-white rounded-2xl shadow-sm px-2 py-1">
+                  <button
+                    onClick={() => setColumnCount(count => Math.max(MIN_COLUMNS, count - 1))}
+                    disabled={columnCount <= MIN_COLUMNS}
+                    className="w-6 h-6 flex items-center justify-center rounded-xl text-gray-400 hover:text-purple-500 hover:bg-purple-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
+                    aria-label="열 줄이기"
+                  >
+                    −
+                  </button>
+                  <span className="w-5 text-center text-sm font-semibold text-purple-500">
+                    {columnCount}
+                  </span>
+                  <button
+                    onClick={() => setColumnCount(count => Math.min(MAX_COLUMNS, count + 1))}
+                    disabled={columnCount >= MAX_COLUMNS}
+                    className="w-6 h-6 flex items-center justify-center rounded-xl text-gray-400 hover:text-purple-500 hover:bg-purple-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
+                    aria-label="열 늘리기"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div
+              className="grid gap-12"
+              style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}
+            >
+              {attendees.map(attendee => (
+                <AttendeeCard
+                  key={attendee.id}
+                  attendee={attendee}
+                  onUpdate={handleUpdate}
+                  onRemove={handleRemoveAttendee}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* FAB */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-pink-400 hover:bg-pink-500 active:scale-95 text-white text-3xl rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        aria-label="수강생 추가"
+      >
+        +
+      </button>
+
+      {/* Modal */}
+      {showModal && (
+        <AddAttendeeModal
+          lessonId={lessonId}
+          existingStudentIds={existingStudentIds}
+          onAdd={handleAdd}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
+  );
+}

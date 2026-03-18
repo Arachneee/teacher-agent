@@ -18,9 +18,8 @@ public class FeedbackLike extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(nullable = false)
-  private Feedback feedback;
+  @Column(nullable = false)
+  private Long feedbackId;
 
   @Column(columnDefinition = "TEXT", nullable = false)
   private String aiContentSnapshot;
@@ -28,10 +27,10 @@ public class FeedbackLike extends BaseEntity {
   @Column(columnDefinition = "TEXT", nullable = false)
   private String keywordsSnapshot;
 
-  public static FeedbackLike create(Feedback feedback, String aiContentSnapshot,
+  public static FeedbackLike create(Long feedbackId, String aiContentSnapshot,
       String keywordsSnapshot) {
     FeedbackLike feedbackLike = new FeedbackLike();
-    feedbackLike.feedback = checkNotNull(feedback, "feedback");
+    feedbackLike.feedbackId = checkPositive(feedbackId, FEEDBACK_ID);
     feedbackLike.aiContentSnapshot = checkNotBlank(aiContentSnapshot, AI_CONTENT_SNAPSHOT);
     feedbackLike.keywordsSnapshot = checkNotNull(keywordsSnapshot, KEYWORDS_SNAPSHOT);
     return feedbackLike;

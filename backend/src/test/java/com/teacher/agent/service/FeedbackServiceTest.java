@@ -73,8 +73,12 @@ class FeedbackServiceTest {
     lessonId = lesson.getId();
   }
 
+  @Autowired
+  private FeedbackLikeRepository feedbackLikeRepository;
+
   @AfterEach
   void tearDown() {
+    feedbackLikeRepository.deleteAllInBatch();
     feedbackRepository.deleteAll();
     lessonRepository.deleteAll();
     studentRepository.deleteAllInBatch();
@@ -94,14 +98,12 @@ class FeedbackServiceTest {
   }
 
   @Test
-  void 같은_학생에_대해_여러_피드백을_생성할_수_있다() {
-    FeedbackResponse first =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    FeedbackResponse second =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+  void 같은_수업에_동일_학생의_피드백을_중복_생성_시_예외가_발생한다() {
+    feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
 
-    assertThat(second.id()).isNotEqualTo(first.id());
-    assertThat(feedbackQueryService.getAll(userId, studentId)).hasSize(2);
+    assertThatThrownBy(
+        () -> feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId)))
+        .isInstanceOf(Exception.class);
   }
 
   @Test
@@ -346,7 +348,6 @@ class FeedbackServiceTest {
   }
 
   @Test
-  @Transactional
   void 좋아요_이력은_누적_저장된다() {
     FeedbackResponse created =
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
@@ -355,12 +356,14 @@ class FeedbackServiceTest {
     feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("버전 2"));
     feedbackCommandService.like(userId, created.id());
 
-    Feedback feedback = feedbackRepository.findById(created.id()).orElseThrow();
-    assertThat(feedback.getLikes()).hasSize(2);
+    Long likeCount = entityManager
+        .createQuery("SELECT COUNT(fl) FROM FeedbackLike fl WHERE fl.feedbackId = :feedbackId",
+            Long.class)
+        .setParameter("feedbackId", created.id()).getSingleResult();
+    assertThat(likeCount).isEqualTo(2);
   }
 
   @Test
-  @Transactional
   void 좋아요_시_스냅샷이_저장된다() {
     FeedbackResponse created =
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
@@ -369,8 +372,10 @@ class FeedbackServiceTest {
     feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
     feedbackCommandService.like(userId, created.id());
 
-    Feedback feedback = feedbackRepository.findById(created.id()).orElseThrow();
-    FeedbackLike feedbackLike = feedback.getLikes().get(0);
+    FeedbackLike feedbackLike = entityManager
+        .createQuery("SELECT fl FROM FeedbackLike fl WHERE fl.feedbackId = :feedbackId",
+            FeedbackLike.class)
+        .setParameter("feedbackId", created.id()).getSingleResult();
     assertThat(feedbackLike.getAiContentSnapshot()).isEqualTo("AI 피드백 내용");
     assertThat(feedbackLike.getKeywordsSnapshot()).isEqualTo("성실함");
   }

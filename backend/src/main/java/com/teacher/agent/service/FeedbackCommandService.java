@@ -3,6 +3,8 @@ package com.teacher.agent.service;
 import static com.teacher.agent.util.RepositoryUtil.findByIdOrThrow;
 
 import com.teacher.agent.domain.Feedback;
+import com.teacher.agent.domain.FeedbackLike;
+import com.teacher.agent.domain.FeedbackLikeRepository;
 import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.Student;
@@ -26,6 +28,7 @@ public class FeedbackCommandService {
   private final LessonQueryService lessonQueryService;
   private final FeedbackAiService feedbackAiService;
   private final FeedbackRepository feedbackRepository;
+  private final FeedbackLikeRepository feedbackLikeRepository;
   private final StudentRepository studentRepository;
 
   @Transactional
@@ -51,6 +54,7 @@ public class FeedbackCommandService {
   @Transactional
   public void delete(UserId userId, Long feedbackId) {
     feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+    feedbackLikeRepository.deleteAllByFeedbackId(feedbackId);
     feedbackRepository.deleteById(feedbackId);
   }
 
@@ -94,7 +98,8 @@ public class FeedbackCommandService {
     } catch (IllegalStateException exception) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
-    feedbackRepository.flush();
+    feedbackLikeRepository.save(
+        FeedbackLike.create(feedbackId, feedback.getAiContent(), feedback.buildKeywordsSnapshot()));
     return FeedbackResponse.withKeywords(feedback, true);
   }
 

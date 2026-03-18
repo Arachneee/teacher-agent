@@ -3,6 +3,8 @@ package com.teacher.agent.service;
 import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrThrow;
 
 import com.teacher.agent.domain.Attendee;
+import com.teacher.agent.domain.Feedback;
+import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.StudentRepository;
@@ -23,6 +25,7 @@ public class AttendeeCommandService {
   private final LessonQueryService lessonQueryService;
   private final LessonRepository lessonRepository;
   private final StudentRepository studentRepository;
+  private final FeedbackRepository feedbackRepository;
 
   @Transactional
   public AttendeeResponse add(UserId userId, Long lessonId, AttendeeCreateRequest request) {
@@ -34,6 +37,9 @@ public class AttendeeCommandService {
       throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
     }
     lessonRepository.flush();
+    if (feedbackRepository.findByStudentIdAndLessonId(request.studentId(), lessonId).isEmpty()) {
+      feedbackRepository.save(Feedback.create(request.studentId(), lessonId));
+    }
     List<Attendee> attendees = lesson.getAttendees();
     return AttendeeResponse.from(attendees.get(attendees.size() - 1));
   }

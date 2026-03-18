@@ -12,21 +12,23 @@ import {
   updateFeedback,
 } from '../lib/api';
 
-export function useFeedback(studentId: number) {
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+export function useFeedback(attendeeId: number, initialFeedback?: Feedback | null) {
+  const [feedback, setFeedback] = useState<Feedback | null>(initialFeedback ?? null);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isEditingAiContent, setIsEditingAiContent] = useState(false);
   const keywordSubmittingRef = useRef(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const feedbackIdRef = useRef<number | null>(null);
+  const feedbackIdRef = useRef<number | null>(initialFeedback?.id ?? null);
+  const skipInitialFetchRef = useRef(initialFeedback !== undefined);
 
   const loadLatestFeedback = useCallback(async (): Promise<Feedback | null> => {
-    const feedbacks = await getFeedbacks(studentId);
+    const feedbacks = await getFeedbacks(attendeeId);
     return feedbacks.length > 0 ? feedbacks[0] : null;
-  }, [studentId]);
+  }, [attendeeId]);
 
   useEffect(() => {
+    if (skipInitialFetchRef.current) return;
     loadLatestFeedback().then((loaded) => {
       setFeedback(loaded);
       feedbackIdRef.current = loaded?.id ?? null;
@@ -70,7 +72,7 @@ export function useFeedback(studentId: number) {
     try {
       let feedbackId = feedback?.id;
       if (feedbackId === undefined) {
-        const created = await createFeedback(studentId);
+        const created = await createFeedback(attendeeId);
         feedbackId = created.id;
       }
       await addKeyword(feedbackId, keyword);
@@ -81,7 +83,7 @@ export function useFeedback(studentId: number) {
       setFeedback(mergedFeedback);
       feedbackIdRef.current = mergedFeedback?.id ?? null;
       return true;
-    } catch (error) {
+    } catch {
       setErrorMessage('키워드를 추가하지 못했어요');
       return false;
     } finally {
@@ -99,7 +101,7 @@ export function useFeedback(studentId: number) {
     try {
       await removeKeyword(feedback.id, keywordId);
       setFeedback(await loadLatestFeedback());
-    } catch (error) {
+    } catch {
       setErrorMessage('키워드를 삭제하지 못했어요');
       setFeedback(previousFeedback);
     }
@@ -112,7 +114,7 @@ export function useFeedback(studentId: number) {
     try {
       await generateAiContent(feedback.id);
       setFeedback(await loadLatestFeedback());
-    } catch (error) {
+    } catch {
       setErrorMessage('AI 문자를 생성하지 못했어요');
     } finally {
       setAiGenerating(false);

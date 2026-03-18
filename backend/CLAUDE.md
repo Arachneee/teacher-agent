@@ -19,4 +19,4 @@ H2 콘솔: http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:teacher_agen
 ## Rules
 
 - 기능을 추가하면 항상 테스트 코드를 작성한다. domain은 단위 테스트, service는 H2 인메모리 통합 테스트를 작성한다.
-- Repository는 어그리거트 루트(Feedback, Student, Teacher)에만 만든다. 하위 엔티티(FeedbackKeyword, FeedbackLike)는 어그리거트 루트를 통해 접근한다.
+- Repository는 어그리거트 루트(Feedback, FeedbackLike, Student, Teacher, Lesson)에만 만든다. 하위 엔티티(FeedbackKeyword, Attendee)는 어그리거트 루트를 통해 접근한다.
