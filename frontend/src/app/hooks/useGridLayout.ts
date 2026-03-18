@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export const MIN_COLUMNS = 1;
 export const MAX_COLUMNS = 6;
@@ -12,6 +12,7 @@ export function useGridLayout(storageSuffix = '') {
   const [gridSlots, setGridSlots] = useState<(number | null)[]>([]);
   const [columnCount, setColumnCount] = useState(3);
   const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
     const saved = localStorage.getItem(columnStorageKey);
@@ -25,6 +26,21 @@ export function useGridLayout(storageSuffix = '') {
   };
 
   const initializeGridSlots = useCallback((ids: number[]) => {
+    if (isInitializedRef.current) {
+      // 이미 초기화된 경우: localStorage 대신 현재 상태 기준으로 조정 (경쟁 조건 방지)
+      setGridSlots(prev => {
+        const idSet = new Set(ids);
+        const filtered = prev.map(id => (id === null || idSet.has(id) ? id : null));
+        const existingIds = new Set(filtered.filter((id): id is number => id !== null));
+        const newIds = ids.filter(id => !existingIds.has(id));
+        const result = [...filtered, ...newIds];
+        while (result.length > 0 && result[result.length - 1] === null) result.pop();
+        return result;
+      });
+      return;
+    }
+    isInitializedRef.current = true;
+    setIsInitialized(true);
     const savedOrder = localStorage.getItem(gridOrderStorageKey);
     if (savedOrder) {
       try {
@@ -36,14 +52,12 @@ export function useGridLayout(storageSuffix = '') {
         const result = [...filtered, ...newIds];
         while (result.length > 0 && result[result.length - 1] === null) result.pop();
         setGridSlots(result);
-        setIsInitialized(true);
         return;
       } catch {
         // 파싱 실패 시 기본값으로 초기화
       }
     }
     setGridSlots(ids);
-    setIsInitialized(true);
   }, [gridOrderStorageKey]);
 
   useEffect(() => {

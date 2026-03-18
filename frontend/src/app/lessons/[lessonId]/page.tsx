@@ -198,11 +198,12 @@ export default function LessonDetailPage() {
   const displaySlots = useMemo(() => {
     const filledCount = gridSlots.filter(id => id !== null).length;
     const nextRowStart = Math.ceil(filledCount / columnCount) * columnCount;
-    const padTo = Math.max(nextRowStart, gridSlots.length);
+    // 드래그 중에는 아래에 빈 행을 추가해 빈 슬롯으로 이동할 수 있도록 한다
+    const padTo = Math.max(nextRowStart, gridSlots.length) + (isDragActive ? columnCount : 0);
     const padded = [...gridSlots];
     while (padded.length < padTo) padded.push(null);
     return padded;
-  }, [gridSlots, columnCount]);
+  }, [gridSlots, columnCount, isDragActive]);
 
   const existingStudentIds = useMemo(
     () => new Set(attendees.map(attendee => attendee.student.id)),

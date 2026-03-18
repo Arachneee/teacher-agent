@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Attendee, updateStudent } from '../lib/api';
 import { useFeedback } from '../hooks/useFeedback';
 import AiFeedbackSection from './AiFeedbackSection';
@@ -40,6 +40,14 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(attendee.student.name);
   const [memo, setMemo] = useState(attendee.student.memo || '');
+
+  // 편집 중이 아닐 때 부모로부터 내려온 최신 학생 정보를 동기화
+  useEffect(() => {
+    if (!editing) {
+      setName(attendee.student.name);
+      setMemo(attendee.student.memo || '');
+    }
+  }, [attendee.student.name, attendee.student.memo, editing]);
   const [saving, setSaving] = useState(false);
   const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');

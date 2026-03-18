@@ -35,6 +35,20 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     }).catch(console.error);
   }, [loadLatestFeedback]);
 
+  // 부모가 re-fetch 후 새 prop을 내려줄 때 로컬 상태를 동기화
+  useEffect(() => {
+    if (!skipInitialFetchRef.current) return;
+    setFeedback(prev => {
+      // 디바운스 타이머가 활성 중이면 사용자가 편집 중인 aiContent를 보존
+      if (initialFeedback && debounceTimerRef.current !== null) {
+        return { ...initialFeedback, aiContent: prev?.aiContent ?? initialFeedback.aiContent };
+      }
+      return initialFeedback ?? null;
+    });
+    feedbackIdRef.current = initialFeedback?.id ?? null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFeedback?.id, initialFeedback?.updatedAt]);
+
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
@@ -44,7 +58,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
   }, []);
 
   const handleUpdateAiContent = (content: string) => {
-    setFeedback(prev => prev ? { ...prev, aiContent: content || null, liked: false } : null);
+    setFeedback(prev => prev ? { ...prev, aiContent: content || null } : null);
     setIsEditingAiContent(true);
 
     if (debounceTimerRef.current) {
