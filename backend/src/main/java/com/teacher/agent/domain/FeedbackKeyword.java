@@ -30,4 +30,8 @@ public class FeedbackKeyword extends BaseEntity {
     feedbackKeyword.keyword = checkNotBlank(checkMaxLength(keyword, 100, KEYWORD), KEYWORD);
     return feedbackKeyword;
   }
+
+  public void update(String newKeyword) {
+    this.keyword = checkNotBlank(checkMaxLength(newKeyword, 100, KEYWORD), KEYWORD);
+  }
 }

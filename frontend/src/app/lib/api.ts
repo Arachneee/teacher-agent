@@ -237,6 +237,15 @@ export async function addKeyword(feedbackId: number, keyword: string): Promise<v
   if (!res.ok) throw new Error('키워드를 추가하지 못했어요');
 }
 
+export async function updateKeyword(feedbackId: number, keywordId: number, keyword: string): Promise<void> {
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/keywords/${keywordId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keyword }),
+  });
+  if (!res.ok) throw new Error('키워드를 수정하지 못했어요');
+}
+
 export async function removeKeyword(feedbackId: number, keywordId: number): Promise<void> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/keywords/${keywordId}`, {
     method: 'DELETE',

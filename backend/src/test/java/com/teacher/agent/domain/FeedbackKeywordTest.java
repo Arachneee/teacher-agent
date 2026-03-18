@@ -65,4 +65,33 @@ class FeedbackKeywordTest {
 
     assertThat(feedbackKeyword.getKeyword()).hasSize(100);
   }
+
+  @Test
+  void 키워드를_수정한다() {
+    Feedback feedback = Feedback.create(1L, 1L);
+    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함");
+
+    feedbackKeyword.update("꼼꼼함");
+
+    assertThat(feedbackKeyword.getKeyword()).isEqualTo("꼼꼼함");
+  }
+
+  @Test
+  void 빈_문자열로_수정하면_실패한다() {
+    Feedback feedback = Feedback.create(1L, 1L);
+    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함");
+
+    assertThatThrownBy(() -> feedbackKeyword.update(""))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void 최대_길이를_초과하는_값으로_수정하면_실패한다() {
+    Feedback feedback = Feedback.create(1L, 1L);
+    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함");
+    String longKeyword = "가".repeat(101);
+
+    assertThatThrownBy(() -> feedbackKeyword.update(longKeyword))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
 }

@@ -262,6 +262,45 @@ class FeedbackServiceTest {
   }
 
   @Test
+  void 키워드를_수정한다() {
+    FeedbackResponse created =
+        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+    FeedbackResponse withKeyword = feedbackCommandService.addKeyword(userId, created.id(),
+        new FeedbackKeywordCreateRequest("성실함"));
+    Long keywordId = withKeyword.keywords().get(0).id();
+
+    FeedbackResponse updated = feedbackCommandService.updateKeyword(userId, created.id(), keywordId,
+        new FeedbackKeywordUpdateRequest("꼼꼼함"));
+
+    assertThat(updated.keywords()).hasSize(1);
+    assertThat(updated.keywords().get(0).keyword()).isEqualTo("꼼꼼함");
+    assertThat(updated.keywords().get(0).id()).isEqualTo(keywordId);
+  }
+
+  @Test
+  void 존재하지_않는_키워드_수정_시_예외가_발생한다() {
+    FeedbackResponse created =
+        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+
+    assertThatThrownBy(() -> feedbackCommandService.updateKeyword(userId, created.id(), 999L,
+        new FeedbackKeywordUpdateRequest("꼼꼼함")))
+        .isInstanceOf(ResponseStatusException.class);
+  }
+
+  @Test
+  void 다른_선생님_피드백의_키워드_수정_시_예외가_발생한다() {
+    FeedbackResponse created =
+        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+    FeedbackResponse withKeyword = feedbackCommandService.addKeyword(userId, created.id(),
+        new FeedbackKeywordCreateRequest("성실함"));
+    Long keywordId = withKeyword.keywords().get(0).id();
+
+    assertThatThrownBy(() -> feedbackCommandService.updateKeyword(otherUserId, created.id(),
+        keywordId, new FeedbackKeywordUpdateRequest("꼼꼼함")))
+        .isInstanceOf(ResponseStatusException.class);
+  }
+
+  @Test
   void AI_콘텐츠를_생성한다() {
     FeedbackResponse created =
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));

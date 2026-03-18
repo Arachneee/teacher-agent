@@ -3,6 +3,7 @@ package com.teacher.agent.controller;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.FeedbackCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
+import com.teacher.agent.dto.FeedbackKeywordUpdateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.dto.FeedbackUpdateRequest;
 import com.teacher.agent.service.FeedbackCommandService;
@@ -63,6 +64,13 @@ public class FeedbackController {
   public ResponseEntity<FeedbackResponse> addKeyword(UserId userId, @PathVariable @Positive Long id,
       @RequestBody @Valid FeedbackKeywordCreateRequest request) {
     return ResponseEntity.status(201).body(feedbackCommandService.addKeyword(userId, id, request));
+  }
+
+  @PutMapping("/{id}/keywords/{keywordId}")
+  public ResponseEntity<FeedbackResponse> updateKeyword(UserId userId,
+      @PathVariable @Positive Long id, @PathVariable @Positive Long keywordId,
+      @RequestBody @Valid FeedbackKeywordUpdateRequest request) {
+    return ResponseEntity.ok(feedbackCommandService.updateKeyword(userId, id, keywordId, request));
   }
 
   @DeleteMapping("/{id}/keywords/{keywordId}")

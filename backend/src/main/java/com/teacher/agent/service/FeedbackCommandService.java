@@ -12,6 +12,7 @@ import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.FeedbackCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
+import com.teacher.agent.dto.FeedbackKeywordUpdateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.dto.FeedbackUpdateRequest;
 import lombok.RequiredArgsConstructor;
@@ -88,6 +89,18 @@ public class FeedbackCommandService {
     } catch (IllegalArgumentException exception) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
     }
+  }
+
+  @Transactional
+  public FeedbackResponse updateKeyword(UserId userId, Long feedbackId, Long keywordId,
+      FeedbackKeywordUpdateRequest request) {
+    Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+    try {
+      feedback.updateKeyword(keywordId, request.keyword());
+    } catch (IllegalArgumentException exception) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+    return feedbackQueryService.toResponse(feedback);
   }
 
   @Transactional

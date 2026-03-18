@@ -51,6 +51,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
   const [saving, setSaving] = useState(false);
   const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');
+  const [editingKeywordId, setEditingKeywordId] = useState<number | null>(null);
 
   const {
     feedback,
@@ -58,6 +59,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
     isEditingAiContent,
     errorMessage: feedbackErrorMessage,
     handleAddKeyword,
+    handleUpdateKeyword,
     handleRemoveKeyword,
     handleGenerate,
     handleUpdateAiContent,
@@ -93,13 +95,33 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
     onRemove(attendee.id);
   };
 
-  const handleAddKeywordWithInput = async () => {
-    const trimmed = keywordInput.trim();
-    if (!trimmed) return;
+  const handleStartEditKeyword = (keyword: { id: number; keyword: string }) => {
+    setEditingKeywordId(keyword.id);
+    setKeywordInput(keyword.keyword);
+    keywordInputRef.current?.focus();
+  };
+
+  const handleCancelEditKeyword = () => {
+    setEditingKeywordId(null);
     setKeywordInput('');
-    const success = await handleAddKeyword(trimmed);
-    if (!success) {
-      setKeywordInput(trimmed);
+  };
+
+  const handleSubmitKeyword = async () => {
+    if (editingKeywordId !== null) {
+      const trimmed = keywordInput.trim();
+      const success = await handleUpdateKeyword(editingKeywordId, trimmed);
+      if (success) {
+        setEditingKeywordId(null);
+        setKeywordInput('');
+      }
+    } else {
+      const trimmed = keywordInput.trim();
+      if (!trimmed) return;
+      setKeywordInput('');
+      const success = await handleAddKeyword(trimmed);
+      if (!success) {
+        setKeywordInput(trimmed);
+      }
     }
   };
 
@@ -205,8 +227,11 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
         <KeywordsSection
           keywords={feedback?.keywords ?? []}
           keywordInput={keywordInput}
+          editingKeywordId={editingKeywordId}
           onKeywordInputChange={setKeywordInput}
-          onAddKeyword={handleAddKeywordWithInput}
+          onSubmitKeyword={handleSubmitKeyword}
+          onStartEditKeyword={handleStartEditKeyword}
+          onCancelEditKeyword={handleCancelEditKeyword}
           onRemoveKeyword={handleRemoveKeyword}
           inputRef={keywordInputRef}
         />

@@ -70,6 +70,14 @@ public class Feedback extends BaseEntity {
     }
   }
 
+  public void updateKeyword(Long keywordId, String newKeyword) {
+    FeedbackKeyword feedbackKeyword = keywords.stream()
+        .filter(keyword -> keyword.getId().equals(keywordId))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("FeedbackKeyword not found: " + keywordId));
+    feedbackKeyword.update(newKeyword);
+  }
+
   public void like() {
     if (aiContent == null || aiContent.isBlank()) {
       throw new IllegalStateException("AI 콘텐츠가 없으면 좋아요를 할 수 없습니다.");

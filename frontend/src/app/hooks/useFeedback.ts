@@ -10,6 +10,7 @@ import {
   likeFeedback,
   removeKeyword,
   updateFeedback,
+  updateKeyword,
 } from '../lib/api';
 
 export function useFeedback(studentId: number, initialFeedback?: Feedback | null) {
@@ -105,6 +106,35 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     }
   };
 
+  const handleUpdateKeyword = async (keywordId: number, newKeyword: string): Promise<boolean> => {
+    if (!feedback) return false;
+    if (!newKeyword.trim()) {
+      await handleRemoveKeyword(keywordId);
+      return true;
+    }
+    const previousFeedback = feedback;
+    setFeedback(prev =>
+      prev ? {
+        ...prev,
+        keywords: prev.keywords.map(keyword =>
+          keyword.id === keywordId ? { ...keyword, keyword: newKeyword } : keyword
+        ),
+      } : null
+    );
+    setErrorMessage(null);
+    try {
+      await updateKeyword(feedback.id, keywordId, newKeyword);
+      const loaded = await loadLatestFeedback();
+      setFeedback(loaded);
+      feedbackIdRef.current = loaded?.id ?? null;
+      return true;
+    } catch {
+      setErrorMessage('키워드를 수정하지 못했어요');
+      setFeedback(previousFeedback);
+      return false;
+    }
+  };
+
   const handleRemoveKeyword = async (keywordId: number) => {
     if (!feedback) return;
     const previousFeedback = feedback;
@@ -150,5 +180,5 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     }
   };
 
-  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleRemoveKeyword, handleGenerate, handleUpdateAiContent, handleLike };
+  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleUpdateKeyword, handleRemoveKeyword, handleGenerate, handleUpdateAiContent, handleLike };
 }
