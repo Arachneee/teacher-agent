@@ -31,8 +31,10 @@ public class Attendee extends BaseEntity {
 
   public static Attendee create(Lesson lesson, Long studentId) {
     Attendee attendee = new Attendee();
+
     attendee.lesson = checkNotNull(lesson, LESSON_ID);
     attendee.studentId = checkPositive(studentId, STUDENT_ID);
+
     return attendee;
   }
 }

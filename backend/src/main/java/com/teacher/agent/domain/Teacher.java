@@ -32,10 +32,12 @@ public class Teacher extends BaseEntity {
 
   public static Teacher create(String userId, String encodedPassword, String name, String subject) {
     Teacher teacher = new Teacher();
+
     teacher.userId = new UserId(checkNotBlank(userId, USER_ID));
     teacher.password = checkNotBlank(encodedPassword, PASSWORD);
     teacher.name = checkNotBlank(name, NAME);
     teacher.subject = checkMaxLength(subject, 100, SUBJECT);
+
     return teacher;
   }
 

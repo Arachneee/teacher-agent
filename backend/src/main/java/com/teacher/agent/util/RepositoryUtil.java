@@ -15,16 +15,17 @@ import org.springframework.web.server.ResponseStatusException;
 @UtilityClass
 public class RepositoryUtil {
 
-  public static <T> T findByIdOrThrow(JpaRepository<T, Long> repository, Long id, String message) {
+  public static <T> T findByIdOrThrow(JpaRepository<T, Long> repository, Long id,
+      String message) {
     return repository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, message));
   }
 
   public static Teacher findTeacherByUserIdOrThrow(TeacherRepository teacherRepository,
       UserId userId) {
-    return teacherRepository.findByUserId(userId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-            "Teacher not found: " + userId.value()));
+    return teacherRepository.findByUserId(userId).orElseThrow(() -> new ResponseStatusException(
+        HttpStatus.NOT_FOUND,
+        "Teacher not found: " + userId.value()));
   }
 
   public static Lesson findLessonByIdAndUserIdOrThrow(LessonRepository lessonRepository,

@@ -19,24 +19,30 @@ class AttendeeTest {
 
   @Test
   void 수업_참가자를_생성한다() {
+    // given
     Lesson lesson = createLesson();
 
+    // when
     Attendee attendee = Attendee.create(lesson, 1L);
 
+    // then
     assertThat(attendee.getLesson()).isSameAs(lesson);
     assertThat(attendee.getStudentId()).isEqualTo(1L);
   }
 
   @Test
   void lesson이_null이면_생성에_실패한다() {
+    // when & then
     assertThatThrownBy(() -> Attendee.create(null, 1L))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void studentId가_0이하면_생성에_실패한다() {
+    // given
     Lesson lesson = createLesson();
 
+    // when & then
     assertThatThrownBy(() -> Attendee.create(lesson, 0L))
         .isInstanceOf(IllegalArgumentException.class);
 
@@ -46,38 +52,49 @@ class AttendeeTest {
 
   @Test
   void Lesson_addAttendee_메서드가_참가자를_추가한다() {
+    // given
     Lesson lesson = createLesson();
 
+    // when
     lesson.addAttendee(1L);
 
+    // then
     assertThat(lesson.getAttendees()).hasSize(1);
     assertThat(lesson.getAttendees().get(0).getStudentId()).isEqualTo(1L);
   }
 
   @Test
   void 중복_학생_추가_시_예외가_발생한다() {
+    // given
     Lesson lesson = createLesson();
     lesson.addAttendee(1L);
 
-    assertThatThrownBy(() -> lesson.addAttendee(1L)).isInstanceOf(IllegalArgumentException.class);
+    // when & then
+    assertThatThrownBy(() -> lesson.addAttendee(1L))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void Lesson_removeAttendee_메서드가_참가자를_제거한다() {
+    // given
     Lesson lesson = createLesson();
     lesson.addAttendee(1L);
     Attendee attendee = lesson.getAttendees().get(0);
 
+    // when
     // 단위 테스트 환경에서는 DB 없이 실행되므로 getId()는 null
     lesson.removeAttendee(attendee.getId());
 
+    // then
     assertThat(lesson.getAttendees()).isEmpty();
   }
 
   @Test
   void 없는_참가자_제거_시_예외가_발생한다() {
+    // given
     Lesson lesson = createLesson();
 
+    // when & then
     assertThatThrownBy(() -> lesson.removeAttendee(999L))
         .isInstanceOf(IllegalArgumentException.class);
   }

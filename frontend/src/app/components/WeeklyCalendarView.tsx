@@ -3,6 +3,7 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lesson, deleteLesson } from '../lib/api';
+import { padTwoDigits } from '../lib/dateTimeUtils';
 
 const FIRST_HOUR = 7;
 const LAST_HOUR = 22;
@@ -19,7 +20,7 @@ function addDays(date: Date, days: number): Date {
 
 function formatKoreanTime(isoString: string): string {
   const date = new Date(isoString);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}`;
 }
 
 function getLessonPosition(lesson: Lesson): { top: number; height: number } {
@@ -92,9 +93,8 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
       const endDate = new Date(startDate);
       endDate.setHours(hour + 1, 0, 0, 0);
 
-      const pad = (n: number) => String(n).padStart(2, '0');
-      const fmt = (d: Date) =>
-        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+      const fmt = (date: Date) =>
+        `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}T${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}:00`;
 
       onCellClick(fmt(startDate), fmt(endDate));
     },

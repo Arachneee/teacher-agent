@@ -17,6 +17,7 @@ public class AttendeeQueryService {
 
   public List<AttendeeResponse> getAll(UserId userId, Long lessonId) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(lessonId, userId);
+
     return lesson.getAttendees().stream().map(AttendeeResponse::from).toList();
   }
 }

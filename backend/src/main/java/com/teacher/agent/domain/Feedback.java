@@ -43,23 +43,15 @@ public class Feedback extends BaseEntity {
 
   public static Feedback create(Long studentId, Long lessonId) {
     Feedback feedback = new Feedback();
+
     feedback.studentId = checkPositive(studentId, STUDENT_ID);
     feedback.lessonId = checkPositive(lessonId, LESSON_ID);
+
     return feedback;
   }
 
   public void addKeyword(String keyword) {
     keywords.add(FeedbackKeyword.create(this, keyword));
-  }
-
-  public void updateAiContent(String aiContent) {
-    this.aiContent = checkNotBlank(aiContent, AI_CONTENT);
-    this.liked = false;
-  }
-
-  public void clearAiContent() {
-    this.aiContent = null;
-    this.liked = false;
   }
 
   public void removeKeyword(Long keywordId) {
@@ -75,16 +67,29 @@ public class Feedback extends BaseEntity {
         .filter(keyword -> keyword.getId().equals(keywordId))
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("FeedbackKeyword not found: " + keywordId));
+
     feedbackKeyword.update(newKeyword);
+  }
+
+  public void updateAiContent(String aiContent) {
+    this.aiContent = checkNotBlank(aiContent, AI_CONTENT);
+    this.liked = false;
+  }
+
+  public void clearAiContent() {
+    this.aiContent = null;
+    this.liked = false;
   }
 
   public void like() {
     if (aiContent == null || aiContent.isBlank()) {
       throw new IllegalStateException("AI 콘텐츠가 없으면 좋아요를 할 수 없습니다.");
     }
+
     if (liked) {
       throw new IllegalStateException("이미 좋아요를 누른 상태입니다.");
     }
+
     this.liked = true;
   }
 

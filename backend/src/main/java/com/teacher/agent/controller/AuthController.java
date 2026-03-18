@@ -35,20 +35,25 @@ public class AuthController {
     UsernamePasswordAuthenticationToken authToken =
         new UsernamePasswordAuthenticationToken(request.userId(), request.password());
     Authentication authentication = authenticationManager.authenticate(authToken);
+
     SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
     securityContext.setAuthentication(authentication);
     SecurityContextHolder.setContext(securityContext);
     securityContextRepository.saveContext(securityContext, httpRequest, httpResponse);
+
     return ResponseEntity.ok(buildAuthResponse(authentication.getName()));
   }
 
   @PostMapping("/logout")
   public ResponseEntity<Void> logout(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
+
     if (session != null) {
       session.invalidate();
     }
+
     SecurityContextHolder.clearContext();
+
     return ResponseEntity.noContent().build();
   }
 
@@ -57,6 +62,7 @@ public class AuthController {
     if (authentication == null || !authentication.isAuthenticated()) {
       return ResponseEntity.status(401).build();
     }
+
     return ResponseEntity.ok(buildAuthResponse(authentication.getName()));
   }
 

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Lesson, Student, addAttendee, createLesson, createStudent, getStudents, updateLesson } from '../lib/api';
+import { padTwoDigits, parseDateTime } from '../lib/dateTimeUtils';
+import TimePicker from './TimePicker';
 
 interface Props {
   lesson?: Lesson;
@@ -9,61 +11,6 @@ interface Props {
   initialEndTime?: string;
   onSave: () => void;
   onClose: () => void;
-}
-
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-
-function pad(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-function parseDateTime(iso: string): { date: string; hour: number; minute: number } {
-  const [datePart, timePart] = iso.slice(0, 16).split('T');
-  const [hour, minute] = timePart.split(':').map(Number);
-  return { date: datePart, hour, minute };
-}
-
-function TimePicker({
-  label,
-  hour,
-  minute,
-  onHourChange,
-  onMinuteChange,
-}: {
-  label: string;
-  hour: number;
-  minute: number;
-  onHourChange: (h: number) => void;
-  onMinuteChange: (m: number) => void;
-}) {
-  const minuteOptions = MINUTES.includes(minute) ? MINUTES : [...MINUTES, minute].sort((a, b) => a - b);
-  return (
-    <div className="flex-1">
-      <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">{label}</label>
-      <div className="flex items-center gap-1.5">
-        <select
-          value={hour}
-          onChange={e => onHourChange(parseInt(e.target.value, 10))}
-          className="flex-1 bg-white rounded-xl px-2 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none text-center"
-        >
-          {HOURS.map(h => (
-            <option key={h} value={h}>{pad(h)}시</option>
-          ))}
-        </select>
-        <span className="text-purple-300 font-bold select-none">:</span>
-        <select
-          value={minute}
-          onChange={e => onMinuteChange(parseInt(e.target.value, 10))}
-          className="flex-1 bg-white rounded-xl px-2 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none text-center"
-        >
-          {minuteOptions.map(m => (
-            <option key={m} value={m}>{pad(m)}분</option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
 }
 
 function getInitialValues(lesson?: Lesson, initialStartTime?: string, initialEndTime?: string) {
@@ -80,7 +27,7 @@ function getInitialValues(lesson?: Lesson, initialStartTime?: string, initialEnd
   const now = new Date();
   const roundedMinute = Math.round(now.getMinutes() / 5) * 5 % 60;
   const startHour = roundedMinute === 60 ? now.getHours() + 1 : now.getHours();
-  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const todayStr = `${now.getFullYear()}-${padTwoDigits(now.getMonth() + 1)}-${padTwoDigits(now.getDate())}`;
   return { date: todayStr, startHour, startMinute: roundedMinute % 60, endHour: (startHour + 1) % 24, endMinute: roundedMinute % 60 };
 }
 
@@ -120,7 +67,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   }, [isEditMode]);
 
   const buildIso = (hour: number, minute: number) =>
-    `${date}T${pad(hour)}:${pad(minute)}:00`;
+    `${date}T${padTwoDigits(hour)}:${padTwoDigits(minute)}:00`;
 
   const handleDetailsSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

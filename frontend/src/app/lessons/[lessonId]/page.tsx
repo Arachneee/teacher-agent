@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   DndContext,
@@ -12,24 +12,15 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Attendee, Lesson, LessonDetailAttendee, getLessonDetail, removeAttendee, updateLesson } from '../../lib/api';
+import { Attendee, removeAttendee } from '../../lib/api';
+import { padTwoDigits } from '../../lib/dateTimeUtils';
 import { useAuth } from '../../context/AuthContext';
 import AttendeeCard from '../../components/AttendeeCard';
 import AddAttendeeModal from '../../components/AddAttendeeModal';
+import LessonEditForm from '../../components/LessonEditForm';
 import { MAX_COLUMNS, MIN_COLUMNS, useGridLayout } from '../../hooks/useGridLayout';
-
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-
-function pad(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-function parseDateTime(iso: string): { date: string; hour: number; minute: number } {
-  const [datePart, timePart] = iso.slice(0, 16).split('T');
-  const [hour, minute] = timePart.split(':').map(Number);
-  return { date: datePart, hour, minute };
-}
+import { useLessonDetail } from '../../hooks/useLessonDetail';
+import { useLessonEdit } from '../../hooks/useLessonEdit';
 
 function formatLessonDateTime(startIso: string, endIso: string): string {
   const start = new Date(startIso);
@@ -38,49 +29,7 @@ function formatLessonDateTime(startIso: string, endIso: string): string {
   const month = start.getMonth() + 1;
   const day = start.getDate();
   const dayOfWeek = days[start.getDay()];
-  return `${month}월 ${day}일 (${dayOfWeek})  ${pad(start.getHours())}:${pad(start.getMinutes())} – ${pad(end.getHours())}:${pad(end.getMinutes())}`;
-}
-
-function TimeSelect({
-  label,
-  hour,
-  minute,
-  onHourChange,
-  onMinuteChange,
-}: {
-  label: string;
-  hour: number;
-  minute: number;
-  onHourChange: (h: number) => void;
-  onMinuteChange: (m: number) => void;
-}) {
-  const minuteOptions = MINUTES.includes(minute) ? MINUTES : [...MINUTES, minute].sort((a, b) => a - b);
-  return (
-    <div className="flex-1">
-      <p className="text-xs font-medium text-gray-400 mb-1 ml-0.5">{label}</p>
-      <div className="flex items-center gap-1.5">
-        <select
-          value={hour}
-          onChange={e => onHourChange(parseInt(e.target.value, 10))}
-          className="flex-1 bg-white rounded-xl px-2 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none text-center border border-purple-100"
-        >
-          {HOURS.map(h => (
-            <option key={h} value={h}>{pad(h)}시</option>
-          ))}
-        </select>
-        <span className="text-purple-300 font-bold select-none">:</span>
-        <select
-          value={minute}
-          onChange={e => onMinuteChange(parseInt(e.target.value, 10))}
-          className="flex-1 bg-white rounded-xl px-2 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none text-center border border-purple-100"
-        >
-          {minuteOptions.map(m => (
-            <option key={m} value={m}>{pad(m)}분</option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
+  return `${month}월 ${day}일 (${dayOfWeek})  ${padTwoDigits(start.getHours())}:${padTwoDigits(start.getMinutes())} – ${padTwoDigits(end.getHours())}:${padTwoDigits(end.getMinutes())}`;
 }
 
 const EMPTY_SLOT_PREFIX = 'empty-slot-';
@@ -144,21 +93,8 @@ export default function LessonDetailPage() {
   const params = useParams();
   const lessonId = parseInt(params.lessonId as string, 10);
 
-  const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [attendees, setAttendees] = useState<Attendee[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
-
-  const [isEditingTime, setIsEditingTime] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDate, setEditDate] = useState('');
-  const [editStartHour, setEditStartHour] = useState(0);
-  const [editStartMinute, setEditStartMinute] = useState(0);
-  const [editEndHour, setEditEndHour] = useState(0);
-  const [editEndMinute, setEditEndMinute] = useState(0);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   const {
     gridSlots,
@@ -169,79 +105,19 @@ export default function LessonDetailPage() {
     removeFromGrid,
   } = useGridLayout(`lesson_${lessonId}`);
 
+  const { lesson, setLesson, attendees, setAttendees, loading, setLoading, fetchData } = useLessonDetail(
+    lessonId,
+    initializeGridSlots,
+  );
+
+  const { isEditing, editForm, setEditForm, isSaving, saveError, openEdit, closeEdit, handleSave } = useLessonEdit(
+    lesson,
+    setLesson,
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace('/login');
-    }
-  }, [authLoading, user, router]);
-
-  const toAttendee = ({ attendeeId, student, feedback }: LessonDetailAttendee, lessonDetailId: number): Attendee => ({
-    id: attendeeId,
-    lessonId: lessonDetailId,
-    student: { id: student.id, name: student.name, memo: student.memo },
-    feedback: feedback ? {
-      id: feedback.id,
-      studentId: feedback.studentId,
-      aiContent: feedback.aiContent,
-      keywords: feedback.keywords,
-      liked: feedback.liked,
-      createdAt: feedback.createdAt,
-      updatedAt: feedback.updatedAt,
-    } : null,
-    createdAt: student.createdAt,
-  });
-
-  const fetchData = () => {
-    getLessonDetail(lessonId)
-      .then(detail => {
-        setLesson({ id: detail.id, title: detail.title, startTime: detail.startTime, endTime: detail.endTime });
-        const mapped = detail.attendees.map(attendee => toAttendee(attendee, detail.id));
-        setAttendees(mapped);
-        initializeGridSlots(mapped.map(attendee => attendee.id));
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [lessonId]);
-
-  const openEditTime = () => {
-    if (!lesson) return;
-    const start = parseDateTime(lesson.startTime);
-    const end = parseDateTime(lesson.endTime);
-    setEditTitle(lesson.title);
-    setEditDate(start.date);
-    setEditStartHour(start.hour);
-    setEditStartMinute(start.minute);
-    setEditEndHour(end.hour);
-    setEditEndMinute(end.minute);
-    setSaveError(null);
-    setIsEditingTime(true);
-  };
-
-  const handleSaveTime = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!lesson || !editDate) return;
-    setIsSaving(true);
-    setSaveError(null);
-    const startIso = `${editDate}T${pad(editStartHour)}:${pad(editStartMinute)}:00`;
-    const endIso = `${editDate}T${pad(editEndHour)}:${pad(editEndMinute)}:00`;
-    try {
-      const updated = await updateLesson(lesson.id, editTitle.trim() || lesson.title, startIso, endIso);
-      setLesson(updated);
-      setIsEditingTime(false);
-    } catch {
-      setSaveError('수업 시간을 수정하지 못했어요.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleRemoveAttendee = async (attendeeId: number) => {
     try {
@@ -251,10 +127,6 @@ export default function LessonDetailPage() {
     } catch {
       fetchData();
     }
-  };
-
-  const handleUpdate = () => {
-    fetchData();
   };
 
   const handleAdd = () => {
@@ -345,16 +217,16 @@ export default function LessonDetailPage() {
                 <>
                   <div className="h-10 w-48 bg-purple-100 rounded-2xl animate-pulse mb-3" />
                   <div className="h-6 w-64 bg-purple-50 rounded-xl animate-pulse" />
+                  <div className="h-4 w-32 bg-purple-50 rounded-xl animate-pulse mt-2" />
                 </>
               ) : (
                 <>
                   <h1 className="text-4xl font-bold text-purple-500">
                     {lesson?.title ?? '수업'}
                   </h1>
-                  {/* 날짜/시간 표시 */}
-                  {lesson && !isEditingTime && (
+                  {lesson && !isEditing && (
                     <button
-                      onClick={openEditTime}
+                      onClick={openEdit}
                       className="group flex items-center gap-2 mt-3 text-sm text-gray-500 hover:text-purple-500 transition-colors"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-gray-400 group-hover:text-purple-400 transition-colors">
@@ -372,91 +244,19 @@ export default function LessonDetailPage() {
                       </svg>
                     </button>
                   )}
-
-                  {/* 인라인 수정 패널 */}
-                  {lesson && isEditingTime && (
-                    <form
-                      onSubmit={handleSaveTime}
-                      className="mt-4 bg-white rounded-3xl shadow-lg border border-purple-100 p-5 max-w-sm"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <p className="text-sm font-semibold text-gray-700">수업 시간 수정</p>
-                        <button
-                          type="button"
-                          onClick={() => setIsEditingTime(false)}
-                          className="w-7 h-7 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors text-lg"
-                          aria-label="닫기"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <div className="flex flex-col gap-3">
-                        <div>
-                          <p className="text-xs font-medium text-gray-400 mb-1 ml-0.5">제목</p>
-                          <input
-                            value={editTitle}
-                            onChange={e => setEditTitle(e.target.value)}
-                            className="w-full bg-purple-50 rounded-xl px-3 py-2 text-gray-800 text-sm outline-none focus:ring-2 focus:ring-purple-300"
-                            required
-                          />
-                        </div>
-
-                        <div>
-                          <p className="text-xs font-medium text-gray-400 mb-1 ml-0.5">날짜</p>
-                          <input
-                            type="date"
-                            value={editDate}
-                            onChange={e => setEditDate(e.target.value)}
-                            className="w-full bg-purple-50 rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
-                            required
-                          />
-                        </div>
-
-                        <div className="bg-purple-50 rounded-2xl px-4 py-3 flex items-end gap-3">
-                          <TimeSelect
-                            label="시작"
-                            hour={editStartHour}
-                            minute={editStartMinute}
-                            onHourChange={setEditStartHour}
-                            onMinuteChange={setEditStartMinute}
-                          />
-                          <span className="text-gray-300 font-medium pb-2">–</span>
-                          <TimeSelect
-                            label="종료"
-                            hour={editEndHour}
-                            minute={editEndMinute}
-                            onHourChange={setEditEndHour}
-                            onMinuteChange={setEditEndMinute}
-                          />
-                        </div>
-
-                        {saveError && (
-                          <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{saveError}</p>
-                        )}
-
-                        <div className="flex gap-2 mt-1">
-                          <button
-                            type="button"
-                            onClick={() => setIsEditingTime(false)}
-                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-medium py-2.5 rounded-xl transition-colors"
-                          >
-                            취소
-                          </button>
-                          <button
-                            type="submit"
-                            disabled={isSaving || !editTitle.trim() || !editDate}
-                            className="flex-1 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-200 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
-                          >
-                            {isSaving ? '저장 중...' : '저장'}
-                          </button>
-                        </div>
-                      </div>
-                    </form>
+                  {lesson && isEditing && (
+                    <LessonEditForm
+                      editForm={editForm}
+                      setEditForm={setEditForm}
+                      isSaving={isSaving}
+                      saveError={saveError}
+                      onSubmit={handleSave}
+                      onClose={closeEdit}
+                    />
                   )}
+                  <p className="text-gray-400 mt-2">수강생을 관리해요</p>
                 </>
               )}
-              {!loading && <p className="text-gray-400 mt-2">수강생을 관리해요</p>}
             </div>
             <div className="flex items-center gap-3 mt-1">
               <span className="text-sm text-gray-400">{user.userId}</span>
@@ -539,7 +339,7 @@ export default function LessonDetailPage() {
                       <SortableAttendeeCard
                         key={attendee.id}
                         attendee={attendee}
-                        onUpdate={handleUpdate}
+                        onUpdate={fetchData}
                         onRemove={handleRemoveAttendee}
                       />
                     );
@@ -560,7 +360,6 @@ export default function LessonDetailPage() {
         +
       </button>
 
-      {/* Modal */}
       {showModal && (
         <AddAttendeeModal
           lessonId={lessonId}

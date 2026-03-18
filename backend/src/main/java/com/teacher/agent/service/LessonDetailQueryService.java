@@ -19,6 +19,7 @@ public class LessonDetailQueryService {
   public LessonDetailResponse getDetail(UserId userId, Long lessonId) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(lessonId, userId);
     var rows = lessonRepository.findDetailRows(lessonId, lesson.getUserId());
+
     return LessonDetailResponse.from(lesson, rows);
   }
 }

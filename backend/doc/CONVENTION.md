@@ -99,6 +99,32 @@ ValidationUtil.checkMaxLength(request.memo(), 500, Parameter.MEMO); // → "memo
 ValidationUtil.checkPositive(id, Parameter.ID);                     // → "id은(는) 양수여야 합니다."
 ```
 
+### 반환값 직접 할당 패턴
+
+`checkNotBlank`, `checkNotNull`, `checkMaxLength` 등의 검증 메서드는 검증을 통과한 값을 반환한다. 엔티티 필드에 직접 할당하자.
+
+```java
+// Good — 검증과 할당을 동시에 처리
+public void update(String title, LocalDateTime startTime, LocalDateTime endTime) {
+    this.title = checkNotBlank(title, TITLE);
+    this.startTime = checkNotNull(startTime, START_TIME);
+    this.endTime = checkNotNull(endTime, END_TIME);
+
+    checkArgument(this.endTime.isAfter(this.startTime), END_TIME);
+}
+
+// Bad — 검증 후 별도로 할당 (불필요한 반복)
+public void update(String title, LocalDateTime startTime, LocalDateTime endTime) {
+    checkNotBlank(title, TITLE);
+    checkNotNull(startTime, START_TIME);
+    checkNotNull(endTime, END_TIME);
+
+    this.title = title;
+    this.startTime = startTime;
+    this.endTime = endTime;
+}
+```
+
 ## 주석
 주석은 코드만으로 의도를 파악하기 어려운 경우에만 작성한다.
 

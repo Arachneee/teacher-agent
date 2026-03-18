@@ -28,6 +28,7 @@ public class FeedbackKeyword extends BaseEntity {
     FeedbackKeyword feedbackKeyword = new FeedbackKeyword();
     feedbackKeyword.feedback = checkNotNull(feedback, "feedback");
     feedbackKeyword.keyword = checkNotBlank(checkMaxLength(keyword, 100, KEYWORD), KEYWORD);
+
     return feedbackKeyword;
   }
 

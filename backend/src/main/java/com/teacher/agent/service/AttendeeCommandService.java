@@ -31,15 +31,19 @@ public class AttendeeCommandService {
   public AttendeeResponse add(UserId userId, Long lessonId, AttendeeCreateRequest request) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(lessonId, userId);
     findStudentByIdAndUserIdOrThrow(studentRepository, request.studentId(), userId);
+
     try {
       lesson.addAttendee(request.studentId());
     } catch (IllegalArgumentException exception) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
     }
+
     lessonRepository.flush();
+
     if (feedbackRepository.findByStudentIdAndLessonId(request.studentId(), lessonId).isEmpty()) {
       feedbackRepository.save(Feedback.create(request.studentId(), lessonId));
     }
+
     List<Attendee> attendees = lesson.getAttendees();
     return AttendeeResponse.from(attendees.get(attendees.size() - 1));
   }
@@ -47,6 +51,7 @@ public class AttendeeCommandService {
   @Transactional
   public void remove(UserId userId, Long lessonId, Long attendeeId) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(lessonId, userId);
+
     try {
       lesson.removeAttendee(attendeeId);
     } catch (IllegalArgumentException exception) {

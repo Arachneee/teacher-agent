@@ -25,13 +25,16 @@ public class LessonCommandService {
   @Transactional
   public LessonResponse update(UserId userId, Long id, LessonUpdateRequest request) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(id, userId);
+
     lesson.update(request.title(), request.startTime(), request.endTime());
+
     return LessonResponse.from(lesson);
   }
 
   @Transactional
   public void delete(UserId userId, Long id) {
     lessonQueryService.findByIdAndVerifyOwner(id, userId);
+
     lessonRepository.deleteById(id);
   }
 }

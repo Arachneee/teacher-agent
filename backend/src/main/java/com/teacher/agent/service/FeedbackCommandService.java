@@ -37,6 +37,7 @@ public class FeedbackCommandService {
     feedbackQueryService.findStudentByIdAndVerifyOwner(request.studentId(), userId);
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(request.lessonId(), userId);
     verifyStudentEnrolled(lesson, request.studentId());
+
     return feedbackQueryService.toResponse(
         feedbackRepository.save(Feedback.create(request.studentId(), request.lessonId())));
   }
@@ -44,17 +45,20 @@ public class FeedbackCommandService {
   @Transactional
   public FeedbackResponse update(UserId userId, Long feedbackId, FeedbackUpdateRequest request) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+
     if (request.aiContent() == null || request.aiContent().isBlank()) {
       feedback.clearAiContent();
     } else {
       feedback.updateAiContent(request.aiContent());
     }
+
     return feedbackQueryService.toResponse(feedback);
   }
 
   @Transactional
   public void delete(UserId userId, Long feedbackId) {
     feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+
     feedbackLikeRepository.deleteAllByFeedbackId(feedbackId);
     feedbackRepository.deleteById(feedbackId);
   }
@@ -62,13 +66,17 @@ public class FeedbackCommandService {
   @Transactional
   public FeedbackResponse generateAiContent(UserId userId, Long feedbackId) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+
     if (feedback.getKeywords().isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "키워드가 없습니다. 먼저 키워드를 추가해주세요.");
     }
+
     Student student = findByIdOrThrow(studentRepository, feedback.getStudentId(),
         "Student not found: " + feedback.getStudentId());
     String aiContent = feedbackAiService.generateFeedbackContent(feedback, student.getName());
+
     feedback.updateAiContent(aiContent);
+
     return feedbackQueryService.toResponse(feedback);
   }
 
@@ -76,14 +84,17 @@ public class FeedbackCommandService {
   public FeedbackResponse addKeyword(UserId userId, Long feedbackId,
       FeedbackKeywordCreateRequest request) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+
     feedback.addKeyword(request.keyword());
     feedbackRepository.flush();
+
     return feedbackQueryService.toResponse(feedback);
   }
 
   @Transactional
   public void removeKeyword(UserId userId, Long feedbackId, Long keywordId) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+
     try {
       feedback.removeKeyword(keywordId);
     } catch (IllegalArgumentException exception) {
@@ -95,30 +106,36 @@ public class FeedbackCommandService {
   public FeedbackResponse updateKeyword(UserId userId, Long feedbackId, Long keywordId,
       FeedbackKeywordUpdateRequest request) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+
     try {
       feedback.updateKeyword(keywordId, request.keyword());
     } catch (IllegalArgumentException exception) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
     }
+
     return feedbackQueryService.toResponse(feedback);
   }
 
   @Transactional
   public FeedbackResponse like(UserId userId, Long feedbackId) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+
     try {
       feedback.like();
     } catch (IllegalStateException exception) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
+
     feedbackLikeRepository.save(
         FeedbackLike.create(feedbackId, feedback.getAiContent(), feedback.buildKeywordsSnapshot()));
+
     return FeedbackResponse.withKeywords(feedback, true);
   }
 
   private void verifyStudentEnrolled(Lesson lesson, Long studentId) {
     boolean enrolled = lesson.getAttendees().stream()
         .anyMatch(attendee -> attendee.getStudentId().equals(studentId));
+
     if (!enrolled) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
           "Student is not enrolled in this lesson");

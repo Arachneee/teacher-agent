@@ -29,10 +29,12 @@ public class Student extends BaseEntity {
 
   public static Student create(UserId userId, String name, String memo) {
     Student student = new Student();
+
     checkNotNull(userId, USER_ID);
     student.userId = new UserId(checkNotBlank(userId.value(), USER_ID));
     student.name = checkNotBlank(name, NAME);
     student.memo = checkMaxLength(memo, 500, MEMO);
+
     return student;
   }
 

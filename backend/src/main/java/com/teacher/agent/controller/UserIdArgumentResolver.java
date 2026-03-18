@@ -22,9 +22,11 @@ public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
   public UserId resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
       NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
     if (authentication == null || !authentication.isAuthenticated()) {
       throw new IllegalStateException("인증 정보가 존재하지 않습니다.");
     }
+
     return new UserId(authentication.getName());
   }
 }

@@ -30,9 +30,11 @@ public class FeedbackLike extends BaseEntity {
   public static FeedbackLike create(Long feedbackId, String aiContentSnapshot,
       String keywordsSnapshot) {
     FeedbackLike feedbackLike = new FeedbackLike();
+
     feedbackLike.feedbackId = checkPositive(feedbackId, FEEDBACK_ID);
     feedbackLike.aiContentSnapshot = checkNotBlank(aiContentSnapshot, AI_CONTENT_SNAPSHOT);
     feedbackLike.keywordsSnapshot = checkNotNull(keywordsSnapshot, KEYWORDS_SNAPSHOT);
+
     return feedbackLike;
   }
 }

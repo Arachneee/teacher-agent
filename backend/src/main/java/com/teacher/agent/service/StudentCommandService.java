@@ -21,19 +21,23 @@ public class StudentCommandService {
   @Transactional
   public StudentResponse create(UserId userId, StudentCreateRequest request) {
     Student student = Student.create(userId, request.name(), request.memo());
+
     return StudentResponse.from(studentRepository.save(student));
   }
 
   @Transactional
   public StudentResponse update(UserId userId, Long id, StudentUpdateRequest request) {
     Student student = findStudentByIdAndUserIdOrThrow(studentRepository, id, userId);
+
     student.update(request.name(), request.memo());
+
     return StudentResponse.from(student);
   }
 
   @Transactional
   public void delete(UserId userId, Long id) {
     findStudentByIdAndUserIdOrThrow(studentRepository, id, userId);
+
     studentRepository.deleteById(id);
   }
 }

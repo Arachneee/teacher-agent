@@ -33,6 +33,7 @@ public class DataInitializer implements CommandLineRunner {
   @Transactional
   public void run(String... args) {
     String encodedPassword = passwordEncoder.encode(initialPassword);
+
     teacherRepository.findByUserId(new UserId(initialUserId))
         .ifPresentOrElse(teacher -> teacher.updatePassword(encodedPassword), () -> teacherRepository
             .save(Teacher.create(initialUserId, encodedPassword, initialName, initialSubject)));

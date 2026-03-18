@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lesson, getLessons } from './lib/api';
+import { padTwoDigits } from './lib/dateTimeUtils';
 import { useAuth } from './context/AuthContext';
 import WeeklyCalendarView from './components/WeeklyCalendarView';
 import AddLessonModal from './components/AddLessonModal';
@@ -17,8 +18,7 @@ function getWeekStart(date: Date): Date {
 }
 
 function toISODateString(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`;
 }
 
 function formatWeekRange(weekStart: Date): string {

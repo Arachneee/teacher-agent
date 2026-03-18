@@ -27,6 +27,7 @@ public class LessonQueryService {
   public List<LessonResponse> getByTeacherAndWeek(UserId userId, LocalDate weekStart) {
     LocalDateTime from = weekStart.atStartOfDay();
     LocalDateTime to = weekStart.plusDays(7).atStartOfDay();
+
     return lessonRepository.findAllByUserIdAndStartTimeBetween(userId, from, to)
         .stream().map(LessonResponse::from).toList();
   }

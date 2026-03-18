@@ -20,7 +20,9 @@ public class TeacherCommandService {
   @Transactional
   public TeacherResponse updateByUserId(UserId userId, TeacherUpdateRequest request) {
     Teacher teacher = findTeacherByUserIdOrThrow(teacherRepository, userId);
+
     teacher.updateProfile(request.name(), request.subject());
+
     return TeacherResponse.from(teacher);
   }
 }

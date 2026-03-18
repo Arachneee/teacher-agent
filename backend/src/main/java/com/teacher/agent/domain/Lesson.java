@@ -41,38 +41,42 @@ public class Lesson extends BaseEntity {
   public static Lesson create(UserId userId, String title, LocalDateTime startTime,
       LocalDateTime endTime) {
     Lesson lesson = new Lesson();
+
     checkNotNull(userId, USER_ID);
     lesson.userId = new UserId(checkNotBlank(userId.value(), USER_ID));
     lesson.title = checkNotBlank(title, TITLE);
     lesson.startTime = checkNotNull(startTime, START_TIME);
     lesson.endTime = checkNotNull(endTime, END_TIME);
-    checkArgument(endTime.isAfter(startTime), END_TIME);
+
+    checkArgument(lesson.endTime.isAfter(lesson.startTime), END_TIME);
+
     return lesson;
   }
 
   public void addAttendee(Long studentId) {
     boolean isDuplicate =
         attendees.stream().anyMatch(attendee -> attendee.getStudentId().equals(studentId));
+
     if (isDuplicate) {
       throw new IllegalArgumentException("Attendee already exists: " + studentId);
     }
+
     attendees.add(Attendee.create(this, studentId));
   }
 
   public void removeAttendee(Long attendeeId) {
     boolean removed = attendees.removeIf(attendee -> Objects.equals(attendee.getId(), attendeeId));
+
     if (!removed) {
       throw new IllegalArgumentException("Attendee not found: " + attendeeId);
     }
   }
 
   public void update(String title, LocalDateTime startTime, LocalDateTime endTime) {
-    checkNotBlank(title, TITLE);
-    checkNotNull(startTime, START_TIME);
-    checkNotNull(endTime, END_TIME);
-    checkArgument(endTime.isAfter(startTime), END_TIME);
-    this.title = title;
-    this.startTime = startTime;
-    this.endTime = endTime;
+    this.title = checkNotBlank(title, TITLE);
+    this.startTime = checkNotNull(startTime, START_TIME);
+    this.endTime = checkNotNull(endTime, END_TIME);
+
+    checkArgument(this.endTime.isAfter(this.startTime), END_TIME);
   }
 }

@@ -19,6 +19,7 @@ public class FeedbackAiService {
   public FeedbackAiService(ChatClient.Builder chatClientBuilder,
       @Value("classpath:prompts/feedback_message.md") Resource feedbackMessagePromptResource) {
     this.chatClientBuilder = chatClientBuilder;
+
     try {
       this.feedbackMessagePrompt =
           feedbackMessagePromptResource.getContentAsString(StandardCharsets.UTF_8);
