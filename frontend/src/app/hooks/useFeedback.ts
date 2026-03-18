@@ -12,7 +12,7 @@ import {
   updateFeedback,
 } from '../lib/api';
 
-export function useFeedback(attendeeId: number, initialFeedback?: Feedback | null) {
+export function useFeedback(studentId: number, initialFeedback?: Feedback | null) {
   const [feedback, setFeedback] = useState<Feedback | null>(initialFeedback ?? null);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -23,9 +23,9 @@ export function useFeedback(attendeeId: number, initialFeedback?: Feedback | nul
   const skipInitialFetchRef = useRef(initialFeedback !== undefined);
 
   const loadLatestFeedback = useCallback(async (): Promise<Feedback | null> => {
-    const feedbacks = await getFeedbacks(attendeeId);
+    const feedbacks = await getFeedbacks(studentId);
     return feedbacks.length > 0 ? feedbacks[0] : null;
-  }, [attendeeId]);
+  }, [studentId]);
 
   useEffect(() => {
     if (skipInitialFetchRef.current) return;
@@ -72,7 +72,7 @@ export function useFeedback(attendeeId: number, initialFeedback?: Feedback | nul
     try {
       let feedbackId = feedback?.id;
       if (feedbackId === undefined) {
-        const created = await createFeedback(attendeeId);
+        const created = await createFeedback(studentId);
         feedbackId = created.id;
       }
       await addKeyword(feedbackId, keyword);

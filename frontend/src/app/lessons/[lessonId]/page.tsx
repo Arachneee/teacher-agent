@@ -35,7 +35,7 @@ export default function LessonDetailPage() {
     student: { id: student.id, name: student.name, memo: student.memo },
     feedback: feedback ? {
       id: feedback.id,
-      attendeeId,
+      studentId: feedback.studentId,
       aiContent: feedback.aiContent,
       keywords: feedback.keywords,
       liked: feedback.liked,

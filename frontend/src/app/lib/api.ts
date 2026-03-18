@@ -16,7 +16,7 @@ export interface FeedbackKeyword {
 
 export interface Feedback {
   id: number;
-  attendeeId: number;
+  studentId: number;
   aiContent: string | null;
   keywords: FeedbackKeyword[];
   liked: boolean;
@@ -212,17 +212,17 @@ export async function removeAttendee(lessonId: number, attendeeId: number): Prom
 
 // Feedbacks
 
-export async function getFeedbacks(attendeeId: number): Promise<Feedback[]> {
-  const res = await fetchWithAuth(`${BASE_URL}/feedbacks?attendeeId=${attendeeId}`);
+export async function getFeedbacks(studentId: number): Promise<Feedback[]> {
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks?studentId=${studentId}`);
   if (!res.ok) throw new Error('피드백 목록을 불러오지 못했어요');
   return res.json();
 }
 
-export async function createFeedback(attendeeId: number): Promise<Feedback> {
+export async function createFeedback(studentId: number): Promise<Feedback> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ attendeeId }),
+    body: JSON.stringify({ studentId }),
   });
   if (!res.ok) throw new Error('피드백을 생성하지 못했어요');
   return res.json();

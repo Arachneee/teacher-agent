@@ -53,7 +53,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
     handleGenerate,
     handleUpdateAiContent,
     handleLike,
-  } = useFeedback(attendee.id, attendee.feedback);
+  } = useFeedback(attendee.student.id, attendee.feedback);
 
   const avatarColor = AVATAR_COLORS[attendee.student.id % AVATAR_COLORS.length];
 
