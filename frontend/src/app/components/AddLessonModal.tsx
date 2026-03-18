@@ -17,6 +17,74 @@ function toIsoString(datetimeLocalValue: string): string {
   return datetimeLocalValue + ':00';
 }
 
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+function DateTimePicker({
+  label,
+  value,
+  onChange,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+}) {
+  const [datePart, timePart] = value ? value.split('T') : ['', '00:00'];
+  const hour = timePart ? parseInt(timePart.split(':')[0], 10) : 0;
+  const minute = timePart ? parseInt(timePart.split(':')[1], 10) : 0;
+
+  const minuteOptions = MINUTES.includes(minute) ? MINUTES : [...MINUTES, minute].sort((a, b) => a - b);
+
+  const update = (newDate: string, newHour: number, newMinute: number) => {
+    if (!newDate) return;
+    onChange(`${newDate}T${String(newHour).padStart(2, '0')}:${String(newMinute).padStart(2, '0')}`);
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
+        {label} {required && <span className="text-rose-400">*</span>}
+      </label>
+      <div className="bg-purple-50 rounded-2xl px-4 pt-3 pb-3 flex flex-col gap-2">
+        <input
+          type="date"
+          value={datePart}
+          onChange={event => update(event.target.value, hour, minute)}
+          className="w-full bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
+          required={required}
+        />
+        <div className="flex items-center gap-2">
+          <select
+            value={hour}
+            onChange={event => update(datePart, parseInt(event.target.value, 10), minute)}
+            className="flex-1 bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none text-center"
+          >
+            {HOURS.map(h => (
+              <option key={h} value={h}>
+                {String(h).padStart(2, '0')}시
+              </option>
+            ))}
+          </select>
+          <span className="text-purple-300 font-bold text-lg select-none">:</span>
+          <select
+            value={minute}
+            onChange={event => update(datePart, hour, parseInt(event.target.value, 10))}
+            className="flex-1 bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none text-center"
+          >
+            {minuteOptions.map(m => (
+              <option key={m} value={m}>
+                {String(m).padStart(2, '0')}분
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AddLessonModal({ lesson, onSave, onClose }: Props) {
   const isEditMode = lesson !== undefined;
   const [title, setTitle] = useState(lesson?.title ?? '');
@@ -75,31 +143,19 @@ export default function AddLessonModal({ lesson, onSave, onClose }: Props) {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
-              시작 시간 <span className="text-rose-400">*</span>
-            </label>
-            <input
-              type="datetime-local"
-              value={startTime}
-              onChange={event => setStartTime(event.target.value)}
-              className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300"
-              required
-            />
-          </div>
+          <DateTimePicker
+            label="시작 시간"
+            value={startTime}
+            onChange={setStartTime}
+            required
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
-              종료 시간 <span className="text-rose-400">*</span>
-            </label>
-            <input
-              type="datetime-local"
-              value={endTime}
-              onChange={event => setEndTime(event.target.value)}
-              className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300"
-              required
-            />
-          </div>
+          <DateTimePicker
+            label="종료 시간"
+            value={endTime}
+            onChange={setEndTime}
+            required
+          />
 
           {errorMessage && (
             <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{errorMessage}</p>
