@@ -10,8 +10,10 @@ import com.teacher.agent.service.LessonDetailQueryService;
 import com.teacher.agent.service.LessonQueryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +35,12 @@ public class LessonController {
   }
 
   @GetMapping
-  public ResponseEntity<List<LessonResponse>> getAll(UserId userId) {
+  public ResponseEntity<List<LessonResponse>> getAll(UserId userId,
+      @RequestParam(required = false)
+      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate weekStart) {
+    if (weekStart != null) {
+      return ResponseEntity.ok(lessonQueryService.getByTeacherAndWeek(userId, weekStart));
+    }
     return ResponseEntity.ok(lessonQueryService.getAllByTeacher(userId));
   }
 

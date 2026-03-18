@@ -9,6 +9,7 @@ import com.teacher.agent.domain.TeacherRepository;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -170,6 +171,31 @@ class LessonServiceTest {
 
     assertThatThrownBy(() -> lessonCommandService.delete(otherTeacher.getUserId(), created.id()))
         .isInstanceOf(ResponseStatusException.class);
+  }
+
+  @Test
+  void 주간_수업_목록을_조회한다() {
+    lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+    LocalDateTime nextWeekStart = LocalDateTime.of(2026, 3, 23, 9, 0);
+    LocalDateTime nextWeekEnd = LocalDateTime.of(2026, 3, 23, 10, 0);
+    lessonCommandService.create(teacher.getUserId(),
+        new LessonCreateRequest("영어", nextWeekStart, nextWeekEnd));
+
+    List<LessonResponse> lessons =
+        lessonQueryService.getByTeacherAndWeek(teacher.getUserId(), LocalDate.of(2026, 3, 16));
+
+    assertThat(lessons).hasSize(1);
+    assertThat(lessons.get(0).title()).isEqualTo("수학");
+  }
+
+  @Test
+  void 해당_주에_수업이_없으면_빈_목록을_반환한다() {
+    lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
+
+    List<LessonResponse> lessons =
+        lessonQueryService.getByTeacherAndWeek(teacher.getUserId(), LocalDate.of(2026, 3, 23));
+
+    assertThat(lessons).isEmpty();
   }
 
 }

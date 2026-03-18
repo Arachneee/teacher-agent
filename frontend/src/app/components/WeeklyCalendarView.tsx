@@ -1,0 +1,291 @@
+'use client';
+
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Lesson, deleteLesson } from '../lib/api';
+
+const FIRST_HOUR = 7;
+const LAST_HOUR = 22;
+const TOTAL_HOURS = LAST_HOUR - FIRST_HOUR;
+const CELL_HEIGHT = 80;
+
+const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일'];
+
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function formatKoreanTime(isoString: string): string {
+  const date = new Date(isoString);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function getLessonPosition(lesson: Lesson): { top: number; height: number } {
+  const start = new Date(lesson.startTime);
+  const end = new Date(lesson.endTime);
+  const startHourDecimal = start.getHours() + start.getMinutes() / 60;
+  const endHourDecimal = end.getHours() + end.getMinutes() / 60;
+
+  const clampedStart = Math.max(startHourDecimal, FIRST_HOUR);
+  const clampedEnd = Math.min(endHourDecimal, LAST_HOUR);
+
+  const top = (clampedStart - FIRST_HOUR) * CELL_HEIGHT;
+  const height = Math.max((clampedEnd - clampedStart) * CELL_HEIGHT, 24);
+  return { top, height };
+}
+
+interface Props {
+  lessons: Lesson[];
+  weekStart: Date;
+  onEdit: (lesson: Lesson) => void;
+  onDelete: (id: number) => void;
+  onCellClick: (startTime: string, endTime: string) => void;
+}
+
+export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelete, onCellClick }: Props) {
+  const router = useRouter();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart]
+  );
+
+  const hours = useMemo(
+    () => Array.from({ length: TOTAL_HOURS }, (_, i) => FIRST_HOUR + i),
+    []
+  );
+
+  const lessonsByDay = useMemo(() => {
+    const map = new Map<number, Lesson[]>();
+    for (let i = 0; i < 7; i++) map.set(i, []);
+    lessons.forEach(lesson => {
+      const lessonDate = new Date(lesson.startTime);
+      weekDays.forEach((day, index) => {
+        if (
+          lessonDate.getFullYear() === day.getFullYear() &&
+          lessonDate.getMonth() === day.getMonth() &&
+          lessonDate.getDate() === day.getDate()
+        ) {
+          map.get(index)!.push(lesson);
+        }
+      });
+    });
+    return map;
+  }, [lessons, weekDays]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const currentHour = new Date().getHours();
+      const scrollTop = Math.max(0, (currentHour - FIRST_HOUR - 1) * CELL_HEIGHT);
+      scrollRef.current.scrollTop = scrollTop;
+    }
+  }, []);
+
+  const handleCellClick = useCallback(
+    (day: Date, hour: number) => {
+      const startDate = new Date(day);
+      startDate.setHours(hour, 0, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setHours(hour + 1, 0, 0, 0);
+
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const fmt = (d: Date) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+
+      onCellClick(fmt(startDate), fmt(endDate));
+    },
+    [onCellClick]
+  );
+
+  const today = new Date();
+
+  const currentTimeTop = useMemo(() => {
+    const now = new Date();
+    const hourDecimal = now.getHours() + now.getMinutes() / 60;
+    if (hourDecimal < FIRST_HOUR || hourDecimal > LAST_HOUR) return null;
+    return (hourDecimal - FIRST_HOUR) * CELL_HEIGHT;
+  }, []);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+      {/* Day Headers */}
+      <div className="flex border-b border-gray-100 bg-white flex-shrink-0" style={{ paddingLeft: '56px' }}>
+        {weekDays.map((day, i) => {
+          const dayName = DAY_NAMES[i];
+          const isToday =
+            day.getFullYear() === today.getFullYear() &&
+            day.getMonth() === today.getMonth() &&
+            day.getDate() === today.getDate();
+          const isWeekend = i === 5 || i === 6;
+
+          return (
+            <div
+              key={i}
+              className={`flex-1 py-3 text-center border-l border-gray-100 ${isWeekend ? 'bg-slate-50/80' : ''}`}
+            >
+              <div
+                className={`text-xs font-medium mb-1.5 ${
+                  isWeekend ? 'text-rose-400' : isToday ? 'text-purple-500' : 'text-gray-400'
+                }`}
+              >
+                {dayName}
+              </div>
+              <div
+                className={`text-sm font-bold w-8 h-8 flex items-center justify-center mx-auto rounded-full transition-colors ${
+                  isToday
+                    ? 'bg-purple-500 text-white'
+                    : isWeekend
+                    ? 'text-rose-500'
+                    : 'text-gray-700'
+                }`}
+              >
+                {day.getDate()}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Scrollable Grid */}
+      <div ref={scrollRef} className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+        <div className="flex">
+          {/* Time Labels */}
+          <div className="flex-shrink-0 w-14">
+            {hours.map(hour => (
+              <div
+                key={hour}
+                className="flex items-start justify-end pr-3 border-b border-gray-100"
+                style={{ height: `${CELL_HEIGHT}px` }}
+              >
+                <span className="text-xs text-gray-400 mt-1 tabular-nums">
+                  {String(hour).padStart(2, '0')}:00
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Day Columns */}
+          {weekDays.map((day, dayIndex) => {
+            const dayLessons = lessonsByDay.get(dayIndex) || [];
+            const isToday =
+              day.getFullYear() === today.getFullYear() &&
+              day.getMonth() === today.getMonth() &&
+              day.getDate() === today.getDate();
+            const isWeekend = dayIndex === 5 || dayIndex === 6;
+
+            return (
+              <div
+                key={dayIndex}
+                className={`flex-1 relative border-l border-gray-100 min-w-0 ${isWeekend ? 'bg-slate-50/40' : ''}`}
+                style={{ height: `${TOTAL_HOURS * CELL_HEIGHT}px` }}
+              >
+                {/* Hour slot click targets */}
+                {hours.map(hour => (
+                  <div
+                    key={hour}
+                    className="absolute w-full border-b border-gray-100 hover:bg-purple-50/60 transition-colors cursor-pointer group"
+                    style={{
+                      top: `${(hour - FIRST_HOUR) * CELL_HEIGHT}px`,
+                      height: `${CELL_HEIGHT}px`,
+                    }}
+                    onClick={() => handleCellClick(day, hour)}
+                  >
+                    <span className="opacity-0 group-hover:opacity-100 absolute bottom-1 right-1 text-purple-300 text-xs transition-opacity select-none">
+                      +
+                    </span>
+                  </div>
+                ))}
+
+                {/* Current time indicator */}
+                {isToday && currentTimeTop !== null && (
+                  <div
+                    className="absolute left-0 right-0 z-10 pointer-events-none"
+                    style={{ top: `${currentTimeTop}px` }}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 rounded-full bg-rose-400 -ml-1 flex-shrink-0" />
+                      <div className="flex-1 h-px bg-rose-400" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Lesson blocks */}
+                {dayLessons.map(lesson => {
+                  const { top, height } = getLessonPosition(lesson);
+                  return (
+                    <div
+                      key={lesson.id}
+                      className="absolute left-0.5 right-0.5 rounded-lg overflow-hidden cursor-pointer z-10 shadow-sm hover:shadow-md transition-shadow group/lesson"
+                      style={{ top: `${top}px`, height: `${height}px` }}
+                      onClick={event => {
+                        event.stopPropagation();
+                        router.push(`/lessons/${lesson.id}`);
+                      }}
+                    >
+                      <div className="h-full bg-violet-400 px-2 py-1 relative">
+                        <div className="text-white text-xs font-semibold truncate leading-tight pr-12">
+                          {lesson.title}
+                        </div>
+                        {height > 32 && (
+                          <div className="text-purple-100 text-xs leading-tight mt-0.5 truncate pr-12">
+                            {formatKoreanTime(lesson.startTime)} –{' '}
+                            {formatKoreanTime(lesson.endTime)}
+                          </div>
+                        )}
+                        {/* Edit / Delete buttons */}
+                        <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover/lesson:opacity-100 transition-opacity">
+                          <button
+                            onClick={event => {
+                              event.stopPropagation();
+                              onEdit(lesson);
+                            }}
+                            className="w-5 h-5 flex items-center justify-center rounded bg-white/25 hover:bg-white/45 text-white transition-colors"
+                            aria-label="수정"
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={async event => {
+                              event.stopPropagation();
+                              if (!confirm(`"${lesson.title}" 수업을 삭제할까요?\n수강생과 피드백도 함께 삭제됩니다.`)) return;
+                              setDeletingId(lesson.id);
+                              try {
+                                await deleteLesson(lesson.id);
+                                onDelete(lesson.id);
+                              } catch {
+                                alert('수업을 삭제하지 못했어요');
+                              } finally {
+                                setDeletingId(null);
+                              }
+                            }}
+                            disabled={deletingId === lesson.id}
+                            className="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-rose-400/80 text-white transition-colors"
+                            aria-label="삭제"
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                              <path d="M10 11v6M14 11v6" />
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}

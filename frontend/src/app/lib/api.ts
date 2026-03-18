@@ -152,8 +152,9 @@ export async function deleteStudent(id: number): Promise<void> {
 
 // Lessons
 
-export async function getLessons(): Promise<Lesson[]> {
-  const res = await fetchWithAuth(`${BASE_URL}/lessons`);
+export async function getLessons(weekStart?: string): Promise<Lesson[]> {
+  const url = weekStart ? `${BASE_URL}/lessons?weekStart=${weekStart}` : `${BASE_URL}/lessons`;
+  const res = await fetchWithAuth(url);
   if (!res.ok) throw new Error('수업 목록을 불러오지 못했어요');
   return res.json();
 }
