@@ -17,3 +17,13 @@ output "application_url" {
   description = "애플리케이션 URL"
   value       = "http://${aws_instance.this.public_ip}:8080"
 }
+
+output "rds_endpoint" {
+  description = "RDS 엔드포인트 (EC2에서 접속 시 사용)"
+  value       = aws_db_instance.this.endpoint
+}
+
+output "rds_jdbc_url" {
+  description = "Spring Boot JDBC URL"
+  value       = "jdbc:mysql://${aws_db_instance.this.endpoint}/${var.rds_db_name}"
+}

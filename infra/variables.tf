@@ -21,3 +21,21 @@ variable "project_name" {
   type        = string
   default     = "teacher-agent"
 }
+
+variable "rds_db_name" {
+  description = "RDS 데이터베이스 이름"
+  type        = string
+  default     = "teacheragent"
+}
+
+variable "rds_username" {
+  description = "RDS 마스터 사용자 이름"
+  type        = string
+  default     = "admin"
+}
+
+variable "rds_password" {
+  description = "RDS 마스터 비밀번호 (terraform.tfvars 또는 환경변수로 주입)"
+  type        = string
+  sensitive   = true
+}

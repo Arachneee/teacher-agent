@@ -6,3 +6,7 @@
 
 # SSH Key (절대 커밋 금지)
 *.pem
+
+# 민감 정보 (RDS 비밀번호 등)
+terraform.tfvars
+*.tfvars

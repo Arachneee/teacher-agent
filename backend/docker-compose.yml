@@ -1,0 +1,19 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: teacher-agent-mysql
+    environment:
+      MYSQL_DATABASE: teacheragent
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: local-password
+      MYSQL_ROOT_PASSWORD: root-password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+volumes:
+  mysql-data:

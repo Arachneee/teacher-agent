@@ -34,6 +34,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.ai:spring-ai-starter-model-openai")
     runtimeOnly("com.h2database:h2")
+    runtimeOnly("com.mysql:mysql-connector-j")
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")

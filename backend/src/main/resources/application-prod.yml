@@ -1,7 +1,8 @@
 cors:
-  allowed-origin-patterns: https://*.vercel.app
+  allowed-origin-patterns: https://teacher-agent-nine.vercel.app
 
 spring:
-  h2:
-    console:
-      enabled: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}

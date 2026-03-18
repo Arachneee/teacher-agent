@@ -91,6 +91,90 @@ resource "aws_security_group" "this" {
 }
 
 # ========================================
+# RDS Security Group (EC2에서만 MySQL 접근 허용)
+# ========================================
+
+resource "aws_security_group" "rds" {
+  name        = "${var.project_name}-rds-sg"
+  description = "Allow MySQL only from EC2 security group"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    description     = "MySQL from EC2"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.this.id]
+  }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-rds-sg"
+  }
+}
+
+# ========================================
+# RDS Subnet Group (Default VPC 서브넷 사용)
+# ========================================
+
+resource "aws_db_subnet_group" "this" {
+  name       = "${var.project_name}-rds-subnet-group"
+  subnet_ids = data.aws_subnets.default.ids
+
+  tags = {
+    Name = "${var.project_name}-rds-subnet-group"
+  }
+}
+
+# ========================================
+# RDS Instance (프리티어 — db.t3.micro, 20GB gp2)
+# ========================================
+
+resource "aws_db_instance" "this" {
+  identifier = "${var.project_name}-db"
+
+  # 프리티어 조건: db.t3.micro + MySQL 8.0 + 20GB gp2
+  instance_class    = "db.t3.micro"
+  engine            = "mysql"
+  engine_version    = "8.0"
+  allocated_storage = 20
+  storage_type      = "gp2" # gp3는 프리티어 대상 아님
+
+  # Multi-AZ 비활성화 — 활성화 시 즉시 과금
+  multi_az = false
+
+  db_name  = var.rds_db_name
+  username = var.rds_username
+  password = var.rds_password
+
+  # 퍼블릭 접근 차단 — EC2 보안 그룹을 통해서만 접근
+  publicly_accessible    = false
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  db_subnet_group_name   = aws_db_subnet_group.this.name
+
+  # 자동 백업 비활성화 — 백업 스토리지도 무료 한도 초과 시 과금 가능
+  backup_retention_period = 0
+
+  # 최종 스냅샷 생략 — destroy 시 스냅샷 스토리지 비용 방지
+  skip_final_snapshot = true
+  deletion_protection = false
+
+  # 마이너 버전 자동 업그레이드 (보안 패치)
+  auto_minor_version_upgrade = true
+
+  tags = {
+    Name = "${var.project_name}-db"
+  }
+}
+
+# ========================================
 # EC2 Instance (프리티어)
 # ========================================
 
