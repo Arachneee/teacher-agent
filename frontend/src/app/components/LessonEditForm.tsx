@@ -22,45 +22,28 @@ interface Props {
 
 export default function LessonEditForm({ editForm, setEditForm, isSaving, saveError, onSubmit, onClose }: Props) {
   return (
-    <form
-      onSubmit={onSubmit}
-      className="mt-4 bg-white rounded-3xl shadow-lg border border-purple-100 p-5 max-w-sm"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-gray-700">수업 시간 수정</p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-7 h-7 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors text-lg"
-          aria-label="닫기"
-        >
-          ✕
-        </button>
-      </div>
+    <form onSubmit={onSubmit}>
+      <input
+        value={editForm.title}
+        onChange={e => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+        className="text-4xl font-bold text-purple-500 bg-transparent border-b-2 border-purple-200 focus:border-purple-400 outline-none w-full leading-tight"
+        required
+        autoFocus
+      />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-end gap-3 mt-4">
         <div>
-          <p className="text-xs font-medium text-gray-400 mb-1 ml-0.5">제목</p>
-          <input
-            value={editForm.title}
-            onChange={e => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-            className="w-full bg-purple-50 rounded-xl px-3 py-2 text-gray-800 text-sm outline-none focus:ring-2 focus:ring-purple-300"
-            required
-          />
-        </div>
-
-        <div>
-          <p className="text-xs font-medium text-gray-400 mb-1 ml-0.5">날짜</p>
+          <p className="text-xs font-medium text-gray-400 mb-1">날짜</p>
           <input
             type="date"
             value={editForm.date}
             onChange={e => setEditForm(prev => ({ ...prev, date: e.target.value }))}
-            className="w-full bg-purple-50 rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
+            className="bg-purple-50 rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-200 cursor-pointer"
             required
           />
         </div>
 
-        <div className="bg-purple-50 rounded-2xl px-4 py-3 flex items-end gap-3">
+        <div className="flex items-end gap-2">
           <TimePicker
             label="시작"
             hour={editForm.startHour}
@@ -68,7 +51,7 @@ export default function LessonEditForm({ editForm, setEditForm, isSaving, saveEr
             onHourChange={startHour => setEditForm(prev => ({ ...prev, startHour }))}
             onMinuteChange={startMinute => setEditForm(prev => ({ ...prev, startMinute }))}
           />
-          <span className="text-gray-300 font-medium pb-2">–</span>
+          <span className="text-gray-300 font-medium pb-2.5">–</span>
           <TimePicker
             label="종료"
             hour={editForm.endHour}
@@ -78,27 +61,27 @@ export default function LessonEditForm({ editForm, setEditForm, isSaving, saveEr
           />
         </div>
 
-        {saveError && (
-          <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{saveError}</p>
-        )}
-
-        <div className="flex gap-2 mt-1">
+        <div className="flex items-center gap-2 pb-0.5">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-medium py-2.5 rounded-xl transition-colors"
+            className="text-sm text-gray-400 hover:text-gray-600 transition-colors px-1"
           >
             취소
           </button>
           <button
             type="submit"
             disabled={isSaving || !editForm.title.trim() || !editForm.date}
-            className="flex-1 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-200 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
+            className="text-sm font-semibold text-purple-500 hover:text-purple-700 disabled:text-purple-300 transition-colors px-1"
           >
             {isSaving ? '저장 중...' : '저장'}
           </button>
         </div>
       </div>
+
+      {saveError && (
+        <p className="text-xs text-rose-400 mt-2">{saveError}</p>
+      )}
     </form>
   );
 }

@@ -20,10 +20,6 @@ public class LessonQueryService {
 
   private final LessonRepository lessonRepository;
 
-  public List<LessonResponse> getAllByTeacher(UserId userId) {
-    return lessonRepository.findAllByUserId(userId).stream().map(LessonResponse::from).toList();
-  }
-
   public List<LessonResponse> getByTeacherAndWeek(UserId userId, LocalDate weekStart) {
     LocalDateTime from = weekStart.atStartOfDay();
     LocalDateTime to = weekStart.plusDays(7).atStartOfDay();

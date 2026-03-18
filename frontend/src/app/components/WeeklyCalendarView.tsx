@@ -112,8 +112,11 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-      {/* Day Headers */}
-      <div className="flex border-b border-gray-100 bg-white flex-shrink-0" style={{ paddingLeft: '56px' }}>
+      {/* Scrollable container wrapping header + grid for consistent width */}
+      <div ref={scrollRef} className="overflow-y-scroll flex-1" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+
+      {/* Day Headers - sticky inside scroll container */}
+      <div className="flex border-b border-gray-100 bg-white sticky top-0 z-20" style={{ paddingLeft: '56px' }}>
         {weekDays.map((day, i) => {
           const dayName = DAY_NAMES[i];
           const isToday =
@@ -150,8 +153,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
         })}
       </div>
 
-      {/* Scrollable Grid */}
-      <div ref={scrollRef} className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      {/* Grid */}
         <div className="flex">
           {/* Time Labels */}
           <div className="flex-shrink-0 w-14">
@@ -219,7 +221,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                   return (
                     <div
                       key={lesson.id}
-                      className="absolute left-0.5 right-0.5 rounded-lg overflow-hidden cursor-pointer z-10 shadow-sm hover:shadow-md transition-shadow group/lesson"
+                      className="absolute left-0.5 right-0.5 rounded-lg overflow-hidden cursor-pointer z-10 shadow-sm hover:shadow-md transition-shadow group/lesson border border-violet-300"
                       style={{ top: `${top}px`, height: `${height}px` }}
                       onClick={event => {
                         event.stopPropagation();

@@ -71,31 +71,6 @@ class LessonServiceTest {
   }
 
   @Test
-  void 해당_교사의_수업_목록을_조회한다() {
-    lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
-    lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("영어", START.plusHours(2), END.plusHours(2)));
-
-    List<LessonResponse> lessons = lessonQueryService.getAllByTeacher(teacher.getUserId());
-
-    assertThat(lessons).hasSize(2);
-  }
-
-  @Test
-  void 다른_교사의_수업은_조회되지_않는다() {
-    Teacher otherTeacher =
-        teacherRepository.save(Teacher.create("otherteacher", "encodedPassword", "다른교사", null));
-    lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));
-    lessonCommandService.create(otherTeacher.getUserId(),
-        new LessonCreateRequest("영어", START, END));
-
-    List<LessonResponse> lessons = lessonQueryService.getAllByTeacher(teacher.getUserId());
-
-    assertThat(lessons).hasSize(1);
-    assertThat(lessons.get(0).title()).isEqualTo("수학");
-  }
-
-  @Test
   void 수업을_단건_조회한다() {
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(), new LessonCreateRequest("수학", START, END));

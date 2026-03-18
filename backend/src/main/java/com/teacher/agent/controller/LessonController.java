@@ -36,12 +36,9 @@ public class LessonController {
 
   @GetMapping
   public ResponseEntity<List<LessonResponse>> getAll(UserId userId,
-      @RequestParam(required = false)
+      @RequestParam(required = true)
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate weekStart) {
-    if (weekStart != null) {
-      return ResponseEntity.ok(lessonQueryService.getByTeacherAndWeek(userId, weekStart));
-    }
-    return ResponseEntity.ok(lessonQueryService.getAllByTeacher(userId));
+    return ResponseEntity.ok(lessonQueryService.getByTeacherAndWeek(userId, weekStart));
   }
 
   @GetMapping("/{id}")

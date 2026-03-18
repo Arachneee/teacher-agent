@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lesson, getLessons } from './lib/api';
 import { padTwoDigits } from './lib/dateTimeUtils';
@@ -45,6 +45,7 @@ export default function Home() {
   const [editingLesson, setEditingLesson] = useState<Lesson | undefined>(undefined);
   const [pendingTime, setPendingTime] = useState<{ startTime: string; endTime: string } | null>(null);
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -115,6 +116,7 @@ export default function Home() {
     setWeekStart(getWeekStart(new Date()));
   };
 
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
@@ -156,9 +158,23 @@ export default function Home() {
                     >
                       ›
                     </button>
-                    <span className="text-sm font-medium text-gray-600 ml-1">
-                      {formatWeekRange(weekStart)}
-                    </span>
+                    <div className="relative ml-1">
+                      <button
+                        onClick={() => dateInputRef.current?.showPicker()}
+                        className="text-sm font-medium text-gray-600 hover:text-purple-500 transition-colors cursor-pointer"
+                      >
+                        {formatWeekRange(weekStart)}
+                      </button>
+                      <input
+                        ref={dateInputRef}
+                        type="date"
+                        className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
+                        value={toISODateString(weekStart)}
+                        onChange={e => {
+                          if (e.target.value) setWeekStart(getWeekStart(new Date(e.target.value)));
+                        }}
+                      />
+                    </div>
                   </div>
                 </>
               ) : (
