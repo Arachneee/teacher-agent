@@ -45,6 +45,33 @@ export interface Attendee {
   createdAt: string;
 }
 
+export interface LessonDetailFeedback {
+  id: number;
+  studentId: number;
+  lessonId: number;
+  aiContent: string | null;
+  keywords: FeedbackKeyword[];
+  liked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LessonDetailAttendee {
+  attendeeId: number;
+  student: Student;
+  feedback: LessonDetailFeedback | null;
+}
+
+export interface LessonDetail {
+  id: number;
+  title: string;
+  startTime: string;
+  endTime: string;
+  createdAt: string;
+  updatedAt: string;
+  attendees: LessonDetailAttendee[];
+}
+
 export interface AuthResponse {
   userId: string;
 }
@@ -158,13 +185,13 @@ export async function deleteLesson(id: number): Promise<void> {
   if (!res.ok) throw new Error('수업을 삭제하지 못했어요');
 }
 
-// Attendees
-
-export async function getAttendees(lessonId: number): Promise<Attendee[]> {
-  const res = await fetchWithAuth(`${BASE_URL}/lessons/${lessonId}/attendees`);
-  if (!res.ok) throw new Error('수강생 목록을 불러오지 못했어요');
+export async function getLessonDetail(id: number): Promise<LessonDetail> {
+  const res = await fetchWithAuth(`${BASE_URL}/lessons/${id}/detail`);
+  if (!res.ok) throw new Error('수업 정보를 불러오지 못했어요');
   return res.json();
 }
+
+// Attendees
 
 export async function addAttendee(lessonId: number, studentId: number): Promise<Attendee> {
   const res = await fetchWithAuth(`${BASE_URL}/lessons/${lessonId}/attendees`, {

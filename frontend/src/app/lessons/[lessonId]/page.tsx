@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Attendee, Lesson, getAttendees, getLessons, removeAttendee } from '../../lib/api';
+import { Attendee, Lesson, LessonDetailAttendee, getLessonDetail, removeAttendee } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import AttendeeCard from '../../components/AttendeeCard';
 import AddAttendeeModal from '../../components/AddAttendeeModal';
@@ -29,12 +29,27 @@ export default function LessonDetailPage() {
     }
   }, [authLoading, user, router]);
 
+  const toAttendee = ({ attendeeId, student, feedback }: LessonDetailAttendee, lessonDetailId: number): Attendee => ({
+    id: attendeeId,
+    lessonId: lessonDetailId,
+    student: { id: student.id, name: student.name, memo: student.memo },
+    feedback: feedback ? {
+      id: feedback.id,
+      attendeeId,
+      aiContent: feedback.aiContent,
+      keywords: feedback.keywords,
+      liked: feedback.liked,
+      createdAt: feedback.createdAt,
+      updatedAt: feedback.updatedAt,
+    } : null,
+    createdAt: student.createdAt,
+  });
+
   const fetchData = () => {
-    Promise.all([getLessons(), getAttendees(lessonId)])
-      .then(([lessons, attendeeList]) => {
-        const found = lessons.find(lesson => lesson.id === lessonId) ?? null;
-        setLesson(found);
-        setAttendees(attendeeList);
+    getLessonDetail(lessonId)
+      .then(detail => {
+        setLesson({ id: detail.id, title: detail.title, startTime: detail.startTime, endTime: detail.endTime });
+        setAttendees(detail.attendees.map(attendee => toAttendee(attendee, detail.id)));
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -50,12 +65,12 @@ export default function LessonDetailPage() {
       setAttendees(prev => prev.filter(attendee => attendee.id !== attendeeId));
     } catch {
       // 실패 시 목록 재조회
-      getAttendees(lessonId).then(setAttendees).catch(console.error);
+      fetchData();
     }
   };
 
   const handleUpdate = () => {
-    getAttendees(lessonId).then(setAttendees).catch(console.error);
+    fetchData();
   };
 
   const handleAdd = () => {
