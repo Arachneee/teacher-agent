@@ -25,10 +25,11 @@ interface Props {
   attendee: Attendee;
   onUpdate: () => void;
   onRemove: (attendeeId: number) => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
 const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
-  { attendee, onUpdate, onRemove },
+  { attendee, onUpdate, onRemove, dragHandleProps },
   ref
 ) => {
   const keywordInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +100,23 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
 
   return (
     <div className="h-full bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4">
+      {/* Drag Handle */}
+      {dragHandleProps && (
+        <div
+          {...dragHandleProps}
+          className="flex justify-center items-center h-4 cursor-grab active:cursor-grabbing -mt-2 -mx-2"
+          aria-label="드래그하여 순서 변경"
+        >
+          <svg width="20" height="8" viewBox="0 0 20 8" fill="none" className="text-gray-300">
+            <circle cx="4" cy="2" r="1.5" fill="currentColor" />
+            <circle cx="10" cy="2" r="1.5" fill="currentColor" />
+            <circle cx="16" cy="2" r="1.5" fill="currentColor" />
+            <circle cx="4" cy="6" r="1.5" fill="currentColor" />
+            <circle cx="10" cy="6" r="1.5" fill="currentColor" />
+            <circle cx="16" cy="6" r="1.5" fill="currentColor" />
+          </svg>
+        </div>
+      )}
       {/* Avatar + Name */}
       <div className="flex items-center gap-3">
         <div

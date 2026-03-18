@@ -2,14 +2,76 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Attendee, Lesson, LessonDetailAttendee, getLessonDetail, removeAttendee } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import AttendeeCard from '../../components/AttendeeCard';
 import AddAttendeeModal from '../../components/AddAttendeeModal';
+import { MAX_COLUMNS, MIN_COLUMNS, useGridLayout } from '../../hooks/useGridLayout';
 
-const DEFAULT_COLUMNS = 3;
-const MIN_COLUMNS = 1;
-const MAX_COLUMNS = 6;
+const EMPTY_SLOT_PREFIX = 'empty-slot-';
+
+function SortableEmptySlot({ id, isDragActive }: { id: string; isDragActive: boolean }) {
+  const { setNodeRef, isOver, transform, transition } = useSortable({
+    id,
+    disabled: { draggable: true },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`h-full min-h-[200px] rounded-2xl border-2 border-dashed transition-colors ${
+        isDragActive
+          ? isOver
+            ? 'border-purple-300 bg-purple-50/50'
+            : 'border-gray-200'
+          : 'border-transparent'
+      }`}
+    />
+  );
+}
+
+interface SortableAttendeeCardProps {
+  attendee: Attendee;
+  onUpdate: () => void;
+  onRemove: (attendeeId: number) => void;
+}
+
+function SortableAttendeeCard({ attendee, onUpdate, onRemove }: SortableAttendeeCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: attendee.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 10 : undefined,
+      }}
+      className="h-full"
+    >
+      <AttendeeCard
+        attendee={attendee}
+        onUpdate={onUpdate}
+        onRemove={onRemove}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
+}
 
 export default function LessonDetailPage() {
   const { user, loading: authLoading } = useAuth();
@@ -21,7 +83,20 @@ export default function LessonDetailPage() {
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [columnCount, setColumnCount] = useState(DEFAULT_COLUMNS);
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  const {
+    gridSlots,
+    setGridSlots,
+    columnCount,
+    handleColumnCountChange,
+    initializeGridSlots,
+    removeFromGrid,
+  } = useGridLayout(`lesson_${lessonId}`);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -49,7 +124,9 @@ export default function LessonDetailPage() {
     getLessonDetail(lessonId)
       .then(detail => {
         setLesson({ id: detail.id, title: detail.title, startTime: detail.startTime, endTime: detail.endTime });
-        setAttendees(detail.attendees.map(attendee => toAttendee(attendee, detail.id)));
+        const mapped = detail.attendees.map(attendee => toAttendee(attendee, detail.id));
+        setAttendees(mapped);
+        initializeGridSlots(mapped.map(attendee => attendee.id));
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -63,8 +140,8 @@ export default function LessonDetailPage() {
     try {
       await removeAttendee(lessonId, attendeeId);
       setAttendees(prev => prev.filter(attendee => attendee.id !== attendeeId));
+      removeFromGrid(attendeeId);
     } catch {
-      // 실패 시 목록 재조회
       fetchData();
     }
   };
@@ -78,6 +155,54 @@ export default function LessonDetailPage() {
     setLoading(true);
     fetchData();
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setIsDragActive(false);
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = active.id as number;
+
+    if (String(over.id).startsWith(EMPTY_SLOT_PREFIX)) {
+      const targetSlotIndex = parseInt(String(over.id).replace(EMPTY_SLOT_PREFIX, ''), 10);
+      setGridSlots(prev => {
+        const result = [...prev];
+        const oldIndex = result.indexOf(activeId);
+        if (oldIndex !== -1) result[oldIndex] = null;
+        while (result.length <= targetSlotIndex) result.push(null);
+        result[targetSlotIndex] = activeId;
+        while (result.length > 0 && result[result.length - 1] === null) result.pop();
+        return result;
+      });
+      return;
+    }
+
+    const overId = over.id as number;
+    setGridSlots(prev => {
+      const result = [...prev];
+      const activeIndex = result.indexOf(activeId);
+      const overIndex = result.indexOf(overId);
+      if (activeIndex !== -1 && overIndex !== -1) {
+        [result[activeIndex], result[overIndex]] = [result[overIndex], result[activeIndex]];
+      }
+      return result;
+    });
+  };
+
+  const attendeeMap = useMemo(() => {
+    const map = new Map<number, Attendee>();
+    attendees.forEach(attendee => map.set(attendee.id, attendee));
+    return map;
+  }, [attendees]);
+
+  const displaySlots = useMemo(() => {
+    const filledCount = gridSlots.filter(id => id !== null).length;
+    const nextRowStart = Math.ceil(filledCount / columnCount) * columnCount;
+    const padTo = Math.max(nextRowStart, gridSlots.length);
+    const padded = [...gridSlots];
+    while (padded.length < padTo) padded.push(null);
+    return padded;
+  }, [gridSlots, columnCount]);
 
   const existingStudentIds = useMemo(
     () => new Set(attendees.map(attendee => attendee.student.id)),
@@ -145,7 +270,7 @@ export default function LessonDetailPage() {
                 <span className="text-xs text-gray-400">열 수</span>
                 <div className="flex items-center gap-1 bg-white rounded-2xl shadow-sm px-2 py-1">
                   <button
-                    onClick={() => setColumnCount(count => Math.max(MIN_COLUMNS, count - 1))}
+                    onClick={() => handleColumnCountChange(columnCount - 1)}
                     disabled={columnCount <= MIN_COLUMNS}
                     className="w-6 h-6 flex items-center justify-center rounded-xl text-gray-400 hover:text-purple-500 hover:bg-purple-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
                     aria-label="열 줄이기"
@@ -156,7 +281,7 @@ export default function LessonDetailPage() {
                     {columnCount}
                   </span>
                   <button
-                    onClick={() => setColumnCount(count => Math.min(MAX_COLUMNS, count + 1))}
+                    onClick={() => handleColumnCountChange(columnCount + 1)}
                     disabled={columnCount >= MAX_COLUMNS}
                     className="w-6 h-6 flex items-center justify-center rounded-xl text-gray-400 hover:text-purple-500 hover:bg-purple-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
                     aria-label="열 늘리기"
@@ -166,19 +291,46 @@ export default function LessonDetailPage() {
                 </div>
               </div>
             </div>
-            <div
-              className="grid gap-12"
-              style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={() => setIsDragActive(true)}
+              onDragEnd={handleDragEnd}
+              onDragCancel={() => setIsDragActive(false)}
+              autoScroll={{ threshold: { x: 0.2, y: 0.2 }, interval: 5 }}
             >
-              {attendees.map(attendee => (
-                <AttendeeCard
-                  key={attendee.id}
-                  attendee={attendee}
-                  onUpdate={handleUpdate}
-                  onRemove={handleRemoveAttendee}
-                />
-              ))}
-            </div>
+              <SortableContext
+                items={displaySlots.map((slotId, index) => slotId !== null ? slotId : `${EMPTY_SLOT_PREFIX}${index}`)}
+                strategy={rectSortingStrategy}
+              >
+                <div
+                  className="grid gap-12"
+                  style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}
+                >
+                  {displaySlots.map((slotId, slotIndex) => {
+                    if (slotId === null) {
+                      return (
+                        <SortableEmptySlot
+                          key={`${EMPTY_SLOT_PREFIX}${slotIndex}`}
+                          id={`${EMPTY_SLOT_PREFIX}${slotIndex}`}
+                          isDragActive={isDragActive}
+                        />
+                      );
+                    }
+                    const attendee = attendeeMap.get(slotId);
+                    if (!attendee) return null;
+                    return (
+                      <SortableAttendeeCard
+                        key={attendee.id}
+                        attendee={attendee}
+                        onUpdate={handleUpdate}
+                        onRemove={handleRemoveAttendee}
+                      />
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           </>
         )}
       </div>
