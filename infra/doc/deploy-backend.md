@@ -1,28 +1,32 @@
-# Backend 배포 가이드 (EC2)
+# Backend Deployment Guide (EC2)
 
-## 개요
+## Purpose
+This guide outlines the process for deploying the Spring Boot backend application to an AWS EC2 instance, covering infrastructure setup, automated CI/CD pipelines, and manual deployment procedures.
 
-Spring Boot 백엔드는 AWS EC2(Amazon Linux 2023, t3.micro)에 배포된다. GitHub Actions를 통해 main 브랜치 push 시 자동 배포된다.
+## Overview
+The Spring Boot backend is deployed on AWS EC2 (Amazon Linux 2023, t3.micro instance). Automated deployment is triggered by pushes to the main branch via GitHub Actions.
 
-## 인프라 구성
+## Infrastructure Configuration
 
-| 항목 | 값 |
-|------|-----|
-| 인스턴스 타입 | t3.micro (CPU 크레딧: standard) |
-| OS | Amazon Linux 2023 |
-| 리전 | ap-northeast-2 (서울) |
-| 포트 | 8080 |
-| JDK | Eclipse Temurin 25 |
-| 앱 경로 | `/home/ec2-user/app/` |
+### EC2 Instance Details
+| Item            | Value                               | Notes                       |
+| :-------------- | :---------------------------------- | :-------------------------- |
+| Instance Type   | t3.micro                            | Standard CPU credits        |
+| OS              | Amazon Linux 2023                   |                             |
+| Region          | ap-northeast-2 (Seoul)              |                             |
+| Application Port| 8080                                | Used by the Spring Boot app |
+| JDK Version     | Eclipse Temurin 25                  |                             |
+| Application Path| `/home/ec2-user/app/`               | Where the JAR file is placed|
 
-### 보안 그룹 인바운드 규칙
+### Security Group Inbound Rules
+| Port | Protocol | Purpose       |
+| :--- | :------- | :------------ |
+| 22   | TCP      | SSH Access    |
+| 8080 | TCP      | Application Traffic |
 
-| 포트 | 프로토콜 | 용도 |
-|------|----------|------|
-| 22 | TCP | SSH 접속 |
-| 8080 | TCP | 애플리케이션 |
+## Infrastructure Provisioning with Terraform
 
-## Terraform으로 인프라 프로비저닝
+To provision the necessary AWS infrastructure (EC2 instance, security group, SSH key pair), navigate to the `infra/` directory and run:
 
 ```bash
 cd infra
@@ -30,96 +34,94 @@ terraform init
 terraform apply
 ```
 
-생성되는 리소스:
-- EC2 인스턴스 (`teacher-agent-server`)
-- 보안 그룹 (`teacher-agent-sg`)
-- SSH 키페어 (`teacher-agent-key`) + `teacher-agent-key.pem` 파일
+This will create:
+-   EC2 instance named `teacher-agent-server`.
+-   Security group named `teacher-agent-sg`.
+-   SSH key pair named `teacher-agent-key`, along with a `teacher-agent-key.pem` file.
 
-## GitHub Actions 자동 배포
+## GitHub Actions Automated Deployment
 
-`backend/**` 경로 변경이 main에 push되면 자동으로 실행된다.
+Automated deployment is triggered for changes pushed to the main branch affecting files under the `backend/**` path.
 
-### 파이프라인 단계
+### Pipeline Stages
+1.  **`build-and-test`**: Executes Gradle build and tests, then uploads the JAR artifact.
+2.  **`deploy`**: Transfers the JAR to EC2 and restarts the application.
 
-1. **build-and-test**: Gradle 빌드 + 테스트, JAR 아티팩트 업로드
-2. **deploy**: EC2에 JAR 전송 및 앱 재기동
+### Required GitHub Secrets
+Ensure the following secrets are configured in your GitHub repository settings:
+-   `EC2_HOST`: Public IP address of the EC2 instance.
+-   `EC2_SSH_KEY`: Content of the SSH private key (`.pem` file).
+-   `OPENAI_API_KEY`: OpenAI API key for backend services.
+-   `INITIAL_TEACHER_PASSWORD`: Password for the initial teacher account.
 
-### 필요한 GitHub Secrets
+### Environment Variables for Deployment
+The following environment variables are injected during deployment:
+-   `SPRING_PROFILES_ACTIVE=prod`
+-   `INITIAL_TEACHER_PASSWORD=<secret>`
 
-| Secret | 설명 |
-|--------|------|
-| `EC2_HOST` | EC2 퍼블릭 IP |
-| `EC2_SSH_KEY` | SSH 프라이빗 키 (PEM 파일 내용) |
-| `OPENAI_API_KEY` | OpenAI API 키 |
-| `INITIAL_TEACHER_PASSWORD` | 초기 선생님 계정 비밀번호 |
+## Manual Deployment Steps
 
-### 환경변수
+### EC2 Initial Setup (One-time)
+1.  Copy the setup script to EC2:
+    ```bash
+    scp -i infra/teacher-agent-key.pem 
+      backend/scripts/setup-ec2.sh 
+      ec2-user@<EC2_HOST>:~/setup-ec2.sh
+    ```
+2.  Execute the script on EC2:
+    ```bash
+    ssh -i infra/teacher-agent-key.pem ec2-user@<EC2_HOST> 
+      'chmod +x ~/setup-ec2.sh && ~/setup-ec2.sh'
+    ```
+    This installs Eclipse Temurin JDK 25 and creates the application directory (`/home/ec2-user/app/`).
 
-배포 시 아래 환경변수가 주입된다:
+### Build and Transfer JAR
+1.  Build the JAR locally:
+    ```bash
+    cd backend
+    ./gradlew build
+    ```
+2.  Copy the JAR file to EC2:
+    ```bash
+    scp -i infra/teacher-agent-key.pem 
+      build/libs/teacher-agent-backend-*-SNAPSHOT.jar 
+      ec2-user@<EC2_HOST>:/home/ec2-user/app/teacher-agent-backend.jar
+    ```
 
-```
-SPRING_PROFILES_ACTIVE=prod
-INITIAL_TEACHER_PASSWORD=<secret>
-```
+### Run Application
+1.  Copy the deployment script to EC2:
+    ```bash
+    scp -i infra/teacher-agent-key.pem 
+      backend/scripts/deploy.sh 
+      ec2-user@<EC2_HOST>:/home/ec2-user/app/deploy.sh
+    ```
+2.  Execute the deployment script on EC2:
+    ```bash
+    ssh -i infra/teacher-agent-key.pem ec2-user@<EC2_HOST> 
+      'chmod +x /home/ec2-user/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=<password> /home/ec2-user/app/deploy.sh'
+    ```
 
-## 수동 배포
+## Deployment Script Execution Details
 
-### EC2 초기 설정 (최초 1회)
+The `backend/scripts/deploy.sh` script performs the following actions:
+1.  Checks for Java installation and installs if necessary.
+2.  Grants `cap_net_bind_service` capability to the Java binary to allow binding to port 8080.
+3.  Registers `libjli.so` path in `ldconfig` to resolve issues with `setcap` and `LD_LIBRARY_PATH`.
+4.  Stops any existing running application instance (`pkill -f "java.*teacher-agent"`).
+5.  Restarts the application using `nohup java -jar teacher-agent-backend.jar`.
 
-```bash
-scp -i infra/teacher-agent-key.pem \
-  backend/scripts/setup-ec2.sh \
-  ec2-user@<EC2_HOST>:~/setup-ec2.sh
+Application logs are stored in `/home/ec2-user/app/app.log`.
 
-ssh -i infra/teacher-agent-key.pem ec2-user@<EC2_HOST> \
-  'chmod +x ~/setup-ec2.sh && ~/setup-ec2.sh'
-```
+## SSH Access
 
-설치 내용: Eclipse Temurin JDK 25, 앱 디렉토리(`/home/ec2-user/app/`) 생성
-
-### JAR 빌드 및 전송
-
-```bash
-cd backend
-./gradlew build
-
-scp -i infra/teacher-agent-key.pem \
-  build/libs/teacher-agent-backend-*-SNAPSHOT.jar \
-  ec2-user@<EC2_HOST>:/home/ec2-user/app/teacher-agent-backend.jar
-```
-
-### 앱 실행
-
-```bash
-scp -i infra/teacher-agent-key.pem \
-  backend/scripts/deploy.sh \
-  ec2-user@<EC2_HOST>:/home/ec2-user/app/deploy.sh
-
-ssh -i infra/teacher-agent-key.pem ec2-user@<EC2_HOST> \
-  'chmod +x /home/ec2-user/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=<password> /home/ec2-user/app/deploy.sh'
-```
-
-## 배포 스크립트 동작
-
-`backend/scripts/deploy.sh` 실행 시:
-
-1. Java 설치 여부 확인 (없으면 자동 설치)
-2. `cap_net_bind_service` capability를 Java 바이너리에 부여 (8080 포트 바인딩 허용)
-3. `libjli.so` 경로를 ldconfig에 등록 (setcap 적용 후 LD_LIBRARY_PATH 무시 문제 해결)
-4. 기존 프로세스 종료 (`pkill -f "java.*teacher-agent"`)
-5. `nohup java -jar teacher-agent-backend.jar` 로 재기동
-
-로그: `/home/ec2-user/app/app.log`
-
-## SSH 접속
-
+To access the EC2 instance:
 ```bash
 ssh -i infra/teacher-agent-key.pem ec2-user@<EC2_HOST>
 ```
 
-## 로그 확인
+## Log Monitoring
 
+To view application logs in real-time:
 ```bash
-ssh -i infra/teacher-agent-key.pem ec2-user@<EC2_HOST> \
+ssh -i infra/teacher-agent-key.pem ec2-user@<EC2_HOST> 
   'tail -f /home/ec2-user/app/app.log'
-```
