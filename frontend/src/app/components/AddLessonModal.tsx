@@ -168,13 +168,15 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
     setErrorMessage(null);
     try {
       const created = await createStudent(newStudentName.trim(), newStudentMemo.trim());
-      const attendee = await addAttendee(targetLessonId, created.id);
       setAllStudents(prev => [...prev, created]);
+      
       if (isEditMode) {
+        const attendee = await addAttendee(targetLessonId, created.id);
         setCurrentAttendees(prev => [...prev, { attendeeId: attendee.id, student: created, feedback: null }]);
       } else {
         setSelectedStudentIds(prev => new Set([...prev, created.id]));
       }
+      
       setShowNewStudentForm(false);
       setNewStudentName('');
       setNewStudentMemo('');
