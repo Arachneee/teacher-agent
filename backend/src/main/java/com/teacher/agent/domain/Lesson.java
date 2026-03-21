@@ -29,8 +29,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
     indexes = {
-      @Index(name = "idx_lesson_user_id", columnList = "userId"),
-      @Index(name = "idx_lesson_recurrence_group_id", columnList = "recurrenceGroupId")
+        @Index(name = "idx_lesson_user_id", columnList = "userId"),
+        @Index(name = "idx_lesson_recurrence_group_id", columnList = "recurrenceGroupId")
     })
 public class Lesson extends BaseEntity {
 
@@ -57,7 +57,8 @@ public class Lesson extends BaseEntity {
       fetch = FetchType.LAZY)
   private List<Attendee> attendees = new ArrayList<>();
 
-  @Embedded private Recurrence recurrence;
+  @Embedded
+  private Recurrence recurrence;
 
   private UUID recurrenceGroupId;
 

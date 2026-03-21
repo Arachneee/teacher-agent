@@ -20,7 +20,8 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException exception) {
+  public ResponseEntity<ErrorResponse> handleValidationException(
+      MethodArgumentNotValidException exception) {
     String message = exception.getBindingResult().getFieldErrors().stream()
         .findFirst()
         .map(error -> error.getField() + ": " + error.getDefaultMessage())
@@ -32,7 +33,8 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException exception) {
+  public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+      ConstraintViolationException exception) {
     String message = exception.getConstraintViolations().stream()
         .findFirst()
         .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
