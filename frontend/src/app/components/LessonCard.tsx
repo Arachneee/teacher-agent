@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Lesson, deleteLesson, UpdateScope } from '../lib/api';
 import RecurringScopeModal from '../components/RecurringScopeModal';
+import ConfirmModal from './ConfirmModal';
 
 interface Props {
   lesson: Lesson;
@@ -15,6 +16,7 @@ export default function LessonCard({ lesson, onEdit, onDelete }: Props) {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showScopeModal, setShowScopeModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDelete = async (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -24,7 +26,11 @@ export default function LessonCard({ lesson, onEdit, onDelete }: Props) {
       return;
     }
     
-    if (!confirm(`"${lesson.title}" 수업을 삭제할까요?\n수강생과 피드백도 함께 삭제됩니다.`)) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteConfirm(false);
     try {
       await deleteLesson(lesson.id);
       onDelete(lesson.id, false);
@@ -126,6 +132,17 @@ export default function LessonCard({ lesson, onEdit, onDelete }: Props) {
         onClose={() => setShowScopeModal(false)}
       />
     )}
-  </>
+
+    {showDeleteConfirm && (
+      <ConfirmModal
+        title="수업 삭제"
+        message={`"${lesson.title}" 수업을 삭제할까요?\n수강생과 피드백도 함께 삭제됩니다.`}
+        confirmText="삭제"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+    )}
+    </>
   );
 }

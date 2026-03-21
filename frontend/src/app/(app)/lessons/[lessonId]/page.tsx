@@ -58,11 +58,12 @@ function SortableEmptySlot({ id, isDragActive }: { id: string; isDragActive: boo
 
 interface SortableAttendeeCardProps {
   attendee: Attendee;
+  isRecurring: boolean;
   onUpdate: () => void;
   onRemove: (attendeeId: number) => void;
 }
 
-function SortableAttendeeCard({ attendee, onUpdate, onRemove }: SortableAttendeeCardProps) {
+function SortableAttendeeCard({ attendee, isRecurring, onUpdate, onRemove }: SortableAttendeeCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: attendee.id,
   });
@@ -80,6 +81,7 @@ function SortableAttendeeCard({ attendee, onUpdate, onRemove }: SortableAttendee
     >
       <AttendeeCard
         attendee={attendee}
+        isRecurring={isRecurring}
         onUpdate={onUpdate}
         onRemove={onRemove}
         dragHandleProps={{ ...attributes, ...listeners }}
@@ -273,9 +275,22 @@ export default function LessonDetailPage() {
                   />
                 ) : (
                   <>
-                    <h1 className="text-4xl font-bold text-purple-500">
-                      {lesson?.title ?? '수업'}
-                    </h1>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-4xl font-bold text-purple-500">
+                        {lesson?.title ?? '수업'}
+                      </h1>
+                      {lesson?.recurrenceGroupId && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-600 text-sm font-medium rounded-full">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17 2.1l4 4-4 4" />
+                            <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8" />
+                            <path d="M7 21.9l-4-4 4-4" />
+                            <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2" />
+                          </svg>
+                          반복
+                        </span>
+                      )}
+                    </div>
                     {lesson && (
                       <button
                         onClick={openEdit}
@@ -382,6 +397,7 @@ export default function LessonDetailPage() {
                     <SortableAttendeeCard
                       key={attendee.id}
                       attendee={attendee}
+                      isRecurring={!!lesson?.recurrenceGroupId}
                       onUpdate={fetchData}
                       onRemove={handleRemoveAttendee}
                     />

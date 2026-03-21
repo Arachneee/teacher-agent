@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Lesson, deleteLesson, UpdateScope } from '../lib/api';
 import { padTwoDigits } from '../lib/dateTimeUtils';
 import RecurringScopeModal from '../components/RecurringScopeModal';
+import ConfirmModal from './ConfirmModal';
 
 const FIRST_HOUR = 7;
 const LAST_HOUR = 22;
@@ -52,6 +53,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
   const [scopeModalLesson, setScopeModalLesson] = useState<Lesson | null>(null);
+  const [deleteConfirmLesson, setDeleteConfirmLesson] = useState<Lesson | null>(null);
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -103,6 +105,22 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
     },
     [onCellClick]
   );
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmLesson) return;
+    const lesson = deleteConfirmLesson;
+    setDeleteConfirmLesson(null);
+    setDeletingId(lesson.id);
+    setDeleteErrorMessage(null);
+    try {
+      await deleteLesson(lesson.id);
+      onDelete(lesson.id, false);
+    } catch {
+      setDeleteErrorMessage(`"${lesson.title}" 수업을 삭제하지 못했어요.`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const today = new Date();
 
@@ -271,7 +289,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                             </svg>
                           </button>
                           <button
-                            onClick={async event => {
+                            onClick={event => {
                               event.stopPropagation();
                               
                               if (lesson.recurrenceGroupId !== null) {
@@ -279,17 +297,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                                 return;
                               }
                               
-                              if (!confirm(`"${lesson.title}" 수업을 삭제할까요?\n수강생과 피드백도 함께 삭제됩니다.`)) return;
-                              setDeletingId(lesson.id);
-                              setDeleteErrorMessage(null);
-                              try {
-                                await deleteLesson(lesson.id);
-                                onDelete(lesson.id, false);
-                              } catch {
-                                setDeleteErrorMessage(`"${lesson.title}" 수업을 삭제하지 못했어요.`);
-                              } finally {
-                                setDeletingId(null);
-                              }
+                              setDeleteConfirmLesson(lesson);
                             }}
                             disabled={deletingId === lesson.id}
                             className="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-rose-400/80 text-white transition-colors"
@@ -332,6 +340,17 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
             }
           }}
           onClose={() => setScopeModalLesson(null)}
+        />
+      )}
+
+      {deleteConfirmLesson && (
+        <ConfirmModal
+          title="수업 삭제"
+          message={`"${deleteConfirmLesson.title}" 수업을 삭제할까요?\n수강생과 피드백도 함께 삭제됩니다.`}
+          confirmText="삭제"
+          variant="danger"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteConfirmLesson(null)}
         />
       )}
     </div>
