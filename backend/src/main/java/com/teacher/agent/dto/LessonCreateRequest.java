@@ -1,5 +1,7 @@
 package com.teacher.agent.dto;
 
+import com.teacher.agent.domain.Recurrence;
+import com.teacher.agent.domain.UserId;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -11,4 +13,9 @@ public record LessonCreateRequest(
     @NotNull LocalDateTime endTime,
     RecurrenceCreateRequest recurrence,
     List<Long> studentIds) {
+
+  public LessonCreateCommand toCommand(UserId userId) {
+    Recurrence recurrenceEntity = recurrence != null ? recurrence.toEntity() : null;
+    return new LessonCreateCommand(userId, title, startTime, endTime, recurrenceEntity, studentIds);
+  }
 }

@@ -15,10 +15,10 @@ public record GenerationContext(
     Recurrence recurrence,
     UUID groupId) {
 
-  public static GenerationContext from(UserId userId, LessonCreateRequest request,
+  public static GenerationContext from(LessonCreateCommand command,
       Recurrence recurrence, UUID groupId) {
-    long duration = Duration.between(request.startTime(), request.endTime()).toMinutes();
-    return new GenerationContext(userId, request.title(), request.startTime(), duration,
+    long duration = Duration.between(command.startTime(), command.endTime()).toMinutes();
+    return new GenerationContext(command.userId(), command.title(), command.startTime(), duration,
         recurrence, groupId);
   }
 

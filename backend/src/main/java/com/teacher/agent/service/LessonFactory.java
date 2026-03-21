@@ -2,9 +2,8 @@ package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.Recurrence;
-import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.GenerationContext;
-import com.teacher.agent.dto.LessonCreateRequest;
+import com.teacher.agent.dto.LessonCreateCommand;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,20 +16,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class LessonFactory {
 
-  public List<Lesson> createFrom(UserId userId, LessonCreateRequest request) {
-    if (request.recurrence() == null) {
+  public List<Lesson> createFrom(LessonCreateCommand command) {
+    if (command.recurrence() == null) {
       return List.of(
-          Lesson.create(userId, request.title(), request.startTime(), request.endTime()));
+          Lesson.create(command.userId(), command.title(), command.startTime(), command.endTime()));
     }
 
-    Recurrence recurrence = request.recurrence().toEntity();
+    Recurrence recurrence = command.recurrence();
 
-    if (recurrence.getEndDate().isAfter(request.startTime().toLocalDate().plusMonths(6))) {
+    if (recurrence.getEndDate().isAfter(command.startTime().toLocalDate().plusMonths(6))) {
       throw new IllegalArgumentException("반복 수업은 최대 6개월까지만 설정할 수 있습니다.");
     }
 
-    GenerationContext context = GenerationContext.from(userId, request, recurrence,
-        UUID.randomUUID());
+    GenerationContext context = GenerationContext.from(command, recurrence, UUID.randomUUID());
     return createRecurringLessons(context);
   }
 
@@ -55,7 +53,8 @@ public class LessonFactory {
   private List<Lesson> generateWeekly(GenerationContext context) {
     List<Lesson> lessons = new ArrayList<>();
     List<DayOfWeek> daysOfWeek = context.recurrence().getDaysOfWeek();
-    LocalDate current = context.startDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+    LocalDate current =
+        context.startDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
     while (!current.isAfter(context.endDate())) {
       for (DayOfWeek day : daysOfWeek) {
