@@ -1,5 +1,7 @@
 package com.teacher.agent.domain;
 
+import static com.teacher.agent.util.ErrorMessages.ATTENDEE_ALREADY_EXISTS;
+import static com.teacher.agent.util.ErrorMessages.ATTENDEE_NOT_FOUND;
 import static com.teacher.agent.util.Parameter.*;
 import static com.teacher.agent.util.ValidationUtil.*;
 
@@ -21,12 +23,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id", callSuper = false)
 @Table(
     indexes = {
         @Index(name = "idx_lesson_user_id", columnList = "userId"),
@@ -93,7 +97,7 @@ public class Lesson extends BaseEntity {
         attendees.stream().anyMatch(attendee -> attendee.getStudentId().equals(studentId));
 
     if (isDuplicate) {
-      throw new IllegalArgumentException("Attendee already exists: " + studentId);
+      throw new IllegalArgumentException(ATTENDEE_ALREADY_EXISTS + studentId);
     }
 
     attendees.add(Attendee.create(this, studentId));
@@ -103,12 +107,26 @@ public class Lesson extends BaseEntity {
     studentIds.forEach(this::addAttendee);
   }
 
+  public void addAttendeesIfAbsent(List<Long> studentIds) {
+    studentIds.stream()
+        .filter(studentId -> !hasAttendee(studentId))
+        .forEach(studentId -> attendees.add(Attendee.create(this, studentId)));
+  }
+
+  public boolean hasAttendee(Long studentId) {
+    return attendees.stream().anyMatch(a -> a.getStudentId().equals(studentId));
+  }
+
   public void removeAttendee(Long attendeeId) {
     boolean removed = attendees.removeIf(attendee -> Objects.equals(attendee.getId(), attendeeId));
 
     if (!removed) {
-      throw new IllegalArgumentException("Attendee not found: " + attendeeId);
+      throw new IllegalArgumentException(ATTENDEE_NOT_FOUND + attendeeId);
     }
+  }
+
+  public void removeAttendeesByStudentIds(List<Long> studentIds) {
+    attendees.removeIf(attendee -> studentIds.contains(attendee.getStudentId()));
   }
 
   public void convertToRecurring(Recurrence recurrence, UUID recurrenceGroupId) {

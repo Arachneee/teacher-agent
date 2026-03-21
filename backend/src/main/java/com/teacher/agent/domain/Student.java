@@ -5,12 +5,14 @@ import static com.teacher.agent.util.ValidationUtil.*;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id", callSuper = false)
 @Table(indexes = @Index(name = "idx_student_user_id", columnList = "userId"))
 public class Student extends BaseEntity {
 
