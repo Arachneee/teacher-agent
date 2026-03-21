@@ -7,8 +7,8 @@ import { padTwoDigits } from '../lib/dateTimeUtils';
 import RecurringScopeModal from '../components/RecurringScopeModal';
 import ConfirmModal from './ConfirmModal';
 
-const FIRST_HOUR = 7;
-const LAST_HOUR = 22;
+const FIRST_HOUR = 0;
+const LAST_HOUR = 24;
 const TOTAL_HOURS = LAST_HOUR - FIRST_HOUR;
 const CELL_HEIGHT = 80;
 
@@ -85,11 +85,20 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
 
   useEffect(() => {
     if (scrollRef.current) {
-      const currentHour = new Date().getHours();
-      const scrollTop = Math.max(0, (currentHour - FIRST_HOUR - 1) * CELL_HEIGHT);
+      let scrollTop: number;
+      if (lessons.length > 0) {
+        const earliestHour = Math.min(
+          ...lessons.map(lesson => new Date(lesson.startTime).getHours())
+        );
+        scrollTop = Math.max(0, (earliestHour - FIRST_HOUR - 1) * CELL_HEIGHT);
+      } else {
+        const containerHeight = scrollRef.current.clientHeight;
+        const noonPosition = (12 - FIRST_HOUR) * CELL_HEIGHT;
+        scrollTop = noonPosition - containerHeight / 2 + CELL_HEIGHT;
+      }
       scrollRef.current.scrollTop = scrollTop;
     }
-  }, []);
+  }, [lessons]);
 
   const handleCellClick = useCallback(
     (day: Date, hour: number) => {
