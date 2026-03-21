@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Student, deleteStudent, updateStudent } from '../lib/api';
+import ConfirmModal from './ConfirmModal';
 
 const AVATAR_COLORS = [
   'bg-pink-200 text-pink-600',
@@ -26,6 +27,7 @@ export default function StudentManagementCard({ student, onUpdate, onDelete }: P
   const [memo, setMemo] = useState(student.memo || '');
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const avatarColor = AVATAR_COLORS[student.id % AVATAR_COLORS.length];
 
@@ -51,8 +53,12 @@ export default function StudentManagementCard({ student, onUpdate, onDelete }: P
     setErrorMessage(null);
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`${student.name} 학생을 삭제할까요?`)) return;
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteConfirm(false);
     try {
       await deleteStudent(student.id);
       onDelete(student.id);
@@ -157,6 +163,17 @@ export default function StudentManagementCard({ student, onUpdate, onDelete }: P
             취소
           </button>
         </div>
+      )}
+
+      {showDeleteConfirm && (
+        <ConfirmModal
+          title="학생 삭제"
+          message={`${student.name} 학생을 삭제할까요?`}
+          confirmText="삭제"
+          variant="danger"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
       )}
     </div>
   );

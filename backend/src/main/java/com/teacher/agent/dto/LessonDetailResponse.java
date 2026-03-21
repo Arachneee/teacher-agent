@@ -14,6 +14,7 @@ public record LessonDetailResponse(
     String title,
     LocalDateTime startTime,
     LocalDateTime endTime,
+    String recurrenceGroupId,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     List<AttendeeDetailItem> attendees) {
@@ -23,7 +24,9 @@ public record LessonDetailResponse(
         .collect(groupingBy(LessonDetailRow::attendeeId, LinkedHashMap::new, toList())).entrySet()
         .stream().map(entry -> AttendeeDetailItem.from(entry.getKey(), entry.getValue())).toList();
     return new LessonDetailResponse(lesson.getId(), lesson.getTitle(), lesson.getStartTime(),
-        lesson.getEndTime(), lesson.getCreatedAt(), lesson.getUpdatedAt(), attendees);
+        lesson.getEndTime(),
+        lesson.getRecurrenceGroupId() != null ? lesson.getRecurrenceGroupId().toString() : null,
+        lesson.getCreatedAt(), lesson.getUpdatedAt(), attendees);
   }
 
   public record AttendeeDetailItem(

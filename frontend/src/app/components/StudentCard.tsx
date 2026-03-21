@@ -5,6 +5,7 @@ import { Student, deleteStudent, updateStudent } from '../lib/api';
 import { useFeedback } from '../hooks/useFeedback';
 import AiFeedbackSection from './AiFeedbackSection';
 import KeywordsSection from './KeywordsSection';
+import ConfirmModal from './ConfirmModal';
 
 export interface StudentCardHandle {
   focusKeywordInput: () => void;
@@ -44,6 +45,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   const [saving, setSaving] = useState(false);
   const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [editingKeywordId, setEditingKeywordId] = useState<number | null>(null);
 
@@ -85,7 +87,11 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   };
 
   const handleDelete = async () => {
-    if (!confirm(`${student.name} 학생을 삭제할까요?`)) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteConfirm(false);
     try {
       await deleteStudent(student.id);
       onDelete(student.id);
@@ -266,6 +272,17 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
           onGenerate={handleGenerate}
           onUpdateAiContent={handleUpdateAiContent}
           onLike={handleLike}
+        />
+      )}
+
+      {showDeleteConfirm && (
+        <ConfirmModal
+          title="학생 삭제"
+          message={`${student.name} 학생을 삭제할까요?`}
+          confirmText="삭제"
+          variant="danger"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
         />
       )}
     </div>

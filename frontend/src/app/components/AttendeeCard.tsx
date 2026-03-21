@@ -5,6 +5,7 @@ import { Attendee, updateStudent } from '../lib/api';
 import { useFeedback } from '../hooks/useFeedback';
 import AiFeedbackSection from './AiFeedbackSection';
 import KeywordsSection from './KeywordsSection';
+import ConfirmModal from './ConfirmModal';
 
 export interface AttendeeCardHandle {
   focusKeywordInput: () => void;
@@ -23,13 +24,14 @@ const AVATAR_COLORS = [
 
 interface Props {
   attendee: Attendee;
+  isRecurring: boolean;
   onUpdate: () => void;
   onRemove: (attendeeId: number) => void;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
 const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
-  { attendee, onUpdate, onRemove, dragHandleProps },
+  { attendee, isRecurring, onUpdate, onRemove, dragHandleProps },
   ref
 ) => {
   const keywordInputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +45,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
   const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');
   const [editingKeywordId, setEditingKeywordId] = useState<number | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const memoTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -97,8 +100,16 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
     }
   };
 
-  const handleRemoveClick = async () => {
-    if (!confirm(`${attendee.student.name} 학생을 이 수업에서 제거할까요?`)) return;
+  const handleRemoveClick = () => {
+    if (isRecurring) {
+      onRemove(attendee.id);
+      return;
+    }
+    setShowRemoveConfirm(true);
+  };
+
+  const handleConfirmRemove = () => {
+    setShowRemoveConfirm(false);
     onRemove(attendee.id);
   };
 
@@ -259,6 +270,17 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
         onUpdateAiContent={handleUpdateAiContent}
         onLike={handleLike}
       />
+
+      {showRemoveConfirm && (
+        <ConfirmModal
+          title="수강생 제거"
+          message={`${attendee.student.name} 학생을 이 수업에서 제거할까요?`}
+          confirmText="제거"
+          variant="danger"
+          onConfirm={handleConfirmRemove}
+          onCancel={() => setShowRemoveConfirm(false)}
+        />
+      )}
     </div>
   );
 });
