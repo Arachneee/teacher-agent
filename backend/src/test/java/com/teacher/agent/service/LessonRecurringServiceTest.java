@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.teacher.agent.domain.LessonRepository;
-import com.teacher.agent.domain.RecurrenceRepository;
 import com.teacher.agent.domain.RecurrenceType;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
@@ -34,9 +33,6 @@ class LessonRecurringServiceTest {
   @Autowired
   private TeacherRepository teacherRepository;
 
-  @Autowired
-  private RecurrenceRepository recurrenceRepository;
-
   private Teacher teacher;
 
   @BeforeEach
@@ -47,7 +43,6 @@ class LessonRecurringServiceTest {
   @AfterEach
   void tearDown() {
     lessonRepository.deleteAll();
-    recurrenceRepository.deleteAll();
     teacherRepository.deleteAll();
   }
 
@@ -75,5 +70,47 @@ class LessonRecurringServiceTest {
     assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
         new LessonCreateRequest("수학", start, end, recurrence)))
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void 매일_수업_생성() {
+    LocalDateTime start = LocalDateTime.of(2026, 3, 16, 9, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 3, 16, 10, 0);
+    RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
+        RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 31));
+
+    lessonCommandService.create(teacher.getUserId(),
+        new LessonCreateRequest("수학", start, end, recurrence));
+
+    assertThat(lessonRepository.findAll()).hasSize(16);
+  }
+
+  @Test
+  void 격주_수업_생성() {
+    LocalDateTime start = LocalDateTime.of(2026, 3, 16, 9, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 3, 16, 10, 0);
+    RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
+        RecurrenceType.WEEKLY, 2, List.of(DayOfWeek.MONDAY),
+        LocalDate.of(2026, 4, 30));
+
+    lessonCommandService.create(teacher.getUserId(),
+        new LessonCreateRequest("수학", start, end, recurrence));
+
+    // 3/16, 3/30, 4/13, 4/27 = 4 lessons (every other Monday)
+    assertThat(lessonRepository.findAll()).hasSize(4);
+  }
+
+  @Test
+  void 매월_수업_생성() {
+    LocalDateTime start = LocalDateTime.of(2026, 3, 16, 9, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 3, 16, 10, 0);
+    RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
+        RecurrenceType.MONTHLY, 1, null, LocalDate.of(2026, 6, 30));
+
+    lessonCommandService.create(teacher.getUserId(),
+        new LessonCreateRequest("수학", start, end, recurrence));
+
+    // 3/16, 4/16, 5/16, 6/16 = 4 lessons
+    assertThat(lessonRepository.findAll()).hasSize(4);
   }
 }

@@ -24,7 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-@Import({LessonQueryService.class, LessonCommandService.class})
+@Import({LessonQueryService.class, LessonCommandService.class, LessonFactory.class})
 class LessonServiceTest {
 
   @Autowired

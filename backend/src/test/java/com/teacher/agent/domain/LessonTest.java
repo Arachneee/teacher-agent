@@ -3,6 +3,7 @@ package com.teacher.agent.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
@@ -28,13 +29,6 @@ class LessonTest {
   void userId가_null이면_생성에_실패한다() {
     // when & then
     assertThatThrownBy(() -> Lesson.create(null, "수학", START, END))
-        .isInstanceOf(IllegalArgumentException.class);
-  }
-
-  @Test
-  void userId_값이_빈_문자열이면_생성에_실패한다() {
-    // when & then
-    assertThatThrownBy(() -> Lesson.create(new UserId(""), "수학", START, END))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -125,5 +119,28 @@ class LessonTest {
     // when & then
     assertThatThrownBy(() -> lesson.update("수학", START, beforeStart))
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void Recurrence를_포함하여_수업을_생성한다() {
+    // given
+    Recurrence recurrence = Recurrence.create(RecurrenceType.DAILY, 1, null,
+        LocalDate.of(2026, 6, 30));
+
+    // when
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END, recurrence);
+
+    // then
+    assertThat(lesson.getRecurrence()).isNotNull();
+    assertThat(lesson.getRecurrence().getRecurrenceType()).isEqualTo(RecurrenceType.DAILY);
+  }
+
+  @Test
+  void Recurrence_없이_수업을_생성하면_recurrence가_null이다() {
+    // when
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
+
+    // then
+    assertThat(lesson.getRecurrence()).isNull();
   }
 }

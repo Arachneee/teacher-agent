@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Converter
+@Converter(autoApply = false)
 public class DayOfWeekConverter implements AttributeConverter<List<DayOfWeek>, String> {
 
   @Override

@@ -5,14 +5,13 @@ import static com.teacher.agent.util.ValidationUtil.*;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -45,27 +44,33 @@ public class Lesson extends BaseEntity {
   @Column(nullable = false)
   private LocalDateTime endTime;
 
-  @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true,
+  @OneToMany(
+      mappedBy = "lesson",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
       fetch = FetchType.LAZY)
   private List<Attendee> attendees = new ArrayList<>();
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "recurrence_id")
-  private Recurrence recurrence;
+  @Embedded private Recurrence recurrence;
 
-  public void setRecurrence(Recurrence recurrence) {
-    this.recurrence = recurrence;
+  public static Lesson create(
+      UserId userId, String title, LocalDateTime startTime, LocalDateTime endTime) {
+    return create(userId, title, startTime, endTime, null);
   }
 
-  public static Lesson create(UserId userId, String title, LocalDateTime startTime,
-      LocalDateTime endTime) {
+  public static Lesson create(
+      UserId userId,
+      String title,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      Recurrence recurrence) {
     Lesson lesson = new Lesson();
 
-    checkNotNull(userId, USER_ID);
-    lesson.userId = new UserId(checkNotBlank(userId.value(), USER_ID));
+    lesson.userId = checkNotNull(userId, USER_ID);
     lesson.title = checkNotBlank(title, TITLE);
     lesson.startTime = checkNotNull(startTime, START_TIME);
     lesson.endTime = checkNotNull(endTime, END_TIME);
+    lesson.recurrence = recurrence;
 
     checkArgument(lesson.endTime.isAfter(lesson.startTime), END_TIME);
 

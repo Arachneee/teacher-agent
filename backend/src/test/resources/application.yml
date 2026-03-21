@@ -8,3 +8,19 @@ spring:
     hibernate:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
+  ai:
+    openai:
+      api-key: test-dummy-key
+      chat:
+        options:
+          model: gpt-4o-mini
+
+cors:
+  allowed-origin-patterns: http://localhost:3000
+
+app:
+  initial-teacher:
+    user-id: admin
+    password: 123
+    name: 관리자
+    subject:
