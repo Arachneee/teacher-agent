@@ -110,6 +110,11 @@ public class Lesson extends BaseEntity {
     }
   }
 
+  public void convertToRecurring(Recurrence recurrence, UUID recurrenceGroupId) {
+    this.recurrence = checkNotNull(recurrence, "recurrence");
+    this.recurrenceGroupId = checkNotNull(recurrenceGroupId, "recurrenceGroupId");
+  }
+
   public void update(String title, LocalDateTime startTime, LocalDateTime endTime) {
     this.title = checkNotBlank(title, TITLE);
     this.startTime = checkNotNull(startTime, START_TIME);

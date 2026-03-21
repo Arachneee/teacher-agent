@@ -1,6 +1,7 @@
 package com.teacher.agent.dto;
 
 import com.teacher.agent.domain.UpdateScope;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -9,10 +10,11 @@ public record LessonUpdateRequest(
     @NotBlank String title,
     @NotNull LocalDateTime startTime,
     @NotNull LocalDateTime endTime,
-    UpdateScope scope) {
+    UpdateScope scope,
+    @Valid RecurrenceCreateRequest recurrence) {
 
   public LessonUpdateRequest(String title, LocalDateTime startTime, LocalDateTime endTime) {
-    this(title, startTime, endTime, UpdateScope.SINGLE);
+    this(title, startTime, endTime, UpdateScope.SINGLE, null);
   }
 
   public UpdateScope resolvedScope() {

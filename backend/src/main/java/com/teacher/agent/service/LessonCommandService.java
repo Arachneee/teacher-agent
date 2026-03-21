@@ -4,6 +4,7 @@ import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
+import com.teacher.agent.domain.Recurrence;
 import com.teacher.agent.domain.Student;
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.UpdateScope;
@@ -11,13 +12,14 @@ import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
+import com.teacher.agent.exception.BadRequestException;
+import com.teacher.agent.exception.ResourceNotFoundException;
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +35,7 @@ public class LessonCommandService {
   public LessonResponse create(UserId userId, LessonCreateRequest request) {
     List<Lesson> lessons = lessonFactory.createFrom(userId, request);
     if (lessons.isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "선택한 기간과 요일 설정으로는 수업이 생성되지 않아요. 종료일을 늘리거나 요일을 변경해주세요.");
+      throw BadRequestException.noLessonGenerated();
     }
     lessonRepository.saveAll(lessons);
 
@@ -54,13 +55,20 @@ public class LessonCommandService {
   private void validateStudentOwnership(UserId userId, List<Long> studentIds) {
     List<Student> students = studentRepository.findAllByIdInAndUserId(studentIds, userId);
     if (students.size() != studentIds.size()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "일부 학생을 찾을 수 없습니다.");
+      throw new ResourceNotFoundException(
+          com.teacher.agent.exception.ErrorCode.STUDENT_NOT_FOUND,
+          "일부 학생을 찾을 수 없습니다.");
     }
   }
 
   @Transactional
   public LessonResponse update(UserId userId, Long id, LessonUpdateRequest request) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(id, userId);
+
+    if (request.recurrence() != null && lesson.getRecurrenceGroupId() == null) {
+      return convertToRecurring(lesson, request);
+    }
+
     UpdateScope scope = request.resolvedScope();
 
     if (scope == UpdateScope.SINGLE) {
@@ -73,6 +81,33 @@ public class LessonCommandService {
 
     for (Lesson target : targets) {
       target.updateTime(request.title(), request.startTime().toLocalTime(), durationMinutes);
+    }
+
+    return LessonResponse.from(lesson);
+  }
+
+  private LessonResponse convertToRecurring(Lesson lesson, LessonUpdateRequest request) {
+    Recurrence recurrence = request.recurrence().toEntity();
+
+    lesson.update(request.title(), request.startTime(), request.endTime());
+
+    List<Lesson> generated = lessonFactory.createFrom(lesson.getUserId(),
+        new LessonCreateRequest(request.title(), request.startTime(), request.endTime(),
+            request.recurrence(), null));
+
+    if (generated.isEmpty()) {
+      throw BadRequestException.noLessonGenerated();
+    }
+
+    UUID groupId = generated.get(0).getRecurrenceGroupId();
+    lesson.convertToRecurring(recurrence, groupId);
+
+    List<Lesson> additionalLessons = generated.stream()
+        .filter(l -> !l.getStartTime().toLocalDate().equals(lesson.getStartTime().toLocalDate()))
+        .toList();
+
+    if (!additionalLessons.isEmpty()) {
+      lessonRepository.saveAll(additionalLessons);
     }
 
     return LessonResponse.from(lesson);
