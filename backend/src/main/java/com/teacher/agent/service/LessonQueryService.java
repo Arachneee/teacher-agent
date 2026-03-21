@@ -38,7 +38,7 @@ public class LessonQueryService {
   }
 
   List<Lesson> findSeriesLessons(Lesson lesson, UserId userId, UpdateScope scope) {
-    if (lesson.getRecurrenceGroupId() == null) {
+    if (lesson.getRecurrenceGroupId() == null || scope == null || scope == UpdateScope.SINGLE) {
       return List.of(lesson);
     }
 
