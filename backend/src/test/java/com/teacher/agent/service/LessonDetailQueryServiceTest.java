@@ -2,6 +2,7 @@ package com.teacher.agent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
@@ -161,7 +162,8 @@ class LessonDetailQueryServiceTest {
         .findByStudentIdAndLessonId(student.getId(), lesson.getId()).orElseThrow().getId();
 
     attendeeCommandService.remove(userId, lesson.getId(),
-        lessonDetailQueryService.getDetail(userId, lesson.getId()).attendees().get(0).attendeeId(), null);
+        lessonDetailQueryService.getDetail(userId, lesson.getId()).attendees().get(0).attendeeId(),
+        null);
     attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
 
     LessonDetailResponse response = lessonDetailQueryService.getDetail(userId, lesson.getId());

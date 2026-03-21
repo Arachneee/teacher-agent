@@ -10,6 +10,7 @@ import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.StudentCreateRequest;
 import com.teacher.agent.dto.StudentResponse;
 import com.teacher.agent.dto.StudentUpdateRequest;
+import com.teacher.agent.exception.BusinessException;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,6 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import com.teacher.agent.exception.BusinessException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)

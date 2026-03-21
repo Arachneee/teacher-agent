@@ -15,6 +15,7 @@ import com.teacher.agent.domain.TeacherRepository;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.RecurrenceCreateRequest;
+import com.teacher.agent.exception.BusinessException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import com.teacher.agent.exception.BusinessException;
 
 @SpringBootTest
 @Transactional
