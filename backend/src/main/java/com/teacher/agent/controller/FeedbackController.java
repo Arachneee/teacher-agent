@@ -7,6 +7,8 @@ import com.teacher.agent.dto.FeedbackKeywordUpdateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.dto.FeedbackUpdateRequest;
 import com.teacher.agent.service.FeedbackCommandService;
+import com.teacher.agent.service.FeedbackKeywordService;
+import com.teacher.agent.service.FeedbackLikeService;
 import com.teacher.agent.service.FeedbackQueryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -24,11 +26,13 @@ public class FeedbackController {
 
   private final FeedbackQueryService feedbackQueryService;
   private final FeedbackCommandService feedbackCommandService;
+  private final FeedbackKeywordService feedbackKeywordService;
+  private final FeedbackLikeService feedbackLikeService;
 
   @PostMapping
   public ResponseEntity<FeedbackResponse> create(UserId userId,
       @RequestBody @Valid FeedbackCreateRequest request) {
-    return ResponseEntity.status(201).body(feedbackCommandService.create(userId, request));
+    return ResponseEntity.ok(feedbackCommandService.create(userId, request));
   }
 
   @GetMapping
@@ -63,25 +67,25 @@ public class FeedbackController {
   @PostMapping("/{id}/keywords")
   public ResponseEntity<FeedbackResponse> addKeyword(UserId userId, @PathVariable @Positive Long id,
       @RequestBody @Valid FeedbackKeywordCreateRequest request) {
-    return ResponseEntity.status(201).body(feedbackCommandService.addKeyword(userId, id, request));
+    return ResponseEntity.ok(feedbackKeywordService.addKeyword(userId, id, request));
   }
 
   @PutMapping("/{id}/keywords/{keywordId}")
   public ResponseEntity<FeedbackResponse> updateKeyword(UserId userId,
       @PathVariable @Positive Long id, @PathVariable @Positive Long keywordId,
       @RequestBody @Valid FeedbackKeywordUpdateRequest request) {
-    return ResponseEntity.ok(feedbackCommandService.updateKeyword(userId, id, keywordId, request));
+    return ResponseEntity.ok(feedbackKeywordService.updateKeyword(userId, id, keywordId, request));
   }
 
   @DeleteMapping("/{id}/keywords/{keywordId}")
   public ResponseEntity<Void> removeKeyword(UserId userId, @PathVariable @Positive Long id,
       @PathVariable @Positive Long keywordId) {
-    feedbackCommandService.removeKeyword(userId, id, keywordId);
+    feedbackKeywordService.removeKeyword(userId, id, keywordId);
     return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/{id}/like")
   public ResponseEntity<FeedbackResponse> like(UserId userId, @PathVariable @Positive Long id) {
-    return ResponseEntity.status(201).body(feedbackCommandService.like(userId, id));
+    return ResponseEntity.ok(feedbackLikeService.like(userId, id));
   }
 }
