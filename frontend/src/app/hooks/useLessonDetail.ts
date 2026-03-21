@@ -27,7 +27,7 @@ export function useLessonDetail(lessonId: number, onAttendeesLoaded: (attendeeId
   const fetchData = () => {
     getLessonDetail(lessonId)
       .then(detail => {
-        setLesson({ id: detail.id, title: detail.title, startTime: detail.startTime, endTime: detail.endTime });
+        setLesson({ id: detail.id, title: detail.title, startTime: detail.startTime, endTime: detail.endTime, recurrenceGroupId: detail.recurrenceGroupId ?? null });
         const mapped = detail.attendees.map(attendee => toAttendee(attendee, detail.id));
         setAttendees(mapped);
         onAttendeesLoaded(mapped.map(attendee => attendee.id));

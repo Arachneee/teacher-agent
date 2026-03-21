@@ -24,11 +24,14 @@ export interface Feedback {
   updatedAt: string;
 }
 
+export type UpdateScope = 'SINGLE' | 'THIS_AND_FOLLOWING' | 'ALL';
+
 export interface Lesson {
   id: number;
   title: string;
   startTime: string;
   endTime: string;
+  recurrenceGroupId: string | null;
 }
 
 export interface AttendeeStudent {
@@ -67,6 +70,7 @@ export interface LessonDetail {
   title: string;
   startTime: string;
   endTime: string;
+  recurrenceGroupId: string | null;
   createdAt: string;
   updatedAt: string;
   attendees: LessonDetailAttendee[];
@@ -83,6 +87,10 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
       window.location.href = '/login';
     }
     throw new Error('세션이 만료됐어요. 다시 로그인해주세요.');
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error(`[API] ${options.method ?? 'GET'} ${url} → ${res.status}`, body);
   }
   return res;
 }
@@ -177,28 +185,49 @@ export async function createLesson(
   startTime: string,
   endTime: string,
   recurrence?: RecurrenceCreateRequest,
+  studentIds?: number[],
 ): Promise<Lesson> {
   const res = await fetchWithAuth(`${BASE_URL}/lessons`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, startTime, endTime, recurrence: recurrence ?? null }),
+    body: JSON.stringify({
+      title,
+      startTime,
+      endTime,
+      recurrence: recurrence ?? null,
+      studentIds: studentIds?.length ? studentIds : null,
+    }),
   });
   if (!res.ok) throw new Error('수업을 추가하지 못했어요');
   return res.json();
 }
 
-export async function updateLesson(id: number, title: string, startTime: string, endTime: string): Promise<Lesson> {
+export async function updateLesson(
+  id: number,
+  title: string,
+  startTime: string,
+  endTime: string,
+  scope?: UpdateScope,
+  recurrence?: RecurrenceCreateRequest
+): Promise<Lesson> {
   const res = await fetchWithAuth(`${BASE_URL}/lessons/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, startTime, endTime }),
+    body: JSON.stringify({
+      title,
+      startTime,
+      endTime,
+      scope: scope ?? 'SINGLE',
+      recurrence: recurrence ?? null,
+    }),
   });
   if (!res.ok) throw new Error('수업을 수정하지 못했어요');
   return res.json();
 }
 
-export async function deleteLesson(id: number): Promise<void> {
-  const res = await fetchWithAuth(`${BASE_URL}/lessons/${id}`, {
+export async function deleteLesson(id: number, scope?: UpdateScope): Promise<void> {
+  const params = new URLSearchParams({ scope: scope ?? 'SINGLE' });
+  const res = await fetchWithAuth(`${BASE_URL}/lessons/${id}?${params}`, {
     method: 'DELETE',
   });
   if (!res.ok) throw new Error('수업을 삭제하지 못했어요');
@@ -212,18 +241,20 @@ export async function getLessonDetail(id: number): Promise<LessonDetail> {
 
 // Attendees
 
-export async function addAttendee(lessonId: number, studentId: number): Promise<Attendee> {
+export async function addAttendee(lessonId: number, studentId: number, scope?: UpdateScope): Promise<Attendee> {
   const res = await fetchWithAuth(`${BASE_URL}/lessons/${lessonId}/attendees`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ studentId }),
+    body: JSON.stringify({ studentId, scope: scope ?? null }),
   });
   if (!res.ok) throw new Error('수강생을 추가하지 못했어요');
   return res.json();
 }
 
-export async function removeAttendee(lessonId: number, attendeeId: number): Promise<void> {
-  const res = await fetchWithAuth(`${BASE_URL}/lessons/${lessonId}/attendees/${attendeeId}`, {
+export async function removeAttendee(lessonId: number, attendeeId: number, scope?: UpdateScope): Promise<void> {
+  const params = scope ? new URLSearchParams({ scope }) : '';
+  const url = `${BASE_URL}/lessons/${lessonId}/attendees/${attendeeId}${params ? `?${params}` : ''}`;
+  const res = await fetchWithAuth(url, {
     method: 'DELETE',
   });
   if (!res.ok) throw new Error('수강생을 제거하지 못했어요');

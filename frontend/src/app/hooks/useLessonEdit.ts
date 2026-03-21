@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lesson, updateLesson } from '../lib/api';
+import { Lesson, UpdateScope, updateLesson } from '../lib/api';
 import { padTwoDigits, parseDateTime } from '../lib/dateTimeUtils';
 
 interface EditForm {
@@ -28,7 +28,7 @@ export function useLessonEdit(lesson: Lesson | null, onSaved: (updated: Lesson) 
 
   const closeEdit = () => setIsEditing(false);
 
-  const handleSave = async (event: React.FormEvent) => {
+  const handleSave = async (event: React.FormEvent, scope?: UpdateScope) => {
     event.preventDefault();
     if (!lesson || !editForm.date) return;
     setIsSaving(true);
@@ -36,7 +36,7 @@ export function useLessonEdit(lesson: Lesson | null, onSaved: (updated: Lesson) 
     const startIso = `${editForm.date}T${padTwoDigits(editForm.startHour)}:${padTwoDigits(editForm.startMinute)}:00`;
     const endIso = `${editForm.date}T${padTwoDigits(editForm.endHour)}:${padTwoDigits(editForm.endMinute)}:00`;
     try {
-      const updated = await updateLesson(lesson.id, editForm.title.trim() || lesson.title, startIso, endIso);
+      const updated = await updateLesson(lesson.id, editForm.title.trim() || lesson.title, startIso, endIso, scope);
       onSaved(updated);
       setIsEditing(false);
     } catch {
