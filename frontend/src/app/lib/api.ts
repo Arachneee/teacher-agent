@@ -208,7 +208,9 @@ export async function updateLesson(
   startTime: string,
   endTime: string,
   scope?: UpdateScope,
-  recurrence?: RecurrenceCreateRequest
+  recurrence?: RecurrenceCreateRequest,
+  addStudentIds?: number[],
+  removeStudentIds?: number[]
 ): Promise<Lesson> {
   const res = await fetchWithAuth(`${BASE_URL}/lessons/${id}`, {
     method: 'PUT',
@@ -219,6 +221,8 @@ export async function updateLesson(
       endTime,
       scope: scope ?? 'SINGLE',
       recurrence: recurrence ?? null,
+      addStudentIds: addStudentIds ?? null,
+      removeStudentIds: removeStudentIds ?? null,
     }),
   });
   if (!res.ok) throw new Error('수업을 수정하지 못했어요');

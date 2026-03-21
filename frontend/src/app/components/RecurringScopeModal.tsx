@@ -67,7 +67,7 @@ export default function RecurringScopeModal({ mode, lessonTitle, onSelect, onClo
 
   return (
     <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
       onClick={event => event.target === event.currentTarget && onClose()}
     >
       <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">

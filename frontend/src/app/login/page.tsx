@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,13 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { user, loading, setUser } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/');
+    }
+  }, [loading, user, router]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
