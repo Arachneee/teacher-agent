@@ -36,3 +36,9 @@ npm-debug.log*
 # OMC tool files
 .omc/
 .sisyphus/
+
+# Build outputs
+backend/bin/
+
+# Screenshots
+*.png
