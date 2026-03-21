@@ -4,14 +4,13 @@ import { useMemo } from 'react';
 import { HOURS, MINUTES, padTwoDigits } from '../lib/dateTimeUtils';
 
 interface Props {
-  label: string;
   hour: number;
   minute: number;
   onHourChange: (hour: number) => void;
   onMinuteChange: (minute: number) => void;
 }
 
-export default function TimePicker({ label, hour, minute, onHourChange, onMinuteChange }: Props) {
+export default function TimePicker({ hour, minute, onHourChange, onMinuteChange }: Props) {
   const minuteOptions = useMemo(
     () => (MINUTES.includes(minute) ? MINUTES : [...MINUTES, minute].sort((a, b) => a - b)),
     [minute]
@@ -19,7 +18,6 @@ export default function TimePicker({ label, hour, minute, onHourChange, onMinute
 
   return (
     <div className="flex-1">
-      <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">{label}</label>
       <div className="flex items-center gap-1.5">
         <select
           value={hour}

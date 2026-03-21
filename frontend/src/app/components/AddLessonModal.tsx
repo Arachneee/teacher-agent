@@ -260,7 +260,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                   <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
                     날짜 <span className="text-rose-400">*</span>
                   </label>
-                  <div className="bg-purple-50 rounded-2xl px-3 py-3 flex items-end">
+                  <div className="bg-purple-50 rounded-2xl px-3 py-2.5 flex items-center">
                     <input
                       type="date"
                       value={date}
@@ -274,9 +274,8 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                   <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
                     시간 <span className="text-rose-400">*</span>
                   </label>
-                  <div className="bg-purple-50 rounded-2xl px-3 py-3 flex items-end gap-2">
+                  <div className="bg-purple-50 rounded-2xl px-3 py-2.5 flex items-center gap-2">
                     <TimePicker
-                      label="시작"
                       hour={startHour}
                       minute={startMinute}
                       onHourChange={setStartHour}
@@ -284,7 +283,6 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                     />
                     <span className="text-gray-300 font-medium pb-2">–</span>
                     <TimePicker
-                      label="종료"
                       hour={endHour}
                       minute={endMinute}
                       onHourChange={setEndHour}
@@ -620,6 +618,15 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                     </button>
                   )}
                   <div className="flex gap-3">
+                    {!isEditMode && (
+                      <button
+                        type="button"
+                        onClick={() => setStep('details')}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-500 font-medium py-3 px-4 rounded-2xl transition-colors duration-150"
+                      >
+                        ←
+                      </button>
+                    )}
                     <button
                       onClick={onSave}
                       disabled={loading}
