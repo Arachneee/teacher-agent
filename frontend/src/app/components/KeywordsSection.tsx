@@ -1,6 +1,6 @@
 'use client';
 
-import type { RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { FeedbackKeyword } from '../lib/api';
 
 interface Props {
@@ -29,6 +29,13 @@ export default function KeywordsSection({
   inputRef,
 }: Props) {
   const isEditing = editingKeywordId !== null;
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col gap-2">
@@ -72,7 +79,11 @@ export default function KeywordsSection({
           ref={inputRef}
           value={keywordInput}
           onChange={event => onKeywordInputChange(event.target.value)}
-          onBlur={onCancelEditKeyword}
+          onBlur={() => {
+            blurTimeoutRef.current = setTimeout(() => {
+              onCancelEditKeyword();
+            }, 150);
+          }}
           onKeyDown={event => {
             if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
               onSubmitKeyword();
@@ -99,8 +110,19 @@ export default function KeywordsSection({
           maxLength={100}
         />
         <button
-          onMouseDown={event => event.preventDefault()}
-          onClick={onSubmitKeyword}
+          onMouseDown={() => {
+            if (blurTimeoutRef.current) {
+              clearTimeout(blurTimeoutRef.current);
+              blurTimeoutRef.current = null;
+            }
+          }}
+          onClick={() => {
+            if (blurTimeoutRef.current) {
+              clearTimeout(blurTimeoutRef.current);
+              blurTimeoutRef.current = null;
+            }
+            onSubmitKeyword();
+          }}
           disabled={!isEditing && !keywordInput.trim()}
           className={`shrink-0 w-8 h-8 mr-1 flex items-center justify-center rounded-xl transition-colors duration-150 ${
             isEditing
