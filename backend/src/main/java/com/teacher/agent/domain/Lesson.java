@@ -15,9 +15,11 @@ import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +27,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(indexes = @Index(name = "idx_lesson_user_id", columnList = "userId"))
+@Table(
+    indexes = {
+      @Index(name = "idx_lesson_user_id", columnList = "userId"),
+      @Index(name = "idx_lesson_recurrence_group_id", columnList = "recurrenceGroupId")
+    })
 public class Lesson extends BaseEntity {
 
   @Id
@@ -53,9 +59,11 @@ public class Lesson extends BaseEntity {
 
   @Embedded private Recurrence recurrence;
 
+  private UUID recurrenceGroupId;
+
   public static Lesson create(
       UserId userId, String title, LocalDateTime startTime, LocalDateTime endTime) {
-    return create(userId, title, startTime, endTime, null);
+    return create(userId, title, startTime, endTime, null, null);
   }
 
   public static Lesson create(
@@ -63,7 +71,8 @@ public class Lesson extends BaseEntity {
       String title,
       LocalDateTime startTime,
       LocalDateTime endTime,
-      Recurrence recurrence) {
+      Recurrence recurrence,
+      UUID recurrenceGroupId) {
     Lesson lesson = new Lesson();
 
     lesson.userId = checkNotNull(userId, USER_ID);
@@ -71,6 +80,7 @@ public class Lesson extends BaseEntity {
     lesson.startTime = checkNotNull(startTime, START_TIME);
     lesson.endTime = checkNotNull(endTime, END_TIME);
     lesson.recurrence = recurrence;
+    lesson.recurrenceGroupId = recurrenceGroupId;
 
     checkArgument(lesson.endTime.isAfter(lesson.startTime), END_TIME);
 
@@ -104,6 +114,14 @@ public class Lesson extends BaseEntity {
     this.title = checkNotBlank(title, TITLE);
     this.startTime = checkNotNull(startTime, START_TIME);
     this.endTime = checkNotNull(endTime, END_TIME);
+
+    checkArgument(this.endTime.isAfter(this.startTime), END_TIME);
+  }
+
+  public void updateTime(String title, LocalTime newTime, long durationMinutes) {
+    this.title = checkNotBlank(title, TITLE);
+    this.startTime = this.startTime.toLocalDate().atTime(newTime);
+    this.endTime = this.startTime.plusMinutes(durationMinutes);
 
     checkArgument(this.endTime.isAfter(this.startTime), END_TIME);
   }

@@ -6,10 +6,12 @@ import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.Student;
 import com.teacher.agent.domain.StudentRepository;
+import com.teacher.agent.domain.UpdateScope;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
+import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -59,13 +61,37 @@ public class LessonCommandService {
   @Transactional
   public LessonResponse update(UserId userId, Long id, LessonUpdateRequest request) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(id, userId);
-    lesson.update(request.title(), request.startTime(), request.endTime());
+    UpdateScope scope = request.resolvedScope();
+
+    if (scope == UpdateScope.SINGLE) {
+      lesson.update(request.title(), request.startTime(), request.endTime());
+      return LessonResponse.from(lesson);
+    }
+
+    List<Lesson> targets = lessonQueryService.findSeriesLessons(lesson, userId, scope);
+    long durationMinutes = Duration.between(request.startTime(), request.endTime()).toMinutes();
+
+    for (Lesson target : targets) {
+      target.updateTime(request.title(), request.startTime().toLocalTime(), durationMinutes);
+    }
+
     return LessonResponse.from(lesson);
   }
 
   @Transactional
-  public void delete(UserId userId, Long id) {
-    lessonQueryService.findByIdAndVerifyOwner(id, userId);
-    lessonRepository.deleteById(id);
+  public void delete(UserId userId, Long id, UpdateScope scope) {
+    Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(id, userId);
+
+    if (scope == null || scope == UpdateScope.SINGLE) {
+      feedbackRepository.deleteAllByLessonIdInAndAiContentIsNull(List.of(id));
+      lessonRepository.deleteById(id);
+      return;
+    }
+
+    List<Lesson> targets = lessonQueryService.findSeriesLessons(lesson, userId, scope);
+    List<Long> targetIds = targets.stream().map(Lesson::getId).toList();
+
+    feedbackRepository.deleteAllByLessonIdInAndAiContentIsNull(targetIds);
+    lessonRepository.deleteAllById(targetIds);
   }
 }

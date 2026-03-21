@@ -15,4 +15,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
   @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.keywords WHERE f.id = :id")
   Optional<Feedback> findById(@Param("id") Long id);
+
+  void deleteAllByLessonIdInAndAiContentIsNull(List<Long> lessonIds);
 }

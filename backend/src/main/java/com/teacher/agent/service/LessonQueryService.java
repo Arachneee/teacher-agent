@@ -4,6 +4,7 @@ import static com.teacher.agent.util.RepositoryUtil.findLessonByIdAndUserIdOrThr
 
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
+import com.teacher.agent.domain.UpdateScope;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.LessonResponse;
 import java.time.LocalDate;
@@ -34,5 +35,19 @@ public class LessonQueryService {
 
   Lesson findByIdAndVerifyOwner(Long id, UserId userId) {
     return findLessonByIdAndUserIdOrThrow(lessonRepository, id, userId);
+  }
+
+  List<Lesson> findSeriesLessons(Lesson lesson, UserId userId, UpdateScope scope) {
+    if (lesson.getRecurrenceGroupId() == null) {
+      return List.of(lesson);
+    }
+
+    if (scope == UpdateScope.ALL) {
+      return lessonRepository.findAllByRecurrenceGroupIdAndUserId(
+          lesson.getRecurrenceGroupId(), userId);
+    }
+
+    return lessonRepository.findAllByRecurrenceGroupIdAndUserIdAndStartTimeGreaterThanEqual(
+        lesson.getRecurrenceGroupId(), userId, lesson.getStartTime());
   }
 }

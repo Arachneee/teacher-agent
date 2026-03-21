@@ -1,5 +1,6 @@
 package com.teacher.agent.controller;
 
+import com.teacher.agent.domain.UpdateScope;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonDetailResponse;
@@ -59,8 +60,9 @@ public class LessonController {
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(UserId userId, @PathVariable @Positive Long id) {
-    lessonCommandService.delete(userId, id);
+  public ResponseEntity<Void> delete(UserId userId, @PathVariable @Positive Long id,
+      @RequestParam(defaultValue = "SINGLE") UpdateScope scope) {
+    lessonCommandService.delete(userId, id, scope);
     return ResponseEntity.noContent().build();
   }
 }

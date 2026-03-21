@@ -4,6 +4,7 @@ import com.teacher.agent.dto.LessonDetailRow;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,11 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
       LocalDateTime to);
 
   Optional<Lesson> findByIdAndUserId(Long id, UserId userId);
+
+  List<Lesson> findAllByRecurrenceGroupIdAndUserId(UUID recurrenceGroupId, UserId userId);
+
+  List<Lesson> findAllByRecurrenceGroupIdAndUserIdAndStartTimeGreaterThanEqual(
+      UUID recurrenceGroupId, UserId userId, LocalDateTime startTime);
 
   @Query("SELECT new com.teacher.agent.dto.LessonDetailRow("
       + " a.id,"

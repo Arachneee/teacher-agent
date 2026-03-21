@@ -2,17 +2,16 @@ package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.Recurrence;
-import com.teacher.agent.domain.RecurrenceType;
 import com.teacher.agent.domain.UserId;
+import com.teacher.agent.dto.GenerationContext;
 import com.teacher.agent.dto.LessonCreateRequest;
 import java.time.DayOfWeek;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,7 +19,8 @@ public class LessonFactory {
 
   public List<Lesson> createFrom(UserId userId, LessonCreateRequest request) {
     if (request.recurrence() == null) {
-      return List.of(Lesson.create(userId, request.title(), request.startTime(), request.endTime()));
+      return List.of(
+          Lesson.create(userId, request.title(), request.startTime(), request.endTime()));
     }
 
     Recurrence recurrence = request.recurrence().toEntity();
@@ -29,80 +29,64 @@ public class LessonFactory {
       throw new IllegalArgumentException("반복 수업은 최대 6개월까지만 설정할 수 있습니다.");
     }
 
-    return createRecurringLessons(userId, request.title(), request.startTime(), request.endTime(),
-        recurrence);
+    GenerationContext context = GenerationContext.from(userId, request, recurrence,
+        UUID.randomUUID());
+    return createRecurringLessons(context);
   }
 
-  private List<Lesson> createRecurringLessons(UserId userId, String title, LocalDateTime startTime,
-      LocalDateTime endTime, Recurrence recurrence) {
+  private List<Lesson> createRecurringLessons(GenerationContext context) {
+    return switch (context.recurrence().getRecurrenceType()) {
+      case DAILY -> generateDaily(context);
+      case WEEKLY -> generateWeekly(context);
+      case MONTHLY -> generateMonthly(context);
+    };
+  }
+
+  private List<Lesson> generateDaily(GenerationContext context) {
     List<Lesson> lessons = new ArrayList<>();
-    long durationMinutes = Duration.between(startTime, endTime).toMinutes();
-    LocalDate start = startTime.toLocalDate();
-    LocalDate end = recurrence.getEndDate();
-
-    switch (recurrence.getRecurrenceType()) {
-      case DAILY -> generateDaily(lessons, userId, title, startTime, durationMinutes, start, end,
-          recurrence);
-      case WEEKLY -> generateWeekly(lessons, userId, title, startTime, durationMinutes, start, end,
-          recurrence);
-      case MONTHLY -> generateMonthly(lessons, userId, title, startTime, durationMinutes, start,
-          end, recurrence);
-      default -> throw new UnsupportedOperationException(
-          "지원하지 않는 반복 유형: " + recurrence.getRecurrenceType());
+    LocalDate current = context.startDate();
+    while (!current.isAfter(context.endDate())) {
+      lessons.add(createLesson(context, current));
+      current = current.plusDays(context.recurrence().getIntervalValue());
     }
-
     return lessons;
   }
 
-  private void generateDaily(List<Lesson> lessons, UserId userId, String title,
-      LocalDateTime startTime, long durationMinutes, LocalDate start, LocalDate end,
-      Recurrence recurrence) {
-    LocalDate current = start;
-    while (!current.isAfter(end)) {
-      addLesson(lessons, userId, title, startTime, current, durationMinutes, recurrence);
-      current = current.plusDays(recurrence.getIntervalValue());
-    }
-  }
+  private List<Lesson> generateWeekly(GenerationContext context) {
+    List<Lesson> lessons = new ArrayList<>();
+    List<DayOfWeek> daysOfWeek = context.recurrence().getDaysOfWeek();
+    LocalDate current = context.startDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
-  private void generateWeekly(List<Lesson> lessons, UserId userId, String title,
-      LocalDateTime startTime, long durationMinutes, LocalDate start, LocalDate end,
-      Recurrence recurrence) {
-    List<DayOfWeek> daysOfWeek = recurrence.getDaysOfWeek();
-    LocalDate weekStart = start.with(TemporalAdjusters.previousOrSame(
-        DayOfWeek.MONDAY));
-    LocalDate current = weekStart;
-
-    while (!current.isAfter(end)) {
+    while (!current.isAfter(context.endDate())) {
       for (DayOfWeek day : daysOfWeek) {
         LocalDate lessonDate = current.with(day);
-        if (!lessonDate.isBefore(start) && !lessonDate.isAfter(end)) {
-          addLesson(lessons, userId, title, startTime, lessonDate, durationMinutes, recurrence);
+        if (!lessonDate.isBefore(context.startDate()) && !lessonDate.isAfter(context.endDate())) {
+          lessons.add(createLesson(context, lessonDate));
         }
       }
-      current = current.plusWeeks(recurrence.getIntervalValue());
+      current = current.plusWeeks(context.recurrence().getIntervalValue());
     }
+    return lessons;
   }
 
-  private void generateMonthly(List<Lesson> lessons, UserId userId, String title,
-      LocalDateTime startTime, long durationMinutes, LocalDate start, LocalDate end,
-      Recurrence recurrence) {
-    LocalDate current = start;
-    int targetDay = start.getDayOfMonth();
+  private List<Lesson> generateMonthly(GenerationContext context) {
+    List<Lesson> lessons = new ArrayList<>();
+    LocalDate current = context.startDate();
+    int targetDay = current.getDayOfMonth();
 
-    while (!current.isAfter(end)) {
-      addLesson(lessons, userId, title, startTime, current, durationMinutes, recurrence);
-      current = current.plusMonths(recurrence.getIntervalValue());
+    while (!current.isAfter(context.endDate())) {
+      lessons.add(createLesson(context, current));
+      current = current.plusMonths(context.recurrence().getIntervalValue());
       int maxDay = current.lengthOfMonth();
       current = current.withDayOfMonth(Math.min(targetDay, maxDay));
     }
+    return lessons;
   }
 
-  private void addLesson(List<Lesson> lessons, UserId userId, String title,
-      LocalDateTime startTime, LocalDate lessonDate, long durationMinutes,
-      Recurrence recurrence) {
-    LocalDateTime lessonStart = lessonDate.atTime(startTime.toLocalTime());
-    LocalDateTime lessonEnd = lessonStart.plusMinutes(durationMinutes);
-    Lesson lesson = Lesson.create(userId, title, lessonStart, lessonEnd, recurrence);
-    lessons.add(lesson);
+  private Lesson createLesson(GenerationContext context, LocalDate lessonDate) {
+    LocalDateTime lessonStart = lessonDate.atTime(context.startTime().toLocalTime());
+    LocalDateTime lessonEnd = lessonStart.plusMinutes(context.durationMinutes());
+    return Lesson.create(context.userId(), context.title(), lessonStart, lessonEnd,
+        context.recurrence(), context.groupId());
   }
 }
