@@ -1,5 +1,7 @@
 package com.teacher.agent.service;
 
+import static com.teacher.agent.util.ErrorMessages.MAX_RECURRENCE_PERIOD_ERROR;
+
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.Recurrence;
 import com.teacher.agent.dto.GenerationContext;
@@ -25,7 +27,7 @@ public class LessonFactory {
     Recurrence recurrence = command.recurrence();
 
     if (recurrence.getEndDate().isAfter(command.startTime().toLocalDate().plusMonths(6))) {
-      throw new IllegalArgumentException("반복 수업은 최대 6개월까지만 설정할 수 있습니다.");
+      throw new IllegalArgumentException(MAX_RECURRENCE_PERIOD_ERROR);
     }
 
     GenerationContext context = GenerationContext.from(command, recurrence, UUID.randomUUID());

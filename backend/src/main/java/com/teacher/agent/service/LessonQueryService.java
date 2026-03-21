@@ -43,11 +43,12 @@ public class LessonQueryService {
     }
 
     if (scope == UpdateScope.ALL) {
-      return lessonRepository.findAllByRecurrenceGroupIdAndUserId(
+      return lessonRepository.findAllWithAttendeesByRecurrenceGroupIdAndUserId(
           lesson.getRecurrenceGroupId(), userId);
     }
 
-    return lessonRepository.findAllByRecurrenceGroupIdAndUserIdAndStartTimeGreaterThanEqual(
-        lesson.getRecurrenceGroupId(), userId, lesson.getStartTime());
+    return lessonRepository
+        .findAllWithAttendeesByRecurrenceGroupIdAndUserIdAndStartTimeGreaterThanEqual(
+            lesson.getRecurrenceGroupId(), userId, lesson.getStartTime());
   }
 }

@@ -1,5 +1,7 @@
 package com.teacher.agent.service;
 
+import static com.teacher.agent.util.ErrorMessages.SOME_STUDENTS_NOT_FOUND;
+
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
@@ -58,7 +60,7 @@ public class LessonCommandService {
     List<Student> students = studentRepository.findAllByIdInAndUserId(studentIds, userId);
     if (students.size() != studentIds.size()) {
       throw new ResourceNotFoundException(
-          com.teacher.agent.exception.ErrorCode.STUDENT_NOT_FOUND, "일부 학생을 찾을 수 없습니다.");
+          com.teacher.agent.exception.ErrorCode.STUDENT_NOT_FOUND, SOME_STUDENTS_NOT_FOUND);
     }
   }
 
@@ -97,34 +99,41 @@ public class LessonCommandService {
     }
 
     if (!addStudentIds.isEmpty()) {
-      validateStudentOwnership(userId, addStudentIds);
-      for (Lesson target : targets) {
-        for (Long studentId : addStudentIds) {
-          try {
-            target.addAttendee(studentId);
-          } catch (IllegalArgumentException ignored) {
-          }
-        }
-      }
-      lessonRepository.flush();
-      for (Lesson target : targets) {
-        for (Long studentId : addStudentIds) {
-          if (feedbackRepository.findByStudentIdAndLessonId(studentId, target.getId()).isEmpty()) {
-            feedbackRepository.save(Feedback.create(studentId, target.getId()));
-          }
-        }
-      }
+      addAttendees(userId, targets, addStudentIds);
     }
 
     if (!removeStudentIds.isEmpty()) {
-      for (Lesson target : targets) {
-        for (Long studentId : removeStudentIds) {
-          target.getAttendees().stream()
-              .filter(a -> a.getStudentId().equals(studentId))
-              .findFirst()
-              .ifPresent(a -> target.removeAttendee(a.getId()));
-        }
+      removeAttendees(targets, removeStudentIds);
+    }
+  }
+
+  private void addAttendees(UserId userId, List<Lesson> targets, List<Long> studentIds) {
+    validateStudentOwnership(userId, studentIds);
+
+    for (Lesson target : targets) {
+      target.addAttendeesIfAbsent(studentIds);
+    }
+
+    lessonRepository.flush();
+
+    for (Lesson target : targets) {
+      createFeedbacksIfAbsent(target, studentIds);
+    }
+  }
+
+  private void createFeedbacksIfAbsent(Lesson lesson, List<Long> studentIds) {
+    for (Long studentId : studentIds) {
+      boolean feedbackExists =
+          feedbackRepository.findByStudentIdAndLessonId(studentId, lesson.getId()).isPresent();
+      if (!feedbackExists) {
+        feedbackRepository.save(Feedback.create(studentId, lesson.getId()));
       }
+    }
+  }
+
+  private void removeAttendees(List<Lesson> targets, List<Long> studentIds) {
+    for (Lesson target : targets) {
+      target.removeAttendeesByStudentIds(studentIds);
     }
   }
 
@@ -147,7 +156,7 @@ public class LessonCommandService {
       throw BadRequestException.noLessonGenerated();
     }
 
-    UUID groupId = generated.get(0).getRecurrenceGroupId();
+    UUID groupId = generated.getFirst().getRecurrenceGroupId();
     lesson.convertToRecurring(recurrence, groupId);
 
     List<Lesson> additionalLessons =
