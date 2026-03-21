@@ -6,16 +6,19 @@ import static com.teacher.agent.util.Parameter.STUDENT_ID;
 import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
 import static com.teacher.agent.util.ValidationUtil.checkPositive;
 
+import com.teacher.agent.util.ErrorMessages;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id", callSuper = false)
 @Table(indexes = @Index(name = "idx_feedback_student_id", columnList = "studentId"),
     uniqueConstraints = @UniqueConstraint(name = "uk_feedback_student_lesson",
         columnNames = {"studentId", "lessonId"}))
@@ -64,7 +67,7 @@ public class Feedback extends BaseEntity {
     boolean removed =
         keywords.removeIf(feedbackKeyword -> feedbackKeyword.getId().equals(keywordId));
     if (!removed) {
-      throw new IllegalArgumentException("FeedbackKeyword not found: " + keywordId);
+      throw new IllegalArgumentException(ErrorMessages.FEEDBACK_KEYWORD_NOT_FOUND + keywordId);
     }
   }
 
@@ -72,7 +75,8 @@ public class Feedback extends BaseEntity {
     FeedbackKeyword feedbackKeyword = keywords.stream()
         .filter(keyword -> keyword.getId().equals(keywordId))
         .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("FeedbackKeyword not found: " + keywordId));
+        .orElseThrow(() -> new IllegalArgumentException(
+            ErrorMessages.FEEDBACK_KEYWORD_NOT_FOUND + keywordId));
 
     feedbackKeyword.update(newKeyword);
   }
@@ -89,11 +93,11 @@ public class Feedback extends BaseEntity {
 
   public void like() {
     if (aiContent == null || aiContent.isBlank()) {
-      throw new IllegalStateException("AI 콘텐츠가 없으면 좋아요를 할 수 없습니다.");
+      throw new IllegalStateException(ErrorMessages.AI_CONTENT_REQUIRED_FOR_LIKE);
     }
 
     if (liked) {
-      throw new IllegalStateException("이미 좋아요를 누른 상태입니다.");
+      throw new IllegalStateException(ErrorMessages.ALREADY_LIKED);
     }
 
     this.liked = true;

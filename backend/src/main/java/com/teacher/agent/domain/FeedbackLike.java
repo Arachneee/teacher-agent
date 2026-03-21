@@ -5,12 +5,14 @@ import static com.teacher.agent.util.ValidationUtil.*;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id", callSuper = false)
 @Table(indexes = @Index(name = "idx_feedback_like_feedback_id_id", columnList = "feedback_id, id"))
 public class FeedbackLike extends BaseEntity {
 

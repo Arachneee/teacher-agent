@@ -6,12 +6,14 @@ import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id", callSuper = false)
 public class Teacher extends BaseEntity {
 
   @Id

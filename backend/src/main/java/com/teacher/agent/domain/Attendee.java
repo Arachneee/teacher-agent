@@ -8,12 +8,14 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id", callSuper = false)
 @Table(uniqueConstraints = @UniqueConstraint(name = "uk_attendee_lesson_student",
     columnNames = {"lesson_id", "student_id"}))
 public class Attendee extends BaseEntity {
