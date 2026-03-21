@@ -3,6 +3,8 @@ package com.teacher.agent.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class FeedbackTest {
@@ -174,5 +176,29 @@ class FeedbackTest {
 
     // then
     assertThat(feedback.isLiked()).isFalse();
+  }
+
+  @Test
+  void 여러_학생의_피드백을_한번에_생성한다() {
+    // given
+    List<Long> studentIds = List.of(1L, 2L, 3L);
+
+    // when
+    List<Feedback> feedbacks = Feedback.createAll(studentIds, 10L);
+
+    // then
+    assertThat(feedbacks).hasSize(3);
+    assertThat(feedbacks).allMatch(f -> f.getLessonId() == 10L);
+    assertThat(feedbacks).extracting(Feedback::getStudentId)
+        .containsExactly(1L, 2L, 3L);
+  }
+
+  @Test
+  void 빈_학생_목록으로_createAll하면_빈_리스트를_반환한다() {
+    // when
+    List<Feedback> feedbacks = Feedback.createAll(Collections.emptyList(), 10L);
+
+    // then
+    assertThat(feedbacks).isEmpty();
   }
 }

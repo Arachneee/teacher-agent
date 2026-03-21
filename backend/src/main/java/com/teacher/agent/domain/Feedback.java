@@ -50,6 +50,12 @@ public class Feedback extends BaseEntity {
     return feedback;
   }
 
+  public static List<Feedback> createAll(List<Long> studentIds, Long lessonId) {
+    return studentIds.stream()
+        .map(studentId -> Feedback.create(studentId, lessonId))
+        .toList();
+  }
+
   public void addKeyword(String keyword) {
     keywords.add(FeedbackKeyword.create(this, keyword));
   }

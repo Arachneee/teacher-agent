@@ -42,12 +42,7 @@ public class LessonCommandService {
 
       for (Lesson lesson : lessons) {
         lesson.addAttendees(studentIds);
-      }
-
-      for (Lesson lesson : lessons) {
-        for (Long studentId : studentIds) {
-          feedbackRepository.save(Feedback.create(studentId, lesson.getId()));
-        }
+        feedbackRepository.saveAll(Feedback.createAll(studentIds, lesson.getId()));
       }
     }
 
