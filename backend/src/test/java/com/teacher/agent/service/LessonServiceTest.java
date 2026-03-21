@@ -15,6 +15,7 @@ import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
 import com.teacher.agent.dto.RecurrenceCreateRequest;
+import com.teacher.agent.exception.BusinessException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,7 +29,6 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import com.teacher.agent.exception.BusinessException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -228,7 +228,7 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), targetId,
-          new LessonUpdateRequest("변경된수학", START, END, UpdateScope.SINGLE, null));
+          new LessonUpdateRequest("변경된수학", START, END, UpdateScope.SINGLE, null, null, null));
 
       // then
       LessonResponse updated = lessonQueryService.getOne(teacher.getUserId(), targetId);
@@ -252,7 +252,7 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), targetId,
-          new LessonUpdateRequest("전체변경", newStart, newEnd, UpdateScope.ALL, null));
+          new LessonUpdateRequest("전체변경", newStart, newEnd, UpdateScope.ALL, null, null, null));
 
       // then
       List<LessonResponse> allLessons = lessonRepository.findAllByUserId(teacher.getUserId())
@@ -278,7 +278,8 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), secondId,
-          new LessonUpdateRequest("이후변경", newStart, newEnd, UpdateScope.THIS_AND_FOLLOWING, null));
+          new LessonUpdateRequest("이후변경", newStart, newEnd, UpdateScope.THIS_AND_FOLLOWING, null,
+              null, null));
 
       // then
       LessonResponse first = lessonQueryService.getOne(teacher.getUserId(), allLessons.get(0).id());
@@ -299,7 +300,7 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), created.id(),
-          new LessonUpdateRequest("변경됨", START, END, UpdateScope.ALL, null));
+          new LessonUpdateRequest("변경됨", START, END, UpdateScope.ALL, null, null, null));
 
       // then
       LessonResponse updated = lessonQueryService.getOne(teacher.getUserId(), created.id());

@@ -184,7 +184,8 @@ class AttendeeServiceTest {
         attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
 
     assertThatThrownBy(
-        () -> attendeeCommandService.remove(otherTeacher.getUserId(), lesson.getId(), added.id(), null))
+        () -> attendeeCommandService.remove(otherTeacher.getUserId(), lesson.getId(), added.id(),
+            null))
         .isInstanceOf(ResourceNotFoundException.class);
   }
 

@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 
 import com.teacher.agent.domain.*;
 import com.teacher.agent.dto.*;
+import com.teacher.agent.exception.BadRequestException;
+import com.teacher.agent.exception.BusinessException;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.AfterEach;
@@ -20,8 +22,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import com.teacher.agent.exception.BadRequestException;
-import com.teacher.agent.exception.BusinessException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -380,7 +380,8 @@ class FeedbackServiceTest {
     feedbackCommandService.like(userId, created.id());
 
     FeedbackResponse regenerated =
-        feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("새로 생성한 피드백"));
+        feedbackCommandService.update(userId, created.id(),
+            new FeedbackUpdateRequest("새로 생성한 피드백"));
     assertThat(regenerated.liked()).isFalse();
 
     FeedbackResponse reLiked = feedbackCommandService.like(userId, created.id());

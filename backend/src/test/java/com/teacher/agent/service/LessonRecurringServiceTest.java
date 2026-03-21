@@ -3,11 +3,11 @@ package com.teacher.agent.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.RecurrenceType;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonUpdateRequest;
 import com.teacher.agent.dto.RecurrenceCreateRequest;
@@ -143,7 +143,7 @@ class LessonRecurringServiceTest {
     RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
         RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 31));
     LessonUpdateRequest updateRequest = new LessonUpdateRequest(
-        "수학", start, end, null, recurrence);
+        "수학", start, end, null, recurrence, null, null);
 
     lessonCommandService.update(teacher.getUserId(), original.getId(), updateRequest);
 

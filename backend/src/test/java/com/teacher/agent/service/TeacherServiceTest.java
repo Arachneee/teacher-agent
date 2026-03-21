@@ -8,14 +8,14 @@ import com.teacher.agent.domain.TeacherRepository;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.TeacherResponse;
 import com.teacher.agent.dto.TeacherUpdateRequest;
+import com.teacher.agent.exception.BusinessException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import com.teacher.agent.exception.BusinessException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
