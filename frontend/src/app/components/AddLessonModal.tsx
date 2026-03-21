@@ -15,6 +15,7 @@ import {
   updateLesson,
 } from '../lib/api';
 import { padTwoDigits, parseDateTime } from '../lib/dateTimeUtils';
+import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
 
 interface Props {
@@ -255,22 +256,18 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                 />
               </div>
 
-              <div className="flex gap-3">
-                <div className="w-[7.5rem] shrink-0">
+              <div className="flex flex-col gap-3">
+                <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
                     날짜 <span className="text-rose-400">*</span>
                   </label>
-                  <div className="bg-purple-50 rounded-2xl px-3 py-2.5 flex items-center">
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={event => setDate(event.target.value)}
-                      className="w-full bg-white rounded-xl px-2 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
-                      required
-                    />
-                  </div>
+                  <DatePicker
+                    value={date}
+                    onChange={setDate}
+                    required
+                  />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
                     시간 <span className="text-rose-400">*</span>
                   </label>
@@ -383,11 +380,9 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
 
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">반복 종료일</label>
-                        <input
-                          type="date"
+                        <DatePicker
                           value={recurrenceEndDate}
-                          onChange={event => setRecurrenceEndDate(event.target.value)}
-                          className="w-full bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
+                          onChange={setRecurrenceEndDate}
                         />
                       </div>
 

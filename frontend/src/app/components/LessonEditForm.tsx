@@ -1,5 +1,6 @@
 'use client';
 
+import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
 
 interface EditForm {
@@ -34,18 +35,15 @@ export default function LessonEditForm({ editForm, setEditForm, isSaving, saveEr
       <div className="flex flex-wrap items-end gap-3 mt-4">
         <div>
           <p className="text-xs font-medium text-gray-400 mb-1">날짜</p>
-          <input
-            type="date"
+          <DatePicker
             value={editForm.date}
-            onChange={e => setEditForm(prev => ({ ...prev, date: e.target.value }))}
-            className="bg-purple-50 rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-200 cursor-pointer"
+            onChange={date => setEditForm(prev => ({ ...prev, date }))}
             required
           />
         </div>
 
         <div className="flex items-end gap-2">
           <TimePicker
-            label="시작"
             hour={editForm.startHour}
             minute={editForm.startMinute}
             onHourChange={startHour => setEditForm(prev => ({ ...prev, startHour }))}
@@ -53,7 +51,6 @@ export default function LessonEditForm({ editForm, setEditForm, isSaving, saveEr
           />
           <span className="text-gray-300 font-medium pb-2.5">–</span>
           <TimePicker
-            label="종료"
             hour={editForm.endHour}
             minute={editForm.endMinute}
             onHourChange={endHour => setEditForm(prev => ({ ...prev, endHour }))}
