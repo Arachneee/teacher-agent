@@ -12,12 +12,13 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Attendee, removeAttendee } from '../../../lib/api';
+import { Attendee, UpdateScope, removeAttendee } from '../../../lib/api';
 import { padTwoDigits } from '../../../lib/dateTimeUtils';
 import { useAuth } from '../../../context/AuthContext';
 import AttendeeCard from '../../../components/AttendeeCard';
 import AddAttendeeModal from '../../../components/AddAttendeeModal';
 import LessonEditForm from '../../../components/LessonEditForm';
+import RecurringScopeModal from '../../../components/RecurringScopeModal';
 import { MAX_COLUMNS, MIN_COLUMNS, useGridLayout } from '../../../hooks/useGridLayout';
 import { useLessonDetail } from '../../../hooks/useLessonDetail';
 import { useLessonEdit } from '../../../hooks/useLessonEdit';
@@ -95,6 +96,10 @@ export default function LessonDetailPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [showEditScopeModal, setShowEditScopeModal] = useState(false);
+  const [pendingEditEvent, setPendingEditEvent] = useState<React.FormEvent | null>(null);
+  const [showRemoveScopeModal, setShowRemoveScopeModal] = useState(false);
+  const [pendingRemoveAttendeeId, setPendingRemoveAttendeeId] = useState<number | null>(null);
 
   const {
     gridSlots,
@@ -115,17 +120,56 @@ export default function LessonDetailPage() {
     setLesson,
   );
 
+  const handleEditSubmit = (event: React.FormEvent) => {
+    if (lesson?.recurrenceGroupId) {
+      event.preventDefault();
+      setShowEditScopeModal(true);
+      setPendingEditEvent(event);
+      return;
+    }
+    handleSave(event);
+  };
+
+  const handleEditWithScope = (scope: UpdateScope) => {
+    setShowEditScopeModal(false);
+    if (pendingEditEvent) {
+      handleSave(pendingEditEvent, scope);
+      setPendingEditEvent(null);
+    }
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
   const handleRemoveAttendee = async (attendeeId: number) => {
+    if (lesson?.recurrenceGroupId) {
+      setPendingRemoveAttendeeId(attendeeId);
+      setShowRemoveScopeModal(true);
+      return;
+    }
+    
     try {
       await removeAttendee(lessonId, attendeeId);
       setAttendees(prev => prev.filter(attendee => attendee.id !== attendeeId));
       removeFromGrid(attendeeId);
     } catch {
       fetchData();
+    }
+  };
+
+  const handleRemoveWithScope = async (scope: UpdateScope) => {
+    if (!pendingRemoveAttendeeId) return;
+    setShowRemoveScopeModal(false);
+    
+    try {
+      await removeAttendee(lessonId, pendingRemoveAttendeeId, scope);
+      setAttendees(prev => prev.filter(attendee => attendee.id !== pendingRemoveAttendeeId));
+      removeFromGrid(pendingRemoveAttendeeId);
+    } catch {
+      fetchData();
+    } finally {
+      setPendingRemoveAttendeeId(null);
     }
   };
 
@@ -224,7 +268,7 @@ export default function LessonDetailPage() {
                     setEditForm={setEditForm}
                     isSaving={isSaving}
                     saveError={saveError}
-                    onSubmit={handleSave}
+                    onSubmit={handleEditSubmit}
                     onClose={closeEdit}
                   />
                 ) : (
@@ -361,8 +405,33 @@ export default function LessonDetailPage() {
         <AddAttendeeModal
           lessonId={lessonId}
           existingStudentIds={existingStudentIds}
+          isRecurring={!!lesson?.recurrenceGroupId}
           onAdd={handleAdd}
           onClose={() => setShowModal(false)}
+        />
+      )}
+
+      {showEditScopeModal && lesson && (
+        <RecurringScopeModal
+          mode="edit"
+          lessonTitle={lesson.title}
+          onSelect={handleEditWithScope}
+          onClose={() => {
+            setShowEditScopeModal(false);
+            setPendingEditEvent(null);
+          }}
+        />
+      )}
+
+      {showRemoveScopeModal && lesson && (
+        <RecurringScopeModal
+          mode="remove_attendee"
+          lessonTitle={lesson.title}
+          onSelect={handleRemoveWithScope}
+          onClose={() => {
+            setShowRemoveScopeModal(false);
+            setPendingRemoveAttendeeId(null);
+          }}
         />
       )}
     </div>

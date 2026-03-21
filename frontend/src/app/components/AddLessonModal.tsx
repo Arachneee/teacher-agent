@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { DayOfWeek, RecurrenceCreateRequest, RecurrenceType } from '../lib/api';
+import type { DayOfWeek, RecurrenceCreateRequest, RecurrenceType, UpdateScope } from '../lib/api';
 import {
   Lesson,
   LessonDetailAttendee,
@@ -17,6 +17,7 @@ import {
 import { padTwoDigits, parseDateTime } from '../lib/dateTimeUtils';
 import CustomSelect from './CustomSelect';
 import DatePicker from './DatePicker';
+import RecurringScopeModal from './RecurringScopeModal';
 import TimePicker from './TimePicker';
 
 interface Props {
@@ -65,13 +66,21 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
 
   const [step, setStep] = useState<'details' | 'students'>('details');
-  const [createdLessonId, setCreatedLessonId] = useState<number | null>(null);
+  // 생성 모드: step1에서 입력한 데이터를 보관 (step2 완료 시 createLesson 호출)
+  const [pendingCreateData, setPendingCreateData] = useState<{
+    title: string;
+    startIso: string;
+    endIso: string;
+    recurrence?: RecurrenceCreateRequest;
+  } | null>(null);
   const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [studentSearchQuery, setStudentSearchQuery] = useState('');
   const [showNewStudentForm, setShowNewStudentForm] = useState(false);
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentMemo, setNewStudentMemo] = useState('');
+  const [showEditScopeModal, setShowEditScopeModal] = useState(false);
+  const [pendingEditData, setPendingEditData] = useState<{ title: string; startIso: string; endIso: string } | null>(null);
 
   // 생성 모드 전용: 선택된 학생 ID 목록
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
@@ -124,7 +133,26 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
     setErrorMessage(null);
     try {
       if (isEditMode) {
-        await updateLesson(lesson.id, title.trim(), buildIso(startHour, startMinute), buildIso(endHour, endMinute));
+        const startIso = buildIso(startHour, startMinute);
+        const endIso = buildIso(endHour, endMinute);
+        
+        if (lesson.recurrenceGroupId) {
+          setPendingEditData({ title: title.trim(), startIso, endIso });
+          setShowEditScopeModal(true);
+          setLoading(false);
+          return;
+        }
+        
+        const recurrence: RecurrenceCreateRequest | undefined = recurrenceEnabled
+          ? {
+              recurrenceType,
+              intervalValue,
+              ...(recurrenceType === 'WEEKLY' ? { daysOfWeek: [...daysOfWeek] } : {}),
+              endDate: recurrenceEndDate,
+            }
+          : undefined;
+        
+        await updateLesson(lesson.id, title.trim(), startIso, endIso, undefined, recurrence);
         setStep('students');
       } else {
         const recurrence: RecurrenceCreateRequest | undefined = recurrenceEnabled
@@ -135,8 +163,12 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
               endDate: recurrenceEndDate,
             }
           : undefined;
-        const created = await createLesson(title.trim(), buildIso(startHour, startMinute), buildIso(endHour, endMinute), recurrence);
-        setCreatedLessonId(created.id);
+        setPendingCreateData({
+          title: title.trim(),
+          startIso: buildIso(startHour, startMinute),
+          endIso: buildIso(endHour, endMinute),
+          recurrence,
+        });
         setStep('students');
       }
     } catch {
@@ -156,17 +188,38 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
     });
   };
 
-  // 생성 모드: 선택된 수강생 일괄 추가 후 완료
-  const handleAddAttendeesAndFinish = async () => {
-    if (!createdLessonId) return;
-    if (selectedStudentIds.size === 0) { onSave(); return; }
+  // 반복 수업 수정: scope 선택 후 실제 업데이트
+  const handleEditWithScope = async (scope: UpdateScope) => {
+    if (!lesson || !pendingEditData) return;
+    setShowEditScopeModal(false);
     setLoading(true);
     setErrorMessage(null);
     try {
-      await Promise.all([...selectedStudentIds].map(id => addAttendee(createdLessonId, id)));
+      await updateLesson(lesson.id, pendingEditData.title, pendingEditData.startIso, pendingEditData.endIso, scope);
+      setStep('students');
+    } catch {
+      setErrorMessage('수업을 수정하지 못했어요.');
+    } finally {
+      setLoading(false);
+      setPendingEditData(null);
+    }
+  };
+
+  const handleCreateAndFinish = async (studentIds: number[]) => {
+    if (!pendingCreateData) return;
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await createLesson(
+        pendingCreateData.title,
+        pendingCreateData.startIso,
+        pendingCreateData.endIso,
+        pendingCreateData.recurrence,
+        studentIds.length > 0 ? studentIds : undefined,
+      );
       onSave();
     } catch {
-      setErrorMessage('일부 수강생을 추가하지 못했어요. 수업 상세에서 다시 시도해주세요.');
+      setErrorMessage('수업을 추가하지 못했어요.');
       setLoading(false);
     }
   };
@@ -174,6 +227,21 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   // 수정 모드: 수강생 즉시 추가
   const handleEditModeAdd = async (student: Student) => {
     if (!lesson) return;
+    
+    if (lesson.recurrenceGroupId) {
+      setLoading(true);
+      setErrorMessage(null);
+      try {
+        const attendee = await addAttendee(lesson.id, student.id);
+        setCurrentAttendees(prev => [...prev, { attendeeId: attendee.id, student, feedback: null }]);
+      } catch {
+        setErrorMessage('수강생을 추가하지 못했어요.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+    
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -189,6 +257,21 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   // 수정 모드: 수강생 즉시 삭제
   const handleEditModeRemove = async (attendeeId: number) => {
     if (!lesson) return;
+    
+    if (lesson.recurrenceGroupId) {
+      setLoading(true);
+      setErrorMessage(null);
+      try {
+        await removeAttendee(lesson.id, attendeeId);
+        setCurrentAttendees(prev => prev.filter(attendee => attendee.attendeeId !== attendeeId));
+      } catch {
+        setErrorMessage('수강생을 삭제하지 못했어요.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+    
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -205,17 +288,21 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   const handleCreateAndSelectStudent = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newStudentName.trim()) { setErrorMessage('학생 이름을 입력해주세요.'); return; }
-    const targetLessonId = isEditMode ? lesson?.id : createdLessonId;
-    if (!targetLessonId) return;
+    if (isEditMode && !lesson?.id) return;
     setLoading(true);
     setErrorMessage(null);
     try {
       const created = await createStudent(newStudentName.trim(), newStudentMemo.trim());
       setAllStudents(prev => [...prev, created]);
       
-      if (isEditMode) {
-        const attendee = await addAttendee(targetLessonId, created.id);
-        setCurrentAttendees(prev => [...prev, { attendeeId: attendee.id, student: created, feedback: null }]);
+      if (isEditMode && lesson) {
+        if (lesson.recurrenceGroupId) {
+          const attendee = await addAttendee(lesson.id, created.id);
+          setCurrentAttendees(prev => [...prev, { attendeeId: attendee.id, student: created, feedback: null }]);
+        } else {
+          const attendee = await addAttendee(lesson.id, created.id);
+          setCurrentAttendees(prev => [...prev, { attendeeId: attendee.id, student: created, feedback: null }]);
+        }
       } else {
         setSelectedStudentIds(prev => new Set([...prev, created.id]));
       }
@@ -245,11 +332,25 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   );
 
   return (
-    <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={event => event.target === event.currentTarget && onClose()}
-    >
-      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
+    <>
+      {showEditScopeModal && lesson && (
+        <RecurringScopeModal
+          mode="edit"
+          lessonTitle={lesson.title}
+          onSelect={handleEditWithScope}
+          onClose={() => {
+            setShowEditScopeModal(false);
+            setPendingEditData(null);
+            setLoading(false);
+          }}
+        />
+      )}
+
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        onClick={event => event.target === event.currentTarget && onClose()}
+      >
+        <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
 
         {/* Step 1: 수업 정보 */}
         {step === 'details' && (
@@ -316,7 +417,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                 </div>
               </div>
 
-              {!isEditMode && (
+              {(!isEditMode || (isEditMode && !lesson?.recurrenceGroupId)) && (
                 <div>
                   <label className="flex items-center gap-2 cursor-pointer ml-1">
                     <button
@@ -629,7 +730,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                 <div className="shrink-0 px-6 pt-3 pb-6 flex flex-col gap-2">
                   {!isEditMode && selectedStudentIds.size > 0 && (
                     <button
-                      onClick={handleAddAttendeesAndFinish}
+                      onClick={() => handleCreateAndFinish([...selectedStudentIds])}
                       disabled={loading}
                       className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-purple-200 text-white font-semibold py-3 rounded-2xl transition-colors duration-150"
                     >
@@ -647,7 +748,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                       </button>
                     )}
                     <button
-                      onClick={onSave}
+                      onClick={isEditMode ? onSave : () => handleCreateAndFinish([])}
                       disabled={loading}
                       className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-500 font-medium py-3 rounded-2xl transition-colors duration-150"
                     >
@@ -722,5 +823,6 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
         )}
       </div>
     </div>
+    </>
   );
 }

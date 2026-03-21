@@ -2,8 +2,9 @@
 
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lesson, deleteLesson } from '../lib/api';
+import { Lesson, deleteLesson, UpdateScope } from '../lib/api';
 import { padTwoDigits } from '../lib/dateTimeUtils';
+import RecurringScopeModal from '../components/RecurringScopeModal';
 
 const FIRST_HOUR = 7;
 const LAST_HOUR = 22;
@@ -41,7 +42,7 @@ interface Props {
   lessons: Lesson[];
   weekStart: Date;
   onEdit: (lesson: Lesson) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: number, didDeleteMultiple: boolean) => void;
   onCellClick: (startTime: string, endTime: string) => void;
 }
 
@@ -50,6 +51,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
   const scrollRef = useRef<HTMLDivElement>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+  const [scopeModalLesson, setScopeModalLesson] = useState<Lesson | null>(null);
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -236,8 +238,16 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                       }}
                     >
                       <div className="h-full bg-violet-400 px-2 py-1 relative">
-                        <div className="text-white text-xs font-semibold truncate leading-tight pr-12">
-                          {lesson.title}
+                        <div className="text-white text-xs font-semibold truncate leading-tight pr-12 flex items-center gap-1">
+                          <span className="truncate">{lesson.title}</span>
+                          {lesson.recurrenceGroupId !== null && (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-purple-100 flex-shrink-0">
+                              <path d="M17 1l4 4-4 4" />
+                              <path d="M3 11V9a4 4 0 014-4h14" />
+                              <path d="M7 23l-4-4 4-4" />
+                              <path d="M21 13v2a4 4 0 01-4 4H3" />
+                            </svg>
+                          )}
                         </div>
                         {height > 32 && (
                           <div className="text-purple-100 text-xs leading-tight mt-0.5 truncate pr-12">
@@ -263,12 +273,18 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                           <button
                             onClick={async event => {
                               event.stopPropagation();
+                              
+                              if (lesson.recurrenceGroupId !== null) {
+                                setScopeModalLesson(lesson);
+                                return;
+                              }
+                              
                               if (!confirm(`"${lesson.title}" 수업을 삭제할까요?\n수강생과 피드백도 함께 삭제됩니다.`)) return;
                               setDeletingId(lesson.id);
                               setDeleteErrorMessage(null);
                               try {
                                 await deleteLesson(lesson.id);
-                                onDelete(lesson.id);
+                                onDelete(lesson.id, false);
                               } catch {
                                 setDeleteErrorMessage(`"${lesson.title}" 수업을 삭제하지 못했어요.`);
                               } finally {
@@ -296,6 +312,28 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
           })}
         </div>
       </div>
+      
+      {scopeModalLesson && (
+        <RecurringScopeModal
+          mode="delete"
+          lessonTitle={scopeModalLesson.title}
+          onSelect={async (scope: UpdateScope) => {
+            const lessonToDelete = scopeModalLesson;
+            setScopeModalLesson(null);
+            setDeletingId(lessonToDelete.id);
+            setDeleteErrorMessage(null);
+            try {
+              await deleteLesson(lessonToDelete.id, scope);
+              onDelete(lessonToDelete.id, scope !== 'SINGLE');
+            } catch {
+              setDeleteErrorMessage(`"${lessonToDelete.title}" 수업을 삭제하지 못했어요.`);
+            } finally {
+              setDeletingId(null);
+            }
+          }}
+          onClose={() => setScopeModalLesson(null)}
+        />
+      )}
     </div>
   );
 }

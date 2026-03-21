@@ -69,8 +69,12 @@ export default function Home() {
     setShowModal(true);
   };
 
-  const handleDelete = (id: number) => {
-    setLessons(prev => prev.filter(lesson => lesson.id !== id));
+  const handleDelete = (id: number, didDeleteMultiple: boolean) => {
+    if (didDeleteMultiple) {
+      fetchLessons();
+    } else {
+      setLessons(prev => prev.filter(lesson => lesson.id !== id));
+    }
   };
 
   const handleModalClose = () => {

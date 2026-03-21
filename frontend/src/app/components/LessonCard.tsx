@@ -2,24 +2,42 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Lesson, deleteLesson } from '../lib/api';
+import { Lesson, deleteLesson, UpdateScope } from '../lib/api';
+import RecurringScopeModal from '../components/RecurringScopeModal';
 
 interface Props {
   lesson: Lesson;
   onEdit: (lesson: Lesson) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: number, didDeleteMultiple: boolean) => void;
 }
 
 export default function LessonCard({ lesson, onEdit, onDelete }: Props) {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showScopeModal, setShowScopeModal] = useState(false);
 
   const handleDelete = async (event: React.MouseEvent) => {
     event.stopPropagation();
+    
+    if (lesson.recurrenceGroupId !== null) {
+      setShowScopeModal(true);
+      return;
+    }
+    
     if (!confirm(`"${lesson.title}" 수업을 삭제할까요?\n수강생과 피드백도 함께 삭제됩니다.`)) return;
     try {
       await deleteLesson(lesson.id);
-      onDelete(lesson.id);
+      onDelete(lesson.id, false);
+    } catch {
+      setErrorMessage('수업을 삭제하지 못했어요');
+    }
+  };
+
+  const handleScopeDelete = async (scope: UpdateScope) => {
+    setShowScopeModal(false);
+    try {
+      await deleteLesson(lesson.id, scope);
+      onDelete(lesson.id, scope !== 'SINGLE');
     } catch {
       setErrorMessage('수업을 삭제하지 못했어요');
     }
@@ -39,14 +57,25 @@ export default function LessonCard({ lesson, onEdit, onDelete }: Props) {
     });
 
   return (
-    <div
-      onClick={() => router.push(`/lessons/${lesson.id}`)}
-      className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-3"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-lg font-semibold text-gray-800 flex-1 min-w-0 truncate">
-          {lesson.title}
-        </h3>
+    <>
+      <div
+        onClick={() => router.push(`/lessons/${lesson.id}`)}
+        className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-3"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-gray-800 truncate">
+              {lesson.title}
+            </h3>
+            {lesson.recurrenceGroupId !== null && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-purple-300 flex-shrink-0">
+                <path d="M17 1l4 4-4 4" />
+                <path d="M3 11V9a4 4 0 014-4h14" />
+                <path d="M7 23l-4-4 4-4" />
+                <path d="M21 13v2a4 4 0 01-4 4H3" />
+              </svg>
+            )}
+          </div>
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={handleEdit}
@@ -88,5 +117,15 @@ export default function LessonCard({ lesson, onEdit, onDelete }: Props) {
         <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{errorMessage}</p>
       )}
     </div>
+
+    {showScopeModal && (
+      <RecurringScopeModal
+        mode="delete"
+        lessonTitle={lesson.title}
+        onSelect={handleScopeDelete}
+        onClose={() => setShowScopeModal(false)}
+      />
+    )}
+  </>
   );
 }

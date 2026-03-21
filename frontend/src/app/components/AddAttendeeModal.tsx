@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Student, addAttendee, createStudent, getStudents } from '../lib/api';
+import { Student, UpdateScope, addAttendee, createStudent, getStudents } from '../lib/api';
+import RecurringScopeModal from './RecurringScopeModal';
 
 interface Props {
   lessonId: number;
   existingStudentIds: Set<number>;
+  isRecurring: boolean;
   onAdd: () => void;
   onClose: () => void;
 }
 
-export default function AddAttendeeModal({ lessonId, existingStudentIds, onAdd, onClose }: Props) {
+export default function AddAttendeeModal({ lessonId, existingStudentIds, isRecurring, onAdd, onClose }: Props) {
   const [students, setStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,8 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, onAdd, 
   const [showNewStudentForm, setShowNewStudentForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [newMemo, setNewMemo] = useState('');
+  const [showScopeModal, setShowScopeModal] = useState(false);
+  const [pendingStudentIds, setPendingStudentIds] = useState<number[]>([]);
 
   useEffect(() => {
     getStudents()
@@ -50,6 +54,13 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, onAdd, 
 
   const handleAddSelected = async () => {
     if (selectedIds.size === 0) { setErrorMessage('추가할 학생을 선택해주세요.'); return; }
+    
+    if (isRecurring) {
+      setPendingStudentIds([...selectedIds]);
+      setShowScopeModal(true);
+      return;
+    }
+    
     setSubmitting(true);
     setErrorMessage(null);
     try {
@@ -61,13 +72,36 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, onAdd, 
     }
   };
 
+  const handleAddWithScope = async (scope: UpdateScope) => {
+    setShowScopeModal(false);
+    setSubmitting(true);
+    setErrorMessage(null);
+    try {
+      await Promise.all(pendingStudentIds.map(id => addAttendee(lessonId, id, scope)));
+      onAdd();
+    } catch {
+      setErrorMessage('일부 수강생을 추가하지 못했어요');
+      setSubmitting(false);
+    } finally {
+      setPendingStudentIds([]);
+    }
+  };
+
   const handleCreateAndAdd = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newName.trim()) { setErrorMessage('학생 이름을 입력해주세요.'); return; }
+    
     setSubmitting(true);
     setErrorMessage(null);
     try {
       const created = await createStudent(newName.trim(), newMemo.trim());
+      
+      if (isRecurring) {
+        setPendingStudentIds([created.id]);
+        setShowScopeModal(true);
+        return;
+      }
+      
       await addAttendee(lessonId, created.id);
       onAdd();
     } catch {
@@ -77,10 +111,24 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, onAdd, 
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={event => event.target === event.currentTarget && onClose()}
-    >
+    <>
+      {showScopeModal && (
+        <RecurringScopeModal
+          mode="add_attendee"
+          lessonTitle=""
+          onSelect={handleAddWithScope}
+          onClose={() => {
+            setShowScopeModal(false);
+            setPendingStudentIds([]);
+            setSubmitting(false);
+          }}
+        />
+      )}
+
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        onClick={event => event.target === event.currentTarget && onClose()}
+      >
       <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
         {/* 헤더 */}
         <div className="text-center pt-6 px-6 pb-4 shrink-0">
@@ -271,5 +319,6 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, onAdd, 
         )}
       </div>
     </div>
+    </>
   );
 }
