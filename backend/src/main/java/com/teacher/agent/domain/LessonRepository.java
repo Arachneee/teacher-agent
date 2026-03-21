@@ -53,6 +53,5 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
       """)
   List<LessonDetailRow> findDetailRows(
       @Param("lessonId") Long lessonId,
-      @Param("userId") UserId userId
-  );
+      @Param("userId") UserId userId);
 }
