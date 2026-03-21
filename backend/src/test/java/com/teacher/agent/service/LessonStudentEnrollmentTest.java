@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.teacher.agent.exception.BusinessException;
 
 @SpringBootTest
 @Transactional
@@ -166,7 +166,7 @@ class LessonStudentEnrollmentTest {
 
     assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
         new LessonCreateRequest("수학", START, END, null, List.of(otherStudent.getId()))))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test

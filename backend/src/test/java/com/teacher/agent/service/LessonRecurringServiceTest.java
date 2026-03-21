@@ -7,7 +7,9 @@ import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.RecurrenceType;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.dto.LessonCreateRequest;
+import com.teacher.agent.dto.LessonUpdateRequest;
 import com.teacher.agent.dto.RecurrenceCreateRequest;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -124,6 +126,37 @@ class LessonRecurringServiceTest {
 
     assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
         new LessonCreateRequest("수학", start, end, recurrence, null)))
-        .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+        .isInstanceOf(com.teacher.agent.exception.BadRequestException.class);
+  }
+
+  @Test
+  void 비반복_수업을_반복_수업으로_전환한다() {
+    LocalDateTime start = LocalDateTime.of(2026, 3, 16, 9, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 3, 16, 10, 0);
+
+    lessonCommandService.create(teacher.getUserId(),
+        new LessonCreateRequest("수학", start, end, null, null));
+
+    Lesson original = lessonRepository.findAll().get(0);
+    assertThat(original.getRecurrenceGroupId()).isNull();
+
+    RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
+        RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 31));
+    LessonUpdateRequest updateRequest = new LessonUpdateRequest(
+        "수학", start, end, null, recurrence);
+
+    lessonCommandService.update(teacher.getUserId(), original.getId(), updateRequest);
+
+    Lesson updated = lessonRepository.findById(original.getId()).orElseThrow();
+    assertThat(updated.getRecurrenceGroupId()).isNotNull();
+    assertThat(updated.getRecurrence()).isNotNull();
+
+    List<Lesson> allLessons = lessonRepository.findAll();
+    assertThat(allLessons).hasSizeGreaterThan(1);
+
+    java.util.UUID groupId = updated.getRecurrenceGroupId();
+    for (Lesson l : allLessons) {
+      assertThat(l.getRecurrenceGroupId()).isEqualTo(groupId);
+    }
   }
 }

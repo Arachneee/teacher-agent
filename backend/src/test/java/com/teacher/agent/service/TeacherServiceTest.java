@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.web.server.ResponseStatusException;
+import com.teacher.agent.exception.BusinessException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -57,7 +57,7 @@ class TeacherServiceTest {
   @Test
   void 존재하지_않는_사용자_아이디로_조회_시_예외가_발생한다() {
     assertThatThrownBy(() -> teacherQueryService.getByUserId(new UserId("nonexistent")))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -84,6 +84,6 @@ class TeacherServiceTest {
   @Test
   void 존재하지_않는_교사의_프로필_수정_시_예외가_발생한다() {
     assertThatThrownBy(() -> teacherCommandService.updateByUserId(new UserId("nonexistent"),
-        new TeacherUpdateRequest("박선생", "영어"))).isInstanceOf(ResponseStatusException.class);
+        new TeacherUpdateRequest("박선생", "영어"))).isInstanceOf(BusinessException.class);
   }
 }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 import com.teacher.agent.domain.*;
 import com.teacher.agent.dto.*;
@@ -19,7 +20,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.teacher.agent.exception.BadRequestException;
+import com.teacher.agent.exception.BusinessException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -110,14 +112,14 @@ class FeedbackServiceTest {
   void 다른_선생님_학생으로_피드백_생성_시_예외가_발생한다() {
     assertThatThrownBy(() -> feedbackCommandService.create(otherUserId,
         new FeedbackCreateRequest(studentId, lessonId)))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 존재하지_않는_학생으로_피드백_생성_시_예외가_발생한다() {
     assertThatThrownBy(
         () -> feedbackCommandService.create(userId, new FeedbackCreateRequest(999L, lessonId)))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -126,7 +128,7 @@ class FeedbackServiceTest {
 
     assertThatThrownBy(() -> feedbackCommandService.create(userId,
         new FeedbackCreateRequest(unenrolledStudent.getId(), lessonId)))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -142,7 +144,7 @@ class FeedbackServiceTest {
   @Test
   void 다른_선생님_학생의_피드백_목록_조회_시_예외가_발생한다() {
     assertThatThrownBy(() -> feedbackQueryService.getAll(otherUserId, studentId))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -161,13 +163,13 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
 
     assertThatThrownBy(() -> feedbackQueryService.getOne(otherUserId, created.id()))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 존재하지_않는_피드백_조회_시_예외가_발생한다() {
     assertThatThrownBy(() -> feedbackQueryService.getOne(userId, 999L))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -213,7 +215,7 @@ class FeedbackServiceTest {
     feedbackCommandService.delete(userId, created.id());
 
     assertThatThrownBy(() -> feedbackQueryService.getOne(userId, created.id()))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -222,7 +224,7 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
 
     assertThatThrownBy(() -> feedbackCommandService.delete(otherUserId, created.id()))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -258,7 +260,7 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
 
     assertThatThrownBy(() -> feedbackCommandService.removeKeyword(userId, created.id(), 999L))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -284,7 +286,7 @@ class FeedbackServiceTest {
 
     assertThatThrownBy(() -> feedbackCommandService.updateKeyword(userId, created.id(), 999L,
         new FeedbackKeywordUpdateRequest("꼼꼼함")))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -297,7 +299,7 @@ class FeedbackServiceTest {
 
     assertThatThrownBy(() -> feedbackCommandService.updateKeyword(otherUserId, created.id(),
         keywordId, new FeedbackKeywordUpdateRequest("꼼꼼함")))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -308,9 +310,9 @@ class FeedbackServiceTest {
         new FeedbackKeywordCreateRequest("성실함"));
     given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동"))).willReturn("AI가 생성한 피드백");
 
-    FeedbackResponse result = feedbackCommandService.generateAiContent(userId, created.id());
+    feedbackCommandService.generateAiContent(userId, created.id());
 
-    assertThat(result.aiContent()).isEqualTo("AI가 생성한 피드백");
+    verify(feedbackAiService).generateFeedbackContent(any(), eq("홍길동"));
   }
 
   @Test
@@ -319,7 +321,7 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
 
     assertThatThrownBy(() -> feedbackCommandService.generateAiContent(userId, created.id()))
-        .isInstanceOf(ResponseStatusException.class).hasMessageContaining("키워드");
+        .isInstanceOf(BadRequestException.class);
   }
 
   @Test
@@ -339,7 +341,7 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
 
     assertThatThrownBy(() -> feedbackCommandService.like(userId, created.id()))
-        .isInstanceOf(ResponseStatusException.class).hasMessageContaining("AI 콘텐츠");
+        .isInstanceOf(BadRequestException.class);
   }
 
   @Test
@@ -350,7 +352,7 @@ class FeedbackServiceTest {
     feedbackCommandService.like(userId, created.id());
 
     assertThatThrownBy(() -> feedbackCommandService.like(userId, created.id()))
-        .isInstanceOf(ResponseStatusException.class).hasMessageContaining("이미 좋아요");
+        .isInstanceOf(BadRequestException.class);
   }
 
   @Test
@@ -374,12 +376,11 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
     feedbackCommandService.addKeyword(userId, created.id(),
         new FeedbackKeywordCreateRequest("성실함"));
-    given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동"))).willReturn("AI가 생성한 피드백");
-    feedbackCommandService.generateAiContent(userId, created.id());
+    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI가 생성한 피드백"));
     feedbackCommandService.like(userId, created.id());
 
-    given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동"))).willReturn("새로 생성한 피드백");
-    FeedbackResponse regenerated = feedbackCommandService.generateAiContent(userId, created.id());
+    FeedbackResponse regenerated =
+        feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("새로 생성한 피드백"));
     assertThat(regenerated.liked()).isFalse();
 
     FeedbackResponse reLiked = feedbackCommandService.like(userId, created.id());

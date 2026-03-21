@@ -28,7 +28,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.teacher.agent.exception.BusinessException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -101,7 +101,7 @@ class LessonServiceTest {
   @Test
   void 존재하지_않는_수업_조회_시_예외가_발생한다() {
     assertThatThrownBy(() -> lessonQueryService.getOne(teacher.getUserId(), 999L))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -124,7 +124,7 @@ class LessonServiceTest {
   @Test
   void 존재하지_않는_수업_수정_시_예외가_발생한다() {
     assertThatThrownBy(() -> lessonCommandService.update(teacher.getUserId(), 999L,
-        new LessonUpdateRequest("수학", START, END))).isInstanceOf(ResponseStatusException.class);
+        new LessonUpdateRequest("수학", START, END))).isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -136,14 +136,14 @@ class LessonServiceTest {
     lessonCommandService.delete(teacher.getUserId(), created.id(), UpdateScope.SINGLE);
 
     assertThatThrownBy(() -> lessonQueryService.getOne(teacher.getUserId(), created.id()))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 존재하지_않는_수업_삭제_시_예외가_발생한다() {
     assertThatThrownBy(() -> lessonCommandService.delete(teacher.getUserId(), 999L,
         UpdateScope.SINGLE))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -155,7 +155,7 @@ class LessonServiceTest {
             new LessonCreateRequest("수학", START, END, null, null));
 
     assertThatThrownBy(() -> lessonCommandService.update(otherTeacher.getUserId(), created.id(),
-        new LessonUpdateRequest("영어", START, END))).isInstanceOf(ResponseStatusException.class);
+        new LessonUpdateRequest("영어", START, END))).isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -168,7 +168,7 @@ class LessonServiceTest {
 
     assertThatThrownBy(() -> lessonCommandService.delete(otherTeacher.getUserId(), created.id(),
         UpdateScope.SINGLE))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -228,7 +228,7 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), targetId,
-          new LessonUpdateRequest("변경된수학", START, END, UpdateScope.SINGLE));
+          new LessonUpdateRequest("변경된수학", START, END, UpdateScope.SINGLE, null));
 
       // then
       LessonResponse updated = lessonQueryService.getOne(teacher.getUserId(), targetId);
@@ -252,7 +252,7 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), targetId,
-          new LessonUpdateRequest("전체변경", newStart, newEnd, UpdateScope.ALL));
+          new LessonUpdateRequest("전체변경", newStart, newEnd, UpdateScope.ALL, null));
 
       // then
       List<LessonResponse> allLessons = lessonRepository.findAllByUserId(teacher.getUserId())
@@ -278,7 +278,7 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), secondId,
-          new LessonUpdateRequest("이후변경", newStart, newEnd, UpdateScope.THIS_AND_FOLLOWING));
+          new LessonUpdateRequest("이후변경", newStart, newEnd, UpdateScope.THIS_AND_FOLLOWING, null));
 
       // then
       LessonResponse first = lessonQueryService.getOne(teacher.getUserId(), allLessons.get(0).id());
@@ -299,7 +299,7 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), created.id(),
-          new LessonUpdateRequest("변경됨", START, END, UpdateScope.ALL));
+          new LessonUpdateRequest("변경됨", START, END, UpdateScope.ALL, null));
 
       // then
       LessonResponse updated = lessonQueryService.getOne(teacher.getUserId(), created.id());
@@ -416,7 +416,7 @@ class LessonServiceTest {
 
       // then
       assertThatThrownBy(() -> lessonQueryService.getOne(teacher.getUserId(), created.id()))
-          .isInstanceOf(ResponseStatusException.class);
+          .isInstanceOf(BusinessException.class);
     }
   }
 

@@ -2,8 +2,6 @@ package com.teacher.agent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
@@ -13,8 +11,8 @@ import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
 import com.teacher.agent.domain.UserId;
-import com.teacher.agent.dto.AttendeeCreateRequest;
 import com.teacher.agent.dto.LessonDetailResponse;
+import com.teacher.agent.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +22,6 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -74,7 +71,7 @@ class LessonDetailQueryServiceTest {
   @Test
   void 수업_상세_조회_시_참가자와_피드백이_반환된다() {
     Student student = studentRepository.save(Student.create(userId, "홍길동", "메모"));
-    attendeeCommandService.add(userId, lesson.getId(), new AttendeeCreateRequest(student.getId()));
+    attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
 
     LessonDetailResponse response = lessonDetailQueryService.getDetail(userId, lesson.getId());
 
@@ -102,8 +99,8 @@ class LessonDetailQueryServiceTest {
   void 여러_참가자가_각자의_피드백을_가진다() {
     Student student1 = studentRepository.save(Student.create(userId, "홍길동", null));
     Student student2 = studentRepository.save(Student.create(userId, "김철수", null));
-    attendeeCommandService.add(userId, lesson.getId(), new AttendeeCreateRequest(student1.getId()));
-    attendeeCommandService.add(userId, lesson.getId(), new AttendeeCreateRequest(student2.getId()));
+    attendeeCommandService.add(userId, lesson.getId(), student1.getId(), null);
+    attendeeCommandService.add(userId, lesson.getId(), student2.getId(), null);
 
     LessonDetailResponse response = lessonDetailQueryService.getDetail(userId, lesson.getId());
 
@@ -115,7 +112,7 @@ class LessonDetailQueryServiceTest {
   @Test
   void 피드백에_키워드가_있으면_키워드_목록이_반환된다() {
     Student student = studentRepository.save(Student.create(userId, "홍길동", null));
-    attendeeCommandService.add(userId, lesson.getId(), new AttendeeCreateRequest(student.getId()));
+    attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
     Long feedbackId = feedbackRepository.findByStudentIdAndLessonId(student.getId(), lesson.getId())
         .orElseThrow().getId();
     Feedback feedback = feedbackRepository.findById(feedbackId).orElseThrow();
@@ -133,7 +130,7 @@ class LessonDetailQueryServiceTest {
   @Test
   void 피드백에_좋아요가_있으면_liked가_true다() {
     Student student = studentRepository.save(Student.create(userId, "홍길동", null));
-    attendeeCommandService.add(userId, lesson.getId(), new AttendeeCreateRequest(student.getId()));
+    attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
     Long feedbackId = feedbackRepository.findByStudentIdAndLessonId(student.getId(), lesson.getId())
         .orElseThrow().getId();
     Feedback feedback = feedbackRepository.findById(feedbackId).orElseThrow();
@@ -153,20 +150,19 @@ class LessonDetailQueryServiceTest {
 
     assertThatThrownBy(
         () -> lessonDetailQueryService.getDetail(otherTeacher.getUserId(), lesson.getId()))
-        .isInstanceOf(ResponseStatusException.class).satisfies(
-            e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(NOT_FOUND));
+        .isInstanceOf(ResourceNotFoundException.class);
   }
 
   @Test
   void 참가자_재추가_시_기존_피드백이_유지된다() {
     Student student = studentRepository.save(Student.create(userId, "홍길동", null));
-    attendeeCommandService.add(userId, lesson.getId(), new AttendeeCreateRequest(student.getId()));
+    attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
     Long originalFeedbackId = feedbackRepository
         .findByStudentIdAndLessonId(student.getId(), lesson.getId()).orElseThrow().getId();
 
     attendeeCommandService.remove(userId, lesson.getId(),
-        lessonDetailQueryService.getDetail(userId, lesson.getId()).attendees().get(0).attendeeId());
-    attendeeCommandService.add(userId, lesson.getId(), new AttendeeCreateRequest(student.getId()));
+        lessonDetailQueryService.getDetail(userId, lesson.getId()).attendees().get(0).attendeeId(), null);
+    attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
 
     LessonDetailResponse response = lessonDetailQueryService.getDetail(userId, lesson.getId());
     assertThat(response.attendees().get(0).feedback().id()).isEqualTo(originalFeedbackId);

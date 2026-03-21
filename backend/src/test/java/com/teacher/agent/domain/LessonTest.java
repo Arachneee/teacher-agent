@@ -210,4 +210,39 @@ class LessonTest {
     assertThatThrownBy(() -> lesson.updateTime("수학", java.time.LocalTime.of(14, 0), 0))
         .isInstanceOf(IllegalArgumentException.class);
   }
+
+  @Test
+  void 비반복_수업을_반복_수업으로_전환한다() {
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
+    assertThat(lesson.getRecurrence()).isNull();
+    assertThat(lesson.getRecurrenceGroupId()).isNull();
+
+    Recurrence recurrence = Recurrence.create(RecurrenceType.WEEKLY, 1,
+        List.of(java.time.DayOfWeek.MONDAY), LocalDate.of(2026, 6, 30));
+    UUID groupId = UUID.randomUUID();
+
+    lesson.convertToRecurring(recurrence, groupId);
+
+    assertThat(lesson.getRecurrence()).isNotNull();
+    assertThat(lesson.getRecurrence().getRecurrenceType()).isEqualTo(RecurrenceType.WEEKLY);
+    assertThat(lesson.getRecurrenceGroupId()).isEqualTo(groupId);
+  }
+
+  @Test
+  void convertToRecurring_시_recurrence가_null이면_실패한다() {
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
+
+    assertThatThrownBy(() -> lesson.convertToRecurring(null, UUID.randomUUID()))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void convertToRecurring_시_groupId가_null이면_실패한다() {
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
+    Recurrence recurrence = Recurrence.create(RecurrenceType.DAILY, 1, null,
+        LocalDate.of(2026, 6, 30));
+
+    assertThatThrownBy(() -> lesson.convertToRecurring(recurrence, null))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
 }

@@ -19,7 +19,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.teacher.agent.exception.BusinessException;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -97,13 +97,13 @@ class StudentServiceTest {
         studentCommandService.create(userId, new StudentCreateRequest("홍길동", "메모"));
 
     assertThatThrownBy(() -> studentQueryService.getOne(otherUserId, created.id()))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 존재하지_않는_학생_조회_시_예외가_발생한다() {
     assertThatThrownBy(() -> studentQueryService.getOne(userId, 999L))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -125,14 +125,14 @@ class StudentServiceTest {
         studentCommandService.create(userId, new StudentCreateRequest("홍길동", "메모"));
 
     assertThatThrownBy(() -> studentCommandService.update(otherUserId, created.id(),
-        new StudentUpdateRequest("이름", "메모"))).isInstanceOf(ResponseStatusException.class);
+        new StudentUpdateRequest("이름", "메모"))).isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 존재하지_않는_학생_수정_시_예외가_발생한다() {
     assertThatThrownBy(
         () -> studentCommandService.update(userId, 999L, new StudentUpdateRequest("이름", "메모")))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -143,7 +143,7 @@ class StudentServiceTest {
     studentCommandService.delete(userId, created.id());
 
     assertThatThrownBy(() -> studentQueryService.getOne(userId, created.id()))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -152,12 +152,12 @@ class StudentServiceTest {
         studentCommandService.create(userId, new StudentCreateRequest("홍길동", null));
 
     assertThatThrownBy(() -> studentCommandService.delete(otherUserId, created.id()))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 존재하지_않는_학생_삭제_시_예외가_발생한다() {
     assertThatThrownBy(() -> studentCommandService.delete(userId, 999L))
-        .isInstanceOf(ResponseStatusException.class);
+        .isInstanceOf(BusinessException.class);
   }
 }
