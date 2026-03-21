@@ -8,15 +8,15 @@ import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.StudentRepository;
+import com.teacher.agent.domain.UpdateScope;
 import com.teacher.agent.domain.UserId;
-import com.teacher.agent.dto.AttendeeCreateRequest;
 import com.teacher.agent.dto.AttendeeResponse;
+import com.teacher.agent.exception.ResourceNotFoundException;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -28,20 +28,25 @@ public class AttendeeCommandService {
   private final FeedbackRepository feedbackRepository;
 
   @Transactional
-  public AttendeeResponse add(UserId userId, Long lessonId, AttendeeCreateRequest request) {
+  public AttendeeResponse add(UserId userId, Long lessonId, Long studentId, UpdateScope scope) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(lessonId, userId);
-    findStudentByIdAndUserIdOrThrow(studentRepository, request.studentId(), userId);
+    findStudentByIdAndUserIdOrThrow(studentRepository, studentId, userId);
 
-    try {
-      lesson.addAttendee(request.studentId());
-    } catch (IllegalArgumentException exception) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
+    List<Lesson> targets = lessonQueryService.findSeriesLessons(lesson, userId, scope);
+
+    for (Lesson target : targets) {
+      try {
+        target.addAttendee(studentId);
+      } catch (IllegalArgumentException ignored) {
+      }
     }
 
     lessonRepository.flush();
 
-    if (feedbackRepository.findByStudentIdAndLessonId(request.studentId(), lessonId).isEmpty()) {
-      feedbackRepository.save(Feedback.create(request.studentId(), lessonId));
+    for (Lesson target : targets) {
+      if (feedbackRepository.findByStudentIdAndLessonId(studentId, target.getId()).isEmpty()) {
+        feedbackRepository.save(Feedback.create(studentId, target.getId()));
+      }
     }
 
     List<Attendee> attendees = lesson.getAttendees();
@@ -49,13 +54,24 @@ public class AttendeeCommandService {
   }
 
   @Transactional
-  public void remove(UserId userId, Long lessonId, Long attendeeId) {
+  public void remove(UserId userId, Long lessonId, Long attendeeId, UpdateScope scope) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(lessonId, userId);
 
-    try {
-      lesson.removeAttendee(attendeeId);
-    } catch (IllegalArgumentException exception) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+    Attendee attendee = lesson.getAttendees().stream()
+        .filter(a -> Objects.equals(a.getId(), attendeeId))
+        .findFirst()
+        .orElseThrow(() -> ResourceNotFoundException.attendee(attendeeId));
+
+    Long studentId = attendee.getStudentId();
+    UpdateScope resolvedScope = scope != null ? scope : UpdateScope.SINGLE;
+
+    List<Lesson> targets = lessonQueryService.findSeriesLessons(lesson, userId, resolvedScope);
+
+    for (Lesson target : targets) {
+      target.getAttendees().stream()
+          .filter(a -> Objects.equals(a.getStudentId(), studentId))
+          .findFirst()
+          .ifPresent(a -> target.removeAttendee(a.getId()));
     }
   }
 }

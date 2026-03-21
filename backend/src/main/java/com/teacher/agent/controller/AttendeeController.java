@@ -1,5 +1,6 @@
 package com.teacher.agent.controller;
 
+import com.teacher.agent.domain.UpdateScope;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.AttendeeCreateRequest;
 import com.teacher.agent.dto.AttendeeResponse;
@@ -25,7 +26,9 @@ public class AttendeeController {
   @PostMapping
   public ResponseEntity<AttendeeResponse> add(UserId userId, @PathVariable @Positive Long lessonId,
       @RequestBody @Valid AttendeeCreateRequest request) {
-    return ResponseEntity.status(201).body(attendeeCommandService.add(userId, lessonId, request));
+    return ResponseEntity.status(201)
+        .body(attendeeCommandService.add(userId, lessonId, request.studentId(),
+            request.resolvedScope()));
   }
 
   @GetMapping
@@ -36,8 +39,9 @@ public class AttendeeController {
 
   @DeleteMapping("/{attendeeId}")
   public ResponseEntity<Void> remove(UserId userId, @PathVariable @Positive Long lessonId,
-      @PathVariable @Positive Long attendeeId) {
-    attendeeCommandService.remove(userId, lessonId, attendeeId);
+      @PathVariable @Positive Long attendeeId,
+      @RequestParam(required = false) UpdateScope scope) {
+    attendeeCommandService.remove(userId, lessonId, attendeeId, scope);
     return ResponseEntity.noContent().build();
   }
 }
