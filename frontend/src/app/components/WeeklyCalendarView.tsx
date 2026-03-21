@@ -49,6 +49,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -112,6 +113,12 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+      {deleteErrorMessage && (
+        <div className="flex items-center justify-between bg-rose-50 text-rose-500 text-xs px-4 py-2.5 border-b border-rose-100">
+          <span>{deleteErrorMessage}</span>
+          <button onClick={() => setDeleteErrorMessage(null)} className="ml-2 hover:text-rose-700 transition-colors">✕</button>
+        </div>
+      )}
       {/* Scrollable container wrapping header + grid for consistent width */}
       <div ref={scrollRef} className="overflow-y-scroll flex-1" style={{ maxHeight: 'calc(100vh - 200px)' }}>
 
@@ -258,11 +265,12 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                               event.stopPropagation();
                               if (!confirm(`"${lesson.title}" 수업을 삭제할까요?\n수강생과 피드백도 함께 삭제됩니다.`)) return;
                               setDeletingId(lesson.id);
+                              setDeleteErrorMessage(null);
                               try {
                                 await deleteLesson(lesson.id);
                                 onDelete(lesson.id);
                               } catch {
-                                alert('수업을 삭제하지 못했어요');
+                                setDeleteErrorMessage(`"${lesson.title}" 수업을 삭제하지 못했어요.`);
                               } finally {
                                 setDeletingId(null);
                               }

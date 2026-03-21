@@ -63,7 +63,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   const avatarColor = AVATAR_COLORS[student.id % AVATAR_COLORS.length];
 
   const handleSave = async () => {
-    if (!name.trim()) return;
+    if (!name.trim()) { setEditErrorMessage('학생 이름을 입력해주세요.'); return; }
     setSaving(true);
     setEditErrorMessage(null);
     try {

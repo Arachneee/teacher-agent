@@ -93,7 +93,33 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
 
   const handleDetailsSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title.trim() || !date) return;
+    if (!title.trim()) { setErrorMessage('수업 제목을 입력해주세요.'); return; }
+    if (!date) { setErrorMessage('날짜를 선택해주세요.'); return; }
+    if (recurrenceEnabled && recurrenceType === 'WEEKLY' && daysOfWeek.size === 0) {
+      setErrorMessage('반복할 요일을 하나 이상 선택해주세요.'); return;
+    }
+    if (recurrenceEnabled && !recurrenceEndDate) {
+      setErrorMessage('반복 종료일을 선택해주세요.'); return;
+    }
+    if (recurrenceEnabled && recurrenceEndDate && recurrenceEndDate < date) {
+      setErrorMessage('반복 종료일은 수업 시작일 이후여야 해요.'); return;
+    }
+    if (recurrenceEnabled && recurrenceType === 'WEEKLY' && daysOfWeek.size > 0 && recurrenceEndDate) {
+      const dayMap: Record<string, number> = { SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6 };
+      const selectedJsDays = new Set([...daysOfWeek].map(d => dayMap[d]));
+      const start = new Date(date);
+      const end = new Date(recurrenceEndDate);
+      let found = false;
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        if (selectedJsDays.has(d.getDay())) { found = true; break; }
+      }
+      if (!found) {
+        const dayNames: Record<string, string> = { MONDAY: '월', TUESDAY: '화', WEDNESDAY: '수', THURSDAY: '목', FRIDAY: '금', SATURDAY: '토', SUNDAY: '일' };
+        const selected = [...daysOfWeek].map(d => dayNames[d]).join(', ');
+        setErrorMessage(`선택한 기간 내에 ${selected}요일이 없어요. 종료일을 늘리거나 요일을 변경해주세요.`);
+        return;
+      }
+    }
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -178,7 +204,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   // 새 학생 등록 후 수강생으로 추가
   const handleCreateAndSelectStudent = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!newStudentName.trim()) return;
+    if (!newStudentName.trim()) { setErrorMessage('학생 이름을 입력해주세요.'); return; }
     const targetLessonId = isEditMode ? lesson?.id : createdLessonId;
     if (!targetLessonId) return;
     setLoading(true);

@@ -16,7 +16,7 @@ export default function AddStudentModal({ onAdd, onClose }: Props) {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) { setErrorMessage('학생 이름을 입력해주세요.'); return; }
     setLoading(true);
     setErrorMessage(null);
     try {

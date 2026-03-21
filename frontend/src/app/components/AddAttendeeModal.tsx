@@ -49,7 +49,7 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, onAdd, 
   };
 
   const handleAddSelected = async () => {
-    if (selectedIds.size === 0) return;
+    if (selectedIds.size === 0) { setErrorMessage('추가할 학생을 선택해주세요.'); return; }
     setSubmitting(true);
     setErrorMessage(null);
     try {
@@ -63,7 +63,7 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, onAdd, 
 
   const handleCreateAndAdd = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!newName.trim()) return;
+    if (!newName.trim()) { setErrorMessage('학생 이름을 입력해주세요.'); return; }
     setSubmitting(true);
     setErrorMessage(null);
     try {
