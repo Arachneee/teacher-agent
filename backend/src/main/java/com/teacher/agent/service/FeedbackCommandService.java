@@ -1,7 +1,5 @@
 package com.teacher.agent.service;
 
-import static com.teacher.agent.util.RepositoryUtil.findByIdOrThrow;
-
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackLike;
 import com.teacher.agent.domain.FeedbackLikeRepository;
@@ -15,11 +13,11 @@ import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordUpdateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.dto.FeedbackUpdateRequest;
+import com.teacher.agent.exception.BadRequestException;
+import com.teacher.agent.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -63,21 +61,29 @@ public class FeedbackCommandService {
     feedbackRepository.deleteById(feedbackId);
   }
 
-  @Transactional
   public FeedbackResponse generateAiContent(UserId userId, Long feedbackId) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
 
     if (feedback.getKeywords().isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "키워드가 없습니다. 먼저 키워드를 추가해주세요.");
+      throw BadRequestException.keywordRequired();
     }
 
-    Student student = findByIdOrThrow(studentRepository, feedback.getStudentId(),
-        "Student not found: " + feedback.getStudentId());
+    Student student = studentRepository.findById(feedback.getStudentId())
+        .orElseThrow(() -> ResourceNotFoundException.student(feedback.getStudentId()));
+
     String aiContent = feedbackAiService.generateFeedbackContent(feedback, student.getName());
 
-    feedback.updateAiContent(aiContent);
+    updateFeedbackAiContent(feedbackId, aiContent);
 
-    return feedbackQueryService.toResponse(feedback);
+    return feedbackQueryService.toResponse(
+        feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId));
+  }
+
+  @Transactional
+  protected void updateFeedbackAiContent(Long feedbackId, String aiContent) {
+    Feedback feedback = feedbackRepository.findById(feedbackId)
+        .orElseThrow(() -> ResourceNotFoundException.feedback(feedbackId));
+    feedback.updateAiContent(aiContent);
   }
 
   @Transactional
@@ -98,7 +104,7 @@ public class FeedbackCommandService {
     try {
       feedback.removeKeyword(keywordId);
     } catch (IllegalArgumentException exception) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+      throw ResourceNotFoundException.feedbackKeyword(keywordId);
     }
   }
 
@@ -110,7 +116,7 @@ public class FeedbackCommandService {
     try {
       feedback.updateKeyword(keywordId, request.keyword());
     } catch (IllegalArgumentException exception) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+      throw ResourceNotFoundException.feedbackKeyword(keywordId);
     }
 
     return feedbackQueryService.toResponse(feedback);
@@ -123,7 +129,7 @@ public class FeedbackCommandService {
     try {
       feedback.like();
     } catch (IllegalStateException exception) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+      throw BadRequestException.feedbackLikeRequiresAiContent();
     }
 
     feedbackLikeRepository.save(
@@ -137,8 +143,7 @@ public class FeedbackCommandService {
         .anyMatch(attendee -> attendee.getStudentId().equals(studentId));
 
     if (!enrolled) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Student is not enrolled in this lesson");
+      throw BadRequestException.studentNotEnrolled();
     }
   }
 }

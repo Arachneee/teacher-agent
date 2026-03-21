@@ -1,6 +1,5 @@
 package com.teacher.agent.service;
 
-import static com.teacher.agent.util.RepositoryUtil.findByIdOrThrow;
 import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrThrow;
 
 import com.teacher.agent.domain.Feedback;
@@ -8,6 +7,7 @@ import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.FeedbackResponse;
+import com.teacher.agent.exception.ResourceNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,8 +31,8 @@ public class FeedbackQueryService {
   }
 
   Feedback findByIdAndVerifyOwner(Long feedbackId, UserId userId) {
-    Feedback feedback =
-        findByIdOrThrow(feedbackRepository, feedbackId, "Feedback not found: " + feedbackId);
+    Feedback feedback = feedbackRepository.findById(feedbackId)
+        .orElseThrow(() -> ResourceNotFoundException.feedback(feedbackId));
     findStudentByIdAndVerifyOwner(feedback.getStudentId(), userId);
     return feedback;
   }

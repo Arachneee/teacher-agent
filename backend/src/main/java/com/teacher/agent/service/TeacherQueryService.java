@@ -4,11 +4,10 @@ import com.teacher.agent.domain.Teacher;
 import com.teacher.agent.domain.TeacherRepository;
 import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.TeacherResponse;
+import com.teacher.agent.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +21,7 @@ public class TeacherQueryService {
   }
 
   Teacher findByUserId(UserId userId) {
-    return teacherRepository.findByUserId(userId).orElseThrow(() -> new ResponseStatusException(
-        HttpStatus.NOT_FOUND,
-        "Teacher not found: " + userId.value()));
+    return teacherRepository.findByUserId(userId)
+        .orElseThrow(() -> ResourceNotFoundException.teacher(userId.value()));
   }
 }

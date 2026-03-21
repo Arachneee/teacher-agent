@@ -1,6 +1,7 @@
 package com.teacher.agent.controller;
 
 import com.teacher.agent.domain.UserId;
+import com.teacher.agent.exception.UnauthorizedException;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +25,7 @@ public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
     if (authentication == null || !authentication.isAuthenticated()) {
-      throw new IllegalStateException("인증 정보가 존재하지 않습니다.");
+      throw new UnauthorizedException();
     }
 
     return new UserId(authentication.getName());

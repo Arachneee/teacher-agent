@@ -23,18 +23,36 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
   List<Lesson> findAllByRecurrenceGroupIdAndUserIdAndStartTimeGreaterThanEqual(
       UUID recurrenceGroupId, UserId userId, LocalDateTime startTime);
 
-  @Query("SELECT new com.teacher.agent.dto.LessonDetailRow("
-      + " a.id,"
-      + " s.id, s.name, s.memo, s.createdAt, s.updatedAt,"
-      + " f.id, f.studentId, f.lessonId, f.aiContent, f.liked, f.createdAt, f.updatedAt,"
-      + " fk.id, fk.keyword, fk.createdAt)"
-      + " FROM Lesson l"
-      + " JOIN l.attendees a"
-      + " JOIN Student s ON s.id = a.studentId"
-      + " JOIN Feedback f ON f.studentId = a.studentId AND f.lessonId = l.id"
-      + " LEFT JOIN f.keywords fk"
-      + " WHERE l.id = :lessonId AND l.userId = :userId"
-      + " ORDER BY a.id, fk.id")
-  List<LessonDetailRow> findDetailRows(@Param("lessonId") Long lessonId,
-      @Param("userId") UserId userId);
+  @Query("""
+      SELECT new com.teacher.agent.dto.LessonDetailRow(
+          a.id,
+          s.id,
+          s.name,
+          s.memo,
+          s.createdAt,
+          s.updatedAt,
+          f.id,
+          f.studentId,
+          f.lessonId,
+          f.aiContent,
+          f.liked,
+          f.createdAt,
+          f.updatedAt,
+          fk.id,
+          fk.keyword,
+          fk.createdAt
+      )
+      FROM Lesson l
+      JOIN l.attendees a
+      JOIN Student s ON s.id = a.studentId
+      JOIN Feedback f ON f.studentId = a.studentId AND f.lessonId = l.id
+      LEFT JOIN f.keywords fk
+      WHERE l.id = :lessonId
+        AND l.userId = :userId
+      ORDER BY a.id, fk.id
+      """)
+  List<LessonDetailRow> findDetailRows(
+      @Param("lessonId") Long lessonId,
+      @Param("userId") UserId userId
+  );
 }
