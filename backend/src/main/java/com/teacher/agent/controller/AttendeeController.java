@@ -26,8 +26,8 @@ public class AttendeeController {
   @PostMapping
   public ResponseEntity<AttendeeResponse> add(UserId userId, @PathVariable @Positive Long lessonId,
       @RequestBody @Valid AttendeeCreateRequest request) {
-    return ResponseEntity.status(201)
-        .body(attendeeCommandService.add(userId, lessonId, request.studentId(),
+    return ResponseEntity.ok(
+        attendeeCommandService.add(userId, lessonId, request.studentId(),
             request.resolvedScope()));
   }
 

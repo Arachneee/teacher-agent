@@ -26,7 +26,7 @@ public class StudentController {
   @PostMapping
   public ResponseEntity<StudentResponse> create(UserId userId,
       @RequestBody @Valid StudentCreateRequest request) {
-    return ResponseEntity.status(201).body(studentCommandService.create(userId, request));
+    return ResponseEntity.ok(studentCommandService.create(userId, request));
   }
 
   @GetMapping
