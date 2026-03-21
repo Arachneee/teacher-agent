@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { DayOfWeek, RecurrenceCreateRequest, RecurrenceType } from '../lib/api';
 import {
   Lesson,
   LessonDetailAttendee,
@@ -55,6 +56,12 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>('WEEKLY');
+  const [intervalValue, setIntervalValue] = useState(1);
+  const [daysOfWeek, setDaysOfWeek] = useState<Set<DayOfWeek>>(new Set());
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
+
   const [step, setStep] = useState<'details' | 'students'>('details');
   const [createdLessonId, setCreatedLessonId] = useState<number | null>(null);
   const [allStudents, setAllStudents] = useState<Student[]>([]);
@@ -92,7 +99,15 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
         await updateLesson(lesson.id, title.trim(), buildIso(startHour, startMinute), buildIso(endHour, endMinute));
         setStep('students');
       } else {
-        const created = await createLesson(title.trim(), buildIso(startHour, startMinute), buildIso(endHour, endMinute));
+        const recurrence: RecurrenceCreateRequest | undefined = recurrenceEnabled
+          ? {
+              recurrenceType,
+              intervalValue,
+              ...(recurrenceType === 'WEEKLY' ? { daysOfWeek: [...daysOfWeek] } : {}),
+              endDate: recurrenceEndDate,
+            }
+          : undefined;
+        const created = await createLesson(title.trim(), buildIso(startHour, startMinute), buildIso(endHour, endMinute), recurrence);
         setCreatedLessonId(created.id);
         setStep('students');
       }
@@ -240,41 +255,153 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
-                  날짜 <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={event => setDate(event.target.value)}
-                  className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2 ml-1">
-                  시간 <span className="text-rose-400">*</span>
-                </label>
-                <div className="bg-purple-50 rounded-2xl px-4 py-3 flex items-end gap-3">
-                  <TimePicker
-                    label="시작"
-                    hour={startHour}
-                    minute={startMinute}
-                    onHourChange={setStartHour}
-                    onMinuteChange={setStartMinute}
-                  />
-                  <span className="text-gray-300 font-medium pb-2">–</span>
-                  <TimePicker
-                    label="종료"
-                    hour={endHour}
-                    minute={endMinute}
-                    onHourChange={setEndHour}
-                    onMinuteChange={setEndMinute}
-                  />
+              <div className="flex gap-3">
+                <div className="w-[7.5rem] shrink-0">
+                  <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
+                    날짜 <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="bg-purple-50 rounded-2xl px-3 py-3 flex items-end">
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={event => setDate(event.target.value)}
+                      className="w-full bg-white rounded-xl px-2 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
+                    시간 <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="bg-purple-50 rounded-2xl px-3 py-3 flex items-end gap-2">
+                    <TimePicker
+                      label="시작"
+                      hour={startHour}
+                      minute={startMinute}
+                      onHourChange={setStartHour}
+                      onMinuteChange={setStartMinute}
+                    />
+                    <span className="text-gray-300 font-medium pb-2">–</span>
+                    <TimePicker
+                      label="종료"
+                      hour={endHour}
+                      minute={endMinute}
+                      onHourChange={setEndHour}
+                      onMinuteChange={setEndMinute}
+                    />
+                  </div>
                 </div>
               </div>
+
+              {!isEditMode && (
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer ml-1">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={recurrenceEnabled}
+                      onClick={() => setRecurrenceEnabled(prev => !prev)}
+                      className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${recurrenceEnabled ? 'bg-purple-400' : 'bg-gray-200'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${recurrenceEnabled ? 'translate-x-5' : ''}`} />
+                    </button>
+                    <span className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                      반복하기
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-purple-400">
+                        <path d="M17 1l4 4-4 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M3 11V9a4 4 0 014-4h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M7 23l-4-4 4-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M21 13v2a4 4 0 01-4 4H3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  </label>
+
+                  {recurrenceEnabled && (
+                    <div className="mt-3 flex flex-col gap-3 bg-purple-50 rounded-2xl px-4 py-4">
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">반복 유형</label>
+                          <select
+                            value={recurrenceType}
+                            onChange={event => setRecurrenceType(event.target.value as RecurrenceType)}
+                            className="w-full bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none"
+                          >
+                            <option value="DAILY">매일</option>
+                            <option value="WEEKLY">매주</option>
+                            <option value="MONTHLY">매월</option>
+                          </select>
+                        </div>
+                        <div className="w-24">
+                          <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">간격</label>
+                          <select
+                            value={intervalValue}
+                            onChange={event => setIntervalValue(parseInt(event.target.value, 10))}
+                            className="w-full bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none"
+                          >
+                            {[1, 2, 3, 4].map(value => (
+                              <option key={value} value={value}>
+                                {value}{recurrenceType === 'DAILY' ? '일' : recurrenceType === 'WEEKLY' ? '주' : '개월'}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {recurrenceType === 'WEEKLY' && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-2 ml-1">요일 선택</label>
+                          <div className="flex gap-1.5">
+                            {([
+                              ['월', 'MONDAY'],
+                              ['화', 'TUESDAY'],
+                              ['수', 'WEDNESDAY'],
+                              ['목', 'THURSDAY'],
+                              ['금', 'FRIDAY'],
+                              ['토', 'SATURDAY'],
+                              ['일', 'SUNDAY'],
+                            ] as const).map(([label, day]) => (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => setDaysOfWeek(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(day)) next.delete(day);
+                                  else next.add(day);
+                                  return next;
+                                })}
+                                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors duration-150 ${
+                                  daysOfWeek.has(day)
+                                    ? 'bg-purple-400 text-white'
+                                    : 'bg-white text-gray-500 hover:bg-purple-100'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">반복 종료일</label>
+                        <input
+                          type="date"
+                          value={recurrenceEndDate}
+                          onChange={event => setRecurrenceEndDate(event.target.value)}
+                          className="w-full bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                        <p className="text-xs text-amber-700 leading-relaxed">
+                          💡 반복 수업은 시작일로부터 최대 <strong>6개월</strong>까지 설정할 수 있어요.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {errorMessage && (
                 <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{errorMessage}</p>

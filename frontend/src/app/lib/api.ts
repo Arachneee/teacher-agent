@@ -150,6 +150,19 @@ export async function deleteStudent(id: number): Promise<void> {
   if (!res.ok) throw new Error('학생을 삭제하지 못했어요');
 }
 
+// Recurrence
+
+export type RecurrenceType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
+export interface RecurrenceCreateRequest {
+  recurrenceType: RecurrenceType;
+  intervalValue: number;
+  daysOfWeek?: DayOfWeek[];
+  endDate: string; // YYYY-MM-DD
+}
+
 // Lessons
 
 export async function getLessons(weekStart: string): Promise<Lesson[]> {
@@ -159,11 +172,16 @@ export async function getLessons(weekStart: string): Promise<Lesson[]> {
   return res.json();
 }
 
-export async function createLesson(title: string, startTime: string, endTime: string): Promise<Lesson> {
+export async function createLesson(
+  title: string,
+  startTime: string,
+  endTime: string,
+  recurrence?: RecurrenceCreateRequest,
+): Promise<Lesson> {
   const res = await fetchWithAuth(`${BASE_URL}/lessons`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, startTime, endTime }),
+    body: JSON.stringify({ title, startTime, endTime, recurrence: recurrence ?? null }),
   });
   if (!res.ok) throw new Error('수업을 추가하지 못했어요');
   return res.json();
