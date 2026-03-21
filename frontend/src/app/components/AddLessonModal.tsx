@@ -15,6 +15,7 @@ import {
   updateLesson,
 } from '../lib/api';
 import { padTwoDigits, parseDateTime } from '../lib/dateTimeUtils';
+import CustomSelect from './CustomSelect';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
 
@@ -317,29 +318,26 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
                       <div className="flex gap-3">
                         <div className="flex-1">
                           <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">반복 유형</label>
-                          <select
+                          <CustomSelect
                             value={recurrenceType}
-                            onChange={event => setRecurrenceType(event.target.value as RecurrenceType)}
-                            className="w-full bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none"
-                          >
-                            <option value="DAILY">매일</option>
-                            <option value="WEEKLY">매주</option>
-                            <option value="MONTHLY">매월</option>
-                          </select>
+                            options={[
+                              { value: 'DAILY', label: '매일' },
+                              { value: 'WEEKLY', label: '매주' },
+                              { value: 'MONTHLY', label: '매월' },
+                            ]}
+                            onChange={value => setRecurrenceType(value as RecurrenceType)}
+                          />
                         </div>
                         <div className="w-24">
                           <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">간격</label>
-                          <select
-                            value={intervalValue}
-                            onChange={event => setIntervalValue(parseInt(event.target.value, 10))}
-                            className="w-full bg-white rounded-xl px-3 py-2 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none"
-                          >
-                            {[1, 2, 3, 4].map(value => (
-                              <option key={value} value={value}>
-                                {value}{recurrenceType === 'DAILY' ? '일' : recurrenceType === 'WEEKLY' ? '주' : '개월'}
-                              </option>
-                            ))}
-                          </select>
+                          <CustomSelect
+                            value={String(intervalValue)}
+                            options={[1, 2, 3, 4].map(value => ({
+                              value: String(value),
+                              label: `${value}${recurrenceType === 'DAILY' ? '일' : recurrenceType === 'WEEKLY' ? '주' : '개월'}`,
+                            }))}
+                            onChange={value => setIntervalValue(parseInt(value, 10))}
+                          />
                         </div>
                       </div>
 

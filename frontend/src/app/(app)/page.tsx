@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lesson, getLessons } from '../lib/api';
 import { padTwoDigits } from '../lib/dateTimeUtils';
 import { useAuth } from '../context/AuthContext';
 import WeeklyCalendarView from '../components/WeeklyCalendarView';
 import AddLessonModal from '../components/AddLessonModal';
+import DatePicker from '../components/DatePicker';
 
 function getWeekStart(date: Date): Date {
   const result = new Date(date);
@@ -21,18 +22,6 @@ function toISODateString(date: Date): string {
   return `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`;
 }
 
-function formatWeekRange(weekStart: Date): string {
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  const startMonth = weekStart.getMonth() + 1;
-  const endMonth = weekEnd.getMonth() + 1;
-  const year = weekStart.getFullYear();
-  if (startMonth === endMonth) {
-    return `${year}년 ${startMonth}월 ${weekStart.getDate()}일 – ${weekEnd.getDate()}일`;
-  }
-  return `${year}년 ${startMonth}월 ${weekStart.getDate()}일 – ${endMonth}월 ${weekEnd.getDate()}일`;
-}
-
 export default function Home() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
@@ -42,7 +31,6 @@ export default function Home() {
   const [editingLesson, setEditingLesson] = useState<Lesson | undefined>(undefined);
   const [pendingTime, setPendingTime] = useState<{ startTime: string; endTime: string } | null>(null);
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
-  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -146,19 +134,10 @@ export default function Home() {
               ›
             </button>
             <div className="relative ml-1">
-              <button
-                onClick={() => dateInputRef.current?.showPicker()}
-                className="text-sm font-medium text-gray-600 hover:text-purple-500 transition-colors cursor-pointer"
-              >
-                {formatWeekRange(weekStart)}
-              </button>
-              <input
-                ref={dateInputRef}
-                type="date"
-                className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
+              <DatePicker
                 value={toISODateString(weekStart)}
-                onChange={e => {
-                  if (e.target.value) setWeekStart(getWeekStart(new Date(e.target.value)));
+                onChange={value => {
+                  if (value) setWeekStart(getWeekStart(new Date(value)));
                 }}
               />
             </div>

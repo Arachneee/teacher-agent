@@ -68,6 +68,21 @@
 - `bg-purple-50`, `rounded-2xl`, `outline-none focus:ring-2 focus:ring-purple-300`
 - 에러 상태는 `ring-rose-300`으로 표시
 
+### 날짜 / 시간 / 선택 입력
+
+네이티브 `<input type="date">`, `<input type="time">`, `<select>` 요소를 **직접 사용하지 않는다.**
+아래 커스텀 컴포넌트를 반드시 사용한다:
+
+| 용도 | 컴포넌트 | 경로 |
+|------|----------|------|
+| 날짜 선택 | `DatePicker` | `components/DatePicker.tsx` |
+| 시간 선택 | `TimePicker` | `components/TimePicker.tsx` |
+| 드롭다운 선택 | `CustomSelect` | `components/CustomSelect.tsx` |
+
+- 모든 드롭다운은 `fixed` 포지셔닝으로 모달 내부에서도 잘리지 않는다.
+- 화면 하단 공간이 부족하면 자동으로 위쪽으로 열린다.
+- 디자인 시스템 색상(파스텔 퍼플/핑크)을 일관되게 적용한다.
+
 ### 모달
 
 - 배경: `bg-black/30 backdrop-blur-sm`
