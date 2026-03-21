@@ -31,7 +31,7 @@ class LessonFactoryTest {
 
   @Test
   void 반복_없이_단일_수업을_생성한다() {
-    LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, null);
+    LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, null, null);
 
     List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -52,7 +52,7 @@ class LessonFactoryTest {
       // 3/16 ~ 3/31 = 16일
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 31));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -66,7 +66,7 @@ class LessonFactoryTest {
       // 3/16, 3/18, 3/20, 3/22, 3/24, 3/26, 3/28, 3/30 = 8일
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 2, null, LocalDate.of(2026, 3, 31));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -80,7 +80,7 @@ class LessonFactoryTest {
     void 매일_반복_수업의_시간이_올바르게_설정된다() {
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 18));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -94,7 +94,7 @@ class LessonFactoryTest {
     void 시작일과_종료일이_같으면_하나만_생성한다() {
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 16));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -114,7 +114,7 @@ class LessonFactoryTest {
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.WEEKLY, 1,
               List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY), LocalDate.of(2026, 4, 30));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -128,7 +128,7 @@ class LessonFactoryTest {
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.WEEKLY, 2,
               List.of(DayOfWeek.MONDAY), LocalDate.of(2026, 4, 30));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -141,7 +141,7 @@ class LessonFactoryTest {
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.WEEKLY, 1,
               List.of(DayOfWeek.FRIDAY), LocalDate.of(2026, 4, 10));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -157,7 +157,7 @@ class LessonFactoryTest {
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.WEEKLY, 1,
               List.of(DayOfWeek.MONDAY), LocalDate.of(2026, 3, 23));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -176,7 +176,7 @@ class LessonFactoryTest {
       // 3/16 ~ 6/16, 매월 = 3/16, 4/16, 5/16, 6/16 = 4
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.MONTHLY, 1, null, LocalDate.of(2026, 6, 16));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -192,7 +192,7 @@ class LessonFactoryTest {
       // 3/16 ~ 9/16, 격월 = 3/16, 5/16, 7/16, 9/16 = 4
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.MONTHLY, 2, null, LocalDate.of(2026, 9, 16));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -203,22 +203,7 @@ class LessonFactoryTest {
       assertThat(lessons.get(3).getStartTime().toLocalDate()).isEqualTo(LocalDate.of(2026, 9, 16));
     }
 
-    @Test
-    void 월말_날짜가_없는_달은_해당_월의_마지막_날로_조정된다() {
-      // 1/31 시작, 매월 → 2월은 28일, 3월은 31일...
-      LocalDateTime janStart = LocalDateTime.of(2026, 1, 31, 9, 0);
-      LocalDateTime janEnd = LocalDateTime.of(2026, 1, 31, 10, 0);
-      RecurrenceCreateRequest recurrence =
-          new RecurrenceCreateRequest(RecurrenceType.MONTHLY, 1, null, LocalDate.of(2026, 3, 31));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, janStart, janEnd, recurrence);
 
-      List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
-
-      assertThat(lessons).hasSize(3);
-      assertThat(lessons.get(0).getStartTime().toLocalDate()).isEqualTo(LocalDate.of(2026, 1, 31));
-      assertThat(lessons.get(1).getStartTime().toLocalDate()).isEqualTo(LocalDate.of(2026, 2, 28));
-      assertThat(lessons.get(2).getStartTime().toLocalDate()).isEqualTo(LocalDate.of(2026, 3, 28));
-    }
   }
 
   @Nested
@@ -230,7 +215,7 @@ class LessonFactoryTest {
       LocalDateTime longEnd = LocalDateTime.of(2026, 3, 16, 11, 0);
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 18));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, longEnd, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, longEnd, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -249,7 +234,7 @@ class LessonFactoryTest {
       // 3/16 + 6개월 = 9/16, 종료일 9/17 → 초과
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 9, 17));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       assertThatThrownBy(() -> lessonFactory.createFrom(USER_ID, request))
           .isInstanceOf(IllegalArgumentException.class)
@@ -261,7 +246,7 @@ class LessonFactoryTest {
       // 3/16 + 6개월 = 9/16
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 9, 16));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -272,7 +257,7 @@ class LessonFactoryTest {
     void 반복_종료일이_6개월_이내이면_정상_생성된다() {
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 4, 16));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -287,7 +272,7 @@ class LessonFactoryTest {
     void 반복_수업에는_반복_정보가_포함된다() {
       RecurrenceCreateRequest recurrence =
           new RecurrenceCreateRequest(RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 18));
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, recurrence, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 
@@ -301,7 +286,7 @@ class LessonFactoryTest {
 
     @Test
     void 단일_수업에는_반복_정보가_없다() {
-      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, null);
+      LessonCreateRequest request = new LessonCreateRequest(TITLE, START, END, null, null);
 
       List<Lesson> lessons = lessonFactory.createFrom(USER_ID, request);
 

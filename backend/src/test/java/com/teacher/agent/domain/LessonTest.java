@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class LessonTest {
@@ -142,5 +143,27 @@ class LessonTest {
 
     // then
     assertThat(lesson.getRecurrence()).isNull();
+  }
+
+  @Test
+  void 여러_수강생을_한번에_등록한다() {
+    // given
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
+
+    // when
+    lesson.addAttendees(List.of(1L, 2L, 3L));
+
+    // then
+    assertThat(lesson.getAttendees()).hasSize(3);
+  }
+
+  @Test
+  void 여러_수강생_등록_시_중복이_있으면_예외가_발생한다() {
+    // given
+    Lesson lesson = Lesson.create(USER_ID, "수학", START, END);
+
+    // when & then
+    assertThatThrownBy(() -> lesson.addAttendees(List.of(1L, 1L)))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 }

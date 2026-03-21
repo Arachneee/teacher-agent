@@ -59,7 +59,7 @@ class LessonServiceTest {
   @Test
   void 수업을_생성한다() {
     LessonResponse response = lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학 1교시", START, END, null));
+        new LessonCreateRequest("수학 1교시", START, END, null, null));
 
     assertThat(response.id()).isNotNull();
     assertThat(response.userId()).isEqualTo(teacher.getUserId().value());
@@ -74,7 +74,7 @@ class LessonServiceTest {
   void 수업을_단건_조회한다() {
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null));
+            new LessonCreateRequest("수학", START, END, null, null));
 
     LessonResponse found = lessonQueryService.getOne(teacher.getUserId(), created.id());
 
@@ -92,7 +92,7 @@ class LessonServiceTest {
   void 수업_정보를_수정한다() {
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null));
+            new LessonCreateRequest("수학", START, END, null, null));
     LocalDateTime newStart = LocalDateTime.of(2026, 3, 17, 14, 0);
     LocalDateTime newEnd = LocalDateTime.of(2026, 3, 17, 15, 0);
 
@@ -115,7 +115,7 @@ class LessonServiceTest {
   void 수업을_삭제한다() {
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null));
+            new LessonCreateRequest("수학", START, END, null, null));
 
     lessonCommandService.delete(teacher.getUserId(), created.id());
 
@@ -135,7 +135,7 @@ class LessonServiceTest {
         teacherRepository.save(Teacher.create("otherteacher2", "encodedPassword", "다른교사2", null));
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null));
+            new LessonCreateRequest("수학", START, END, null, null));
 
     assertThatThrownBy(() -> lessonCommandService.update(otherTeacher.getUserId(), created.id(),
         new LessonUpdateRequest("영어", START, END))).isInstanceOf(ResponseStatusException.class);
@@ -147,7 +147,7 @@ class LessonServiceTest {
         teacherRepository.save(Teacher.create("otherteacher3", "encodedPassword", "다른교사3", null));
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null));
+            new LessonCreateRequest("수학", START, END, null, null));
 
     assertThatThrownBy(() -> lessonCommandService.delete(otherTeacher.getUserId(), created.id()))
         .isInstanceOf(ResponseStatusException.class);
@@ -156,11 +156,11 @@ class LessonServiceTest {
   @Test
   void 주간_수업_목록을_조회한다() {
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null));
+        new LessonCreateRequest("수학", START, END, null, null));
     LocalDateTime nextWeekStart = LocalDateTime.of(2026, 3, 23, 9, 0);
     LocalDateTime nextWeekEnd = LocalDateTime.of(2026, 3, 23, 10, 0);
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("영어", nextWeekStart, nextWeekEnd, null));
+        new LessonCreateRequest("영어", nextWeekStart, nextWeekEnd, null, null));
 
     List<LessonResponse> lessons =
         lessonQueryService.getByTeacherAndWeek(teacher.getUserId(), LocalDate.of(2026, 3, 16));
@@ -172,7 +172,7 @@ class LessonServiceTest {
   @Test
   void 해당_주에_수업이_없으면_빈_목록을_반환한다() {
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null));
+        new LessonCreateRequest("수학", START, END, null, null));
 
     List<LessonResponse> lessons =
         lessonQueryService.getByTeacherAndWeek(teacher.getUserId(), LocalDate.of(2026, 3, 23));

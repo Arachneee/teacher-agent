@@ -55,7 +55,7 @@ class LessonRecurringServiceTest {
         LocalDate.of(2026, 4, 30));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence));
+        new LessonCreateRequest("수학", start, end, recurrence, null));
 
     assertThat(lessonRepository.findAll()).hasSize(14);
   }
@@ -68,7 +68,7 @@ class LessonRecurringServiceTest {
         RecurrenceType.DAILY, 1, null, start.toLocalDate().plusMonths(7));
 
     assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence)))
+        new LessonCreateRequest("수학", start, end, recurrence, null)))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -80,7 +80,7 @@ class LessonRecurringServiceTest {
         RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 31));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence));
+        new LessonCreateRequest("수학", start, end, recurrence, null));
 
     assertThat(lessonRepository.findAll()).hasSize(16);
   }
@@ -94,7 +94,7 @@ class LessonRecurringServiceTest {
         LocalDate.of(2026, 4, 30));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence));
+        new LessonCreateRequest("수학", start, end, recurrence, null));
 
     // 3/16, 3/30, 4/13, 4/27 = 4 lessons (every other Monday)
     assertThat(lessonRepository.findAll()).hasSize(4);
@@ -108,9 +108,22 @@ class LessonRecurringServiceTest {
         RecurrenceType.MONTHLY, 1, null, LocalDate.of(2026, 6, 30));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence));
+        new LessonCreateRequest("수학", start, end, recurrence, null));
 
     // 3/16, 4/16, 5/16, 6/16 = 4 lessons
     assertThat(lessonRepository.findAll()).hasSize(4);
+  }
+
+  @Test
+  void 매주_반복_기간_내_해당_요일_없으면_실패() {
+    LocalDateTime start = LocalDateTime.of(2026, 3, 16, 9, 0); // 월요일
+    LocalDateTime end = LocalDateTime.of(2026, 3, 16, 10, 0);
+    RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
+        RecurrenceType.WEEKLY, 1, List.of(DayOfWeek.TUESDAY),
+        LocalDate.of(2026, 3, 16)); // 종료일이 같은 월요일 → 화요일 없음
+
+    assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
+        new LessonCreateRequest("수학", start, end, recurrence, null)))
+        .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
   }
 }

@@ -88,6 +88,10 @@ public class Lesson extends BaseEntity {
     attendees.add(Attendee.create(this, studentId));
   }
 
+  public void addAttendees(List<Long> studentIds) {
+    studentIds.forEach(this::addAttendee);
+  }
+
   public void removeAttendee(Long attendeeId) {
     boolean removed = attendees.removeIf(attendee -> Objects.equals(attendee.getId(), attendeeId));
 
