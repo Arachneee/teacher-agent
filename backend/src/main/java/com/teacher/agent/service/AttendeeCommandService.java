@@ -15,11 +15,13 @@ import com.teacher.agent.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AttendeeCommandService {
 
   private final LessonQueryService lessonQueryService;
@@ -37,7 +39,8 @@ public class AttendeeCommandService {
     for (Lesson target : targets) {
       try {
         target.addAttendee(studentId);
-      } catch (IllegalArgumentException ignored) {
+      } catch (IllegalArgumentException e) {
+        log.warn("수강생 추가 실패 - 이미 등록됨: lessonId={}, studentId={}", target.getId(), studentId);
       }
     }
 
@@ -50,17 +53,18 @@ public class AttendeeCommandService {
     }
 
     List<Attendee> attendees = lesson.getAttendees();
-    return AttendeeResponse.from(attendees.get(attendees.size() - 1));
+    return AttendeeResponse.from(attendees.getLast());
   }
 
   @Transactional
   public void remove(UserId userId, Long lessonId, Long attendeeId, UpdateScope scope) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(lessonId, userId);
 
-    Attendee attendee = lesson.getAttendees().stream()
-        .filter(a -> Objects.equals(a.getId(), attendeeId))
-        .findFirst()
-        .orElseThrow(() -> ResourceNotFoundException.attendee(attendeeId));
+    Attendee attendee =
+        lesson.getAttendees().stream()
+            .filter(a -> Objects.equals(a.getId(), attendeeId))
+            .findFirst()
+            .orElseThrow(() -> ResourceNotFoundException.attendee(attendeeId));
 
     Long studentId = attendee.getStudentId();
     UpdateScope resolvedScope = scope != null ? scope : UpdateScope.SINGLE;

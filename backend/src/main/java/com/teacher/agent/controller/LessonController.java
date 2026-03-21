@@ -32,7 +32,7 @@ public class LessonController {
   @PostMapping
   public ResponseEntity<LessonResponse> create(UserId userId,
       @RequestBody @Valid LessonCreateRequest request) {
-    return ResponseEntity.status(201).body(lessonCommandService.create(userId, request));
+    return ResponseEntity.ok(lessonCommandService.create(userId, request));
   }
 
   @GetMapping
