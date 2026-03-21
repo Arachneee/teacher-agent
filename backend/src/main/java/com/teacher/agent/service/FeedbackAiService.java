@@ -1,5 +1,7 @@
 package com.teacher.agent.service;
 
+import static com.teacher.agent.util.ErrorMessages.PROMPT_FILE_READ_ERROR;
+
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackKeyword;
 import java.io.IOException;
@@ -25,7 +27,7 @@ public class FeedbackAiService {
           feedbackMessagePromptResource.getContentAsString(StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new IllegalStateException(
-          "프롬프트 파일을 읽을 수 없습니다: " + feedbackMessagePromptResource.getFilename(), e);
+          PROMPT_FILE_READ_ERROR + feedbackMessagePromptResource.getFilename(), e);
     }
   }
 
