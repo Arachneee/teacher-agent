@@ -9,6 +9,7 @@ import com.teacher.agent.domain.Student;
 import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.UpdateScope;
 import com.teacher.agent.domain.UserId;
+import com.teacher.agent.dto.LessonCreateCommand;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
@@ -33,14 +34,15 @@ public class LessonCommandService {
 
   @Transactional
   public LessonResponse create(UserId userId, LessonCreateRequest request) {
-    List<Lesson> lessons = lessonFactory.createFrom(userId, request);
+    var command = request.toCommand(userId);
+    List<Lesson> lessons = lessonFactory.createFrom(command);
     if (lessons.isEmpty()) {
       throw BadRequestException.noLessonGenerated();
     }
     lessonRepository.saveAll(lessons);
 
-    if (request.studentIds() != null && !request.studentIds().isEmpty()) {
-      List<Long> studentIds = request.studentIds().stream().distinct().toList();
+    if (command.studentIds() != null && !command.studentIds().isEmpty()) {
+      List<Long> studentIds = command.studentIds().stream().distinct().toList();
       validateStudentOwnership(userId, studentIds);
 
       for (Lesson lesson : lessons) {
@@ -56,8 +58,7 @@ public class LessonCommandService {
     List<Student> students = studentRepository.findAllByIdInAndUserId(studentIds, userId);
     if (students.size() != studentIds.size()) {
       throw new ResourceNotFoundException(
-          com.teacher.agent.exception.ErrorCode.STUDENT_NOT_FOUND,
-          "일부 학생을 찾을 수 없습니다.");
+          com.teacher.agent.exception.ErrorCode.STUDENT_NOT_FOUND, "일부 학생을 찾을 수 없습니다.");
     }
   }
 
@@ -70,20 +71,61 @@ public class LessonCommandService {
     }
 
     UpdateScope scope = request.resolvedScope();
+    List<Lesson> targets = lessonQueryService.findSeriesLessons(lesson, userId, scope);
 
     if (scope == UpdateScope.SINGLE) {
       lesson.update(request.title(), request.startTime(), request.endTime());
-      return LessonResponse.from(lesson);
+    } else {
+      long durationMinutes = Duration.between(request.startTime(), request.endTime()).toMinutes();
+      for (Lesson target : targets) {
+        target.updateTime(request.title(), request.startTime().toLocalTime(), durationMinutes);
+      }
     }
 
-    List<Lesson> targets = lessonQueryService.findSeriesLessons(lesson, userId, scope);
-    long durationMinutes = Duration.between(request.startTime(), request.endTime()).toMinutes();
-
-    for (Lesson target : targets) {
-      target.updateTime(request.title(), request.startTime().toLocalTime(), durationMinutes);
-    }
+    applyAttendeeChanges(userId, targets, request);
 
     return LessonResponse.from(lesson);
+  }
+
+  private void applyAttendeeChanges(
+      UserId userId, List<Lesson> targets, LessonUpdateRequest request) {
+    List<Long> addStudentIds = request.resolvedAddStudentIds();
+    List<Long> removeStudentIds = request.resolvedRemoveStudentIds();
+
+    if (addStudentIds.isEmpty() && removeStudentIds.isEmpty()) {
+      return;
+    }
+
+    if (!addStudentIds.isEmpty()) {
+      validateStudentOwnership(userId, addStudentIds);
+      for (Lesson target : targets) {
+        for (Long studentId : addStudentIds) {
+          try {
+            target.addAttendee(studentId);
+          } catch (IllegalArgumentException ignored) {
+          }
+        }
+      }
+      lessonRepository.flush();
+      for (Lesson target : targets) {
+        for (Long studentId : addStudentIds) {
+          if (feedbackRepository.findByStudentIdAndLessonId(studentId, target.getId()).isEmpty()) {
+            feedbackRepository.save(Feedback.create(studentId, target.getId()));
+          }
+        }
+      }
+    }
+
+    if (!removeStudentIds.isEmpty()) {
+      for (Lesson target : targets) {
+        for (Long studentId : removeStudentIds) {
+          target.getAttendees().stream()
+              .filter(a -> a.getStudentId().equals(studentId))
+              .findFirst()
+              .ifPresent(a -> target.removeAttendee(a.getId()));
+        }
+      }
+    }
   }
 
   private LessonResponse convertToRecurring(Lesson lesson, LessonUpdateRequest request) {
@@ -91,9 +133,15 @@ public class LessonCommandService {
 
     lesson.update(request.title(), request.startTime(), request.endTime());
 
-    List<Lesson> generated = lessonFactory.createFrom(lesson.getUserId(),
-        new LessonCreateRequest(request.title(), request.startTime(), request.endTime(),
-            request.recurrence(), null));
+    var command =
+        new LessonCreateCommand(
+            lesson.getUserId(),
+            request.title(),
+            request.startTime(),
+            request.endTime(),
+            recurrence,
+            null);
+    List<Lesson> generated = lessonFactory.createFrom(command);
 
     if (generated.isEmpty()) {
       throw BadRequestException.noLessonGenerated();
@@ -102,9 +150,11 @@ public class LessonCommandService {
     UUID groupId = generated.get(0).getRecurrenceGroupId();
     lesson.convertToRecurring(recurrence, groupId);
 
-    List<Lesson> additionalLessons = generated.stream()
-        .filter(l -> !l.getStartTime().toLocalDate().equals(lesson.getStartTime().toLocalDate()))
-        .toList();
+    List<Lesson> additionalLessons =
+        generated.stream()
+            .filter(
+                l -> !l.getStartTime().toLocalDate().equals(lesson.getStartTime().toLocalDate()))
+            .toList();
 
     if (!additionalLessons.isEmpty()) {
       lessonRepository.saveAll(additionalLessons);
