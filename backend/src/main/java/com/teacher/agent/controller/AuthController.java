@@ -1,22 +1,14 @@
 package com.teacher.agent.controller;
 
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
 import com.teacher.agent.dto.AuthResponse;
 import com.teacher.agent.dto.LoginRequest;
+import com.teacher.agent.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,50 +16,24 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-  private final AuthenticationManager authenticationManager;
-  private final TeacherRepository teacherRepository;
-  private final SecurityContextRepository securityContextRepository =
-      new HttpSessionSecurityContextRepository();
+  private final AuthService authService;
 
   @PostMapping("/login")
   public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest request,
       HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-    UsernamePasswordAuthenticationToken authToken =
-        new UsernamePasswordAuthenticationToken(request.userId(), request.password());
-    Authentication authentication = authenticationManager.authenticate(authToken);
-
-    SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-    securityContext.setAuthentication(authentication);
-    SecurityContextHolder.setContext(securityContext);
-    securityContextRepository.saveContext(securityContext, httpRequest, httpResponse);
-
-    return ResponseEntity.ok(buildAuthResponse(authentication.getName()));
+    return ResponseEntity.ok(authService.login(request, httpRequest, httpResponse));
   }
 
   @PostMapping("/logout")
   public ResponseEntity<Void> logout(HttpServletRequest request) {
-    HttpSession session = request.getSession(false);
-
-    if (session != null) {
-      session.invalidate();
-    }
-
-    SecurityContextHolder.clearContext();
-
+    authService.logout(request);
     return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/me")
   public ResponseEntity<AuthResponse> me(Authentication authentication) {
-    if (authentication == null || !authentication.isAuthenticated()) {
-      return ResponseEntity.status(401).build();
-    }
-
-    return ResponseEntity.ok(buildAuthResponse(authentication.getName()));
-  }
-
-  private AuthResponse buildAuthResponse(String userId) {
-    return teacherRepository.findByUserId(new UserId(userId)).map(AuthResponse::from)
-        .orElseGet(() -> new AuthResponse(userId, null, null));
+    return authService.getCurrentUser(authentication)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.status(401).build());
   }
 }
