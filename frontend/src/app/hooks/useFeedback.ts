@@ -6,6 +6,7 @@ import {
   addKeyword,
   createFeedback,
   generateAiContent,
+  getFeedback,
   getFeedbacks,
   likeFeedback,
   removeKeyword,
@@ -23,6 +24,10 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
   const feedbackIdRef = useRef<number | null>(initialFeedback?.id ?? null);
   const skipInitialFetchRef = useRef(initialFeedback !== undefined);
 
+  const reloadFeedback = useCallback(async (feedbackId: number): Promise<Feedback> => {
+    return getFeedback(feedbackId);
+  }, []);
+
   const loadLatestFeedback = useCallback(async (): Promise<Feedback | null> => {
     const feedbacks = await getFeedbacks(studentId);
     return feedbacks.length > 0 ? feedbacks[0] : null;
@@ -37,9 +42,26 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
   }, [loadLatestFeedback]);
 
   // 부모가 re-fetch 후 새 prop을 내려줄 때 로컬 상태를 동기화
+  // 단, 로컬에서 키워드를 추가/수정한 경우 로컬 상태를 유지
   useEffect(() => {
     if (!skipInitialFetchRef.current) return;
     setFeedback(prev => {
+      // 로컬 상태가 더 최신인 경우 (키워드 수가 더 많거나 updatedAt이 더 최신) 동기화 건너뛰기
+      if (prev && initialFeedback) {
+        const localKeywordCount = prev.keywords?.length ?? 0;
+        const initialKeywordCount = initialFeedback.keywords?.length ?? 0;
+        if (localKeywordCount > initialKeywordCount) {
+          return prev;
+        }
+        // updatedAt 비교: 로컬이 더 최신이면 유지
+        if (prev.updatedAt && initialFeedback.updatedAt) {
+          const localTime = new Date(prev.updatedAt).getTime();
+          const initialTime = new Date(initialFeedback.updatedAt).getTime();
+          if (localTime > initialTime) {
+            return prev;
+          }
+        }
+      }
       // 디바운스 타이머가 활성 중이면 사용자가 편집 중인 aiContent를 보존
       if (initialFeedback && debounceTimerRef.current !== null) {
         return { ...initialFeedback, aiContent: prev?.aiContent ?? initialFeedback.aiContent };
@@ -91,12 +113,12 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
         feedbackId = created.id;
       }
       await addKeyword(feedbackId, keyword);
-      const loaded = await loadLatestFeedback();
-      const mergedFeedback = loaded && debounceTimerRef.current !== null
+      const loaded = await reloadFeedback(feedbackId);
+      const mergedFeedback = debounceTimerRef.current !== null
         ? { ...loaded, aiContent: feedback?.aiContent ?? loaded.aiContent }
         : loaded;
       setFeedback(mergedFeedback);
-      feedbackIdRef.current = mergedFeedback?.id ?? null;
+      feedbackIdRef.current = mergedFeedback.id;
       return true;
     } catch {
       setErrorMessage('키워드를 추가하지 못했어요');
@@ -124,9 +146,9 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     setErrorMessage(null);
     try {
       await updateKeyword(feedback.id, keywordId, newKeyword);
-      const loaded = await loadLatestFeedback();
+      const loaded = await reloadFeedback(feedback.id);
       setFeedback(loaded);
-      feedbackIdRef.current = loaded?.id ?? null;
+      feedbackIdRef.current = loaded.id;
       return true;
     } catch {
       setErrorMessage('키워드를 수정하지 못했어요');
@@ -144,7 +166,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     setErrorMessage(null);
     try {
       await removeKeyword(feedback.id, keywordId);
-      setFeedback(await loadLatestFeedback());
+      setFeedback(await reloadFeedback(feedback.id));
     } catch {
       setErrorMessage('키워드를 삭제하지 못했어요');
       setFeedback(previousFeedback);
@@ -157,7 +179,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     setErrorMessage(null);
     try {
       await generateAiContent(feedback.id);
-      setFeedback(await loadLatestFeedback());
+      setFeedback(await reloadFeedback(feedback.id));
     } catch {
       setErrorMessage('AI 문자를 생성하지 못했어요');
     } finally {
@@ -169,12 +191,12 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     if (!feedback || feedback.liked) return;
     try {
       await likeFeedback(feedback.id);
-      const loaded = await loadLatestFeedback();
-      const mergedFeedback = loaded && debounceTimerRef.current !== null
+      const loaded = await reloadFeedback(feedback.id);
+      const mergedFeedback = debounceTimerRef.current !== null
         ? { ...loaded, aiContent: feedback?.aiContent ?? loaded.aiContent }
         : loaded;
       setFeedback(mergedFeedback);
-      feedbackIdRef.current = mergedFeedback?.id ?? null;
+      feedbackIdRef.current = mergedFeedback.id;
     } catch {
       setErrorMessage('좋아요 처리에 실패했어요');
     }

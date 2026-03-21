@@ -47,6 +47,13 @@ export default function KeywordsSection({
             return (
               <span
                 key={keyword.id}
+                onMouseDown={event => {
+                  event.preventDefault();
+                  if (blurTimeoutRef.current) {
+                    clearTimeout(blurTimeoutRef.current);
+                    blurTimeoutRef.current = null;
+                  }
+                }}
                 onClick={() => onStartEditKeyword(keyword)}
                 className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full cursor-pointer transition-colors ${
                   isBeingEdited
@@ -56,8 +63,12 @@ export default function KeywordsSection({
               >
                 {keyword.keyword}
                 <button
+                  onMouseDown={event => event.preventDefault()}
                   onClick={event => {
                     event.stopPropagation();
+                    if (isBeingEdited) {
+                      onCancelEditKeyword();
+                    }
                     onRemoveKeyword(keyword.id);
                   }}
                   className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-pink-200 transition-colors text-sm leading-none"
@@ -80,9 +91,11 @@ export default function KeywordsSection({
           value={keywordInput}
           onChange={event => onKeywordInputChange(event.target.value)}
           onBlur={() => {
-            blurTimeoutRef.current = setTimeout(() => {
-              onCancelEditKeyword();
-            }, 150);
+            if (editingKeywordId !== null) {
+              blurTimeoutRef.current = setTimeout(() => {
+                onCancelEditKeyword();
+              }, 150);
+            }
           }}
           onKeyDown={event => {
             if (event.key === 'Enter' && !event.nativeEvent.isComposing) {

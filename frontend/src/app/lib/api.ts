@@ -266,6 +266,12 @@ export async function removeAttendee(lessonId: number, attendeeId: number, scope
 
 // Feedbacks
 
+export async function getFeedback(feedbackId: number): Promise<Feedback> {
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}`);
+  if (!res.ok) throw new Error('피드백을 불러오지 못했어요');
+  return res.json();
+}
+
 export async function getFeedbacks(studentId: number): Promise<Feedback[]> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks?studentId=${studentId}`);
   if (!res.ok) throw new Error('피드백 목록을 불러오지 못했어요');
