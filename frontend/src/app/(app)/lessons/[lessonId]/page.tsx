@@ -22,6 +22,7 @@ import RecurringScopeModal from '../../../components/RecurringScopeModal';
 import { MAX_COLUMNS, MIN_COLUMNS, useGridLayout } from '../../../hooks/useGridLayout';
 import { useLessonDetail } from '../../../hooks/useLessonDetail';
 import { useLessonEdit } from '../../../hooks/useLessonEdit';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 function formatLessonDateTime(startIso: string, endIso: string): string {
   const start = new Date(startIso);
@@ -116,6 +117,9 @@ export default function LessonDetailPage() {
     lessonId,
     initializeGridSlots,
   );
+
+  const isMobile = useIsMobile();
+  const effectiveColumnCount = isMobile ? 1 : columnCount;
 
   const { isEditing, editForm, setEditForm, isSaving, saveError, openEdit, closeEdit, handleSave } = useLessonEdit(
     lesson,
@@ -243,7 +247,7 @@ export default function LessonDetailPage() {
   }
 
   return (
-    <div className="mx-auto px-6 py-10" style={{ maxWidth: `${columnCount * 24}rem` }}>
+    <div className="mx-auto px-4 md:px-6 py-6 md:py-10" style={{ maxWidth: isMobile ? '100%' : `${columnCount * 24}rem` }}>
       <header className="mb-10">
         <button
           onClick={() => router.push('/')}
@@ -352,7 +356,7 @@ export default function LessonDetailPage() {
             <p className="text-sm text-gray-400">
               총 <span className="font-semibold text-purple-400">{attendees.length}</span>명의 수강생
             </p>
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <span className="text-xs text-gray-400">열 수</span>
               <div className="flex items-center gap-1 bg-white rounded-2xl shadow-sm px-2 py-1">
                 <button
@@ -391,7 +395,7 @@ export default function LessonDetailPage() {
             >
               <div
                 className="grid gap-12"
-                style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}
+                style={{ gridTemplateColumns: `repeat(${effectiveColumnCount}, minmax(0, 1fr))` }}
               >
                 {displaySlots.map((slotId, slotIndex) => {
                   if (slotId === null) {
@@ -423,7 +427,7 @@ export default function LessonDetailPage() {
 
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-pink-400 hover:bg-pink-500 active:scale-95 text-white text-3xl rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 right-5 md:bottom-8 md:right-8 w-14 h-14 md:w-16 md:h-16 bg-pink-400 hover:bg-pink-500 active:scale-95 text-white text-3xl rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
         aria-label="수강생 추가"
       >
         +
