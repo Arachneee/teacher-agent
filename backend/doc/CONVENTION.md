@@ -37,9 +37,29 @@ public StudentResponse create(@RequestBody StudentCreateRequest request) { ... }
 
 ## Service
 
-- 클래스 레벨에 `@Transactional(readOnly = true)` 선언.
-- 쓰기 작업 메서드에만 `@Transactional` 추가.
+서비스는 역할에 따라 **CommandService**와 **QueryService**로 분리한다.
+
+- **CommandService** (쓰기): 클래스 레벨 어노테이션 없음. 쓰기 메서드에만 `@Transactional` 선언.
+- **QueryService** (읽기): 클래스 레벨에 `@Transactional(readOnly = true)` 선언.
 - 엔티티를 직접 반환하지 않고 DTO로 변환하여 반환.
+
+```java
+// CommandService
+@Service
+@RequiredArgsConstructor
+public class StudentCommandService {
+    @Transactional
+    public StudentResponse create(...) { ... }
+}
+
+// QueryService
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class StudentQueryService {
+    public StudentResponse findById(...) { ... }
+}
+```
 
 ## DTO
 

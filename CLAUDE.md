@@ -6,7 +6,7 @@
 AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프론트엔드로 구성된 풀스택 프로젝트.
 
 ## 아키텍처
-- `backend/` — Spring Boot 4.0 (Java 25), JPA + H2(인메모리), Spring AI(OpenAI gpt-4o-mini) 연동
+- `backend/` — Spring Boot 4.0 (Java 25), JPA + MySQL (테스트는 H2 인메모리), Spring AI(OpenAI gpt-4o-mini) 연동
 - `frontend/` — Next.js 16 (App Router), React 19, Tailwind CSS 4, TypeScript
 - `infra/` — Terraform 기반 AWS 인프라 (EC2, 보안 그룹 등)
 - `doc/` — 프로젝트 문서 (COMMIT.md 등 Claude가 참조해야 할 파일)
@@ -33,7 +33,6 @@ AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프
 이 섹션은 리포지토리 내의 다른 중요한 Markdown 문서들에 대한 개요와 링크를 제공합니다.
 
 ### 최상위 레벨 문서
--   **`GEMINI.md`**: (CLAUDE.md에 대한 심볼릭 링크) - Gemini CLI를 위한 중앙 문서 허브.
 -   **`CLAUDE.md`**: (이 파일) - AI 에이전트 지침 및 프로젝트 문서 인덱스.
 
 ### 백엔드 문서 (`backend/`)
@@ -51,6 +50,7 @@ AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프
 -   **`infra/doc/deploy-frontend.md`**: Vercel에 Next.js 프론트엔드를 배포하기 위한 가이드로, 환경 변수, API 프록시 구성 및 자동 배포 프로세스를 포함합니다.
 
 ### 일반 프로젝트 문서 (`doc/`)
+-   **`doc/PRD.md`**: 제품 요구사항 문서. 서비스 개요, 도메인 모델, 기능 요구사항, API 목록, 주요 UX 흐름을 정의합니다.
 -   **`doc/AUTH.md`**: 사용자 모델, 인증 흐름, API 엔드포인트 및 보안 구성을 포함하여 백엔드의 인증 및 인가 정책을 자세히 설명합니다.
 -   **`doc/COMMIT.md`**: Conventional Commits를 따르는 프로젝트의 커밋 메시지 컨벤션을 정의합니다.
 

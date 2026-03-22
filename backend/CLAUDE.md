@@ -14,7 +14,8 @@
 
 환경변수 필요: `OPENAI_API_KEY`
 
-H2 콘솔: http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:teacher_agent`)
+운영 DB: MySQL (`jdbc:mysql://localhost:3306/teacheragent`)
+테스트 DB: H2 인메모리 (`jdbc:h2:mem:testdb;MODE=MySQL`) — 별도 설정 불필요, 테스트 실행 시 자동 사용
 
 ## Rules
 
