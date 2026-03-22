@@ -108,19 +108,6 @@ export async function deleteStudent(id: number): Promise<void> {
   if (!res.ok) throw new Error('학생을 삭제하지 못했어요');
 }
 
-// Recurrence
-
-export type RecurrenceType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
-
-export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
-
-export interface RecurrenceCreateRequest {
-  recurrenceType: RecurrenceType;
-  intervalValue: number;
-  daysOfWeek?: DayOfWeek[];
-  endDate: string; // YYYY-MM-DD
-}
-
 // Lessons
 
 export async function getLessons(weekStart: string): Promise<Lesson[]> {
