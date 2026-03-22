@@ -39,7 +39,7 @@ export default function Sidebar() {
   const activeTab: Tab = pathname.startsWith('/students') ? 'students' : 'calendar';
 
   return (
-    <aside className="w-[72px] shrink-0 bg-white/70 backdrop-blur-sm border-r border-white/80 flex flex-col items-center pt-6 pb-6 gap-1 shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.04)]">
+    <aside className="hidden md:flex w-[72px] shrink-0 bg-white/70 backdrop-blur-sm border-r border-white/80 flex-col items-center pt-6 pb-6 gap-1 shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.04)]">
       <div className="mb-5 text-2xl select-none" aria-hidden>🍎</div>
       {TABS.map(({ id, label, href, Icon }) => (
         <button

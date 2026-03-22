@@ -45,9 +45,11 @@ interface Props {
   onEdit: (lesson: Lesson) => void;
   onDelete: (id: number, didDeleteMultiple: boolean) => void;
   onCellClick: (startTime: string, endTime: string) => void;
+  mode?: 'week' | 'day';
+  currentDay?: Date;
 }
 
-export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelete, onCellClick }: Props) {
+export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelete, onCellClick, mode = 'week', currentDay }: Props) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -55,10 +57,12 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
   const [scopeModalLesson, setScopeModalLesson] = useState<Lesson | null>(null);
   const [deleteConfirmLesson, setDeleteConfirmLesson] = useState<Lesson | null>(null);
 
-  const weekDays = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
-    [weekStart]
-  );
+  const weekDays = useMemo(() => {
+    if (mode === 'day' && currentDay) {
+      return [currentDay];
+    }
+    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  }, [mode, currentDay, weekStart]);
 
   const hours = useMemo(
     () => Array.from({ length: TOTAL_HOURS }, (_, i) => FIRST_HOUR + i),
@@ -67,7 +71,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
 
   const lessonsByDay = useMemo(() => {
     const map = new Map<number, Lesson[]>();
-    for (let i = 0; i < 7; i++) map.set(i, []);
+    for (let i = 0; i < weekDays.length; i++) map.set(i, []);
     lessons.forEach(lesson => {
       const lessonDate = new Date(lesson.startTime);
       weekDays.forEach((day, index) => {
@@ -149,7 +153,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
         </div>
       )}
       {/* Scrollable container wrapping header + grid for consistent width */}
-      <div ref={scrollRef} className="overflow-y-scroll flex-1" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <div ref={scrollRef} className="overflow-y-scroll flex-1 max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-200px)]" style={{ maxHeight: 'min(calc(100vh - 200px), calc(100dvh - 200px))' }}>
 
       {/* Day Headers - sticky inside scroll container */}
       <div className="flex border-b border-gray-100 bg-white sticky top-0 z-20" style={{ paddingLeft: '56px' }}>
