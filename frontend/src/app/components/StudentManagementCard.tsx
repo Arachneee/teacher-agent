@@ -2,18 +2,9 @@
 
 import { useState } from 'react';
 import { Student, deleteStudent, updateStudent } from '../lib/api';
+import { getAvatarColor } from '../lib/constants';
+import { formatDateKorean } from '../lib/dateTimeUtils';
 import ConfirmModal from './ConfirmModal';
-
-const AVATAR_COLORS = [
-  'bg-pink-200 text-pink-600',
-  'bg-purple-200 text-purple-600',
-  'bg-blue-200 text-blue-600',
-  'bg-green-200 text-green-600',
-  'bg-yellow-200 text-yellow-600',
-  'bg-orange-200 text-orange-600',
-  'bg-rose-200 text-rose-600',
-  'bg-teal-200 text-teal-600',
-];
 
 interface Props {
   student: Student;
@@ -29,7 +20,7 @@ export default function StudentManagementCard({ student, onUpdate, onDelete }: P
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const avatarColor = AVATAR_COLORS[student.id % AVATAR_COLORS.length];
+  const avatarColor = getAvatarColor(student.id);
 
   const handleSave = async () => {
     if (!name.trim()) { setErrorMessage('학생 이름을 입력해주세요.'); return; }
@@ -66,9 +57,6 @@ export default function StudentManagementCard({ student, onUpdate, onDelete }: P
       setErrorMessage('학생을 삭제하지 못했어요');
     }
   };
-
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 
   return (
     <div className="bg-white rounded-3xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-3">
@@ -121,7 +109,7 @@ export default function StudentManagementCard({ student, onUpdate, onDelete }: P
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-400">{formatDate(student.createdAt)} 등록</p>
+          <p className="text-xs text-gray-400">{formatDateKorean(student.createdAt)} 등록</p>
         </div>
       </div>
 

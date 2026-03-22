@@ -2,6 +2,8 @@
 
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { Student, deleteStudent, updateStudent } from '../lib/api';
+import { getAvatarColor } from '../lib/constants';
+import { formatDateKorean } from '../lib/dateTimeUtils';
 import { useFeedback } from '../hooks/useFeedback';
 import AiFeedbackSection from './AiFeedbackSection';
 import KeywordsSection from './KeywordsSection';
@@ -10,17 +12,6 @@ import ConfirmModal from './ConfirmModal';
 export interface StudentCardHandle {
   focusKeywordInput: () => void;
 }
-
-const AVATAR_COLORS = [
-  'bg-pink-200 text-pink-600',
-  'bg-purple-200 text-purple-600',
-  'bg-blue-200 text-blue-600',
-  'bg-green-200 text-green-600',
-  'bg-yellow-200 text-yellow-600',
-  'bg-orange-200 text-orange-600',
-  'bg-rose-200 text-rose-600',
-  'bg-teal-200 text-teal-600',
-];
 
 interface Props {
   student: Student;
@@ -62,7 +53,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
     handleLike,
   } = useFeedback(student.id);
 
-  const avatarColor = AVATAR_COLORS[student.id % AVATAR_COLORS.length];
+  const avatarColor = getAvatarColor(student.id);
 
   const handleSave = async () => {
     if (!name.trim()) { setEditErrorMessage('학생 이름을 입력해주세요.'); return; }
@@ -129,9 +120,6 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
       }
     }
   };
-
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 
   return (
     <div className="h-full bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4">
@@ -200,7 +188,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-400">{formatDate(student.createdAt)} 등록</p>
+          <p className="text-xs text-gray-400">{formatDateKorean(student.createdAt)} 등록</p>
         </div>
       </div>
 

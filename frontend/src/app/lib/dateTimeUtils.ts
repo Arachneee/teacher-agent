@@ -10,3 +10,7 @@ export function parseDateTime(iso: string): { date: string; hour: number; minute
   const [hour, minute] = timePart.split(':').map(Number);
   return { date: datePart, hour, minute };
 }
+
+export function formatDateKorean(iso: string): string {
+  return new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+}

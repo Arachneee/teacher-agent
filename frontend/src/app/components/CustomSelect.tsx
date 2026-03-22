@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useDropdown } from '../hooks/useDropdown';
 
 interface Option {
   value: string;
@@ -14,48 +14,13 @@ interface CustomSelectProps {
   className?: string;
 }
 
+const DROPDOWN_HEIGHT = 200;
+
 export default function CustomSelect({ value, options, onChange, className = '' }: CustomSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
-
-  const DROPDOWN_HEIGHT = 200;
-
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const openUp = spaceBelow < DROPDOWN_HEIGHT && rect.top > spaceBelow;
-    setDropdownPos({
-      top: openUp ? rect.top - Math.min(options.length * 36 + 8, DROPDOWN_HEIGHT) - 8 : rect.bottom + 8,
-      left: rect.left,
-      width: rect.width,
-    });
-  }, [options.length]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    updatePosition();
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-        triggerRef.current && !triggerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [isOpen, updatePosition]);
+  const { isOpen, setIsOpen, triggerRef, dropdownRef, dropdownPos } = useDropdown({
+    dropdownHeight: Math.min(options.length * 36 + 8, DROPDOWN_HEIGHT),
+    includeWidth: true,
+  });
 
   const selectedLabel = options.find(opt => opt.value === value)?.label ?? '';
 

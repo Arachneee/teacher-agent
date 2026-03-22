@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Lesson, getLessons } from '../lib/api';
 import { padTwoDigits } from '../lib/dateTimeUtils';
 import { useAuth } from '../context/AuthContext';
@@ -23,20 +22,13 @@ function toISODateString(date: Date): string {
 }
 
 export default function Home() {
-  const { user, loading: authLoading, logout } = useAuth();
-  const router = useRouter();
+  const { user, logout } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | undefined>(undefined);
   const [pendingTime, setPendingTime] = useState<{ startTime: string; endTime: string } | null>(null);
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace('/login');
-    }
-  }, [authLoading, user, router]);
 
   const fetchLessons = useCallback(() => {
     setLoading(true);
@@ -103,14 +95,6 @@ export default function Home() {
     setWeekStart(getWeekStart(new Date()));
   };
 
-  if (authLoading || !user) {
-    return (
-      <div className="flex-1 flex items-center justify-center h-screen">
-        <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-400 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col flex-1 px-6 py-8">
       <header className="mb-6 flex items-center justify-between">
@@ -148,7 +132,7 @@ export default function Home() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400">{user.userId}</span>
+          <span className="text-sm text-gray-400">{user?.userId}</span>
           <button
             onClick={logout}
             className="text-sm text-gray-400 hover:text-purple-500 transition-colors"

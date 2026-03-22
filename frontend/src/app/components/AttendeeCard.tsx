@@ -2,6 +2,8 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Attendee, updateStudent } from '../lib/api';
+import { getAvatarColor } from '../lib/constants';
+import { formatDateKorean } from '../lib/dateTimeUtils';
 import { useFeedback } from '../hooks/useFeedback';
 import AiFeedbackSection from './AiFeedbackSection';
 import KeywordsSection from './KeywordsSection';
@@ -10,17 +12,6 @@ import ConfirmModal from './ConfirmModal';
 export interface AttendeeCardHandle {
   focusKeywordInput: () => void;
 }
-
-const AVATAR_COLORS = [
-  'bg-pink-200 text-pink-600',
-  'bg-purple-200 text-purple-600',
-  'bg-blue-200 text-blue-600',
-  'bg-green-200 text-green-600',
-  'bg-yellow-200 text-yellow-600',
-  'bg-orange-200 text-orange-600',
-  'bg-rose-200 text-rose-600',
-  'bg-teal-200 text-teal-600',
-];
 
 interface Props {
   attendee: Attendee;
@@ -67,7 +58,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
     handleLike,
   } = useFeedback(attendee.student.id, attendee.feedback);
 
-  const avatarColor = AVATAR_COLORS[attendee.student.id % AVATAR_COLORS.length];
+  const avatarColor = getAvatarColor(attendee.student.id);
 
   const handleMemoSave = async () => {
     const trimmed = memo.trim();
@@ -143,9 +134,6 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
     }
   };
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
-
   return (
     <div className="h-full bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4">
       {dragHandleProps && (
@@ -190,7 +178,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
               </svg>
             </button>
           </div>
-          <p className="text-xs text-gray-400">{formatDate(attendee.createdAt)} 등록</p>
+          <p className="text-xs text-gray-400">{formatDateKorean(attendee.createdAt)} 등록</p>
         </div>
       </div>
 

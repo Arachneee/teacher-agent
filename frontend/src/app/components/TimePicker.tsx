@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { HOURS, MINUTES, padTwoDigits } from '../lib/dateTimeUtils';
+import { useDropdown } from '../hooks/useDropdown';
 
 interface Props {
   hour: number;
@@ -10,55 +11,20 @@ interface Props {
   onMinuteChange: (minute: number) => void;
 }
 
+const DROPDOWN_HEIGHT = 240;
+
 export default function TimePicker({ hour, minute, onHourChange, onMinuteChange }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isOpen, setIsOpen, triggerRef, dropdownRef, dropdownPos } = useDropdown({
+    dropdownHeight: DROPDOWN_HEIGHT,
+  });
+
   const hourRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const minuteRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
 
   const minuteOptions = useMemo(
     () => (MINUTES.includes(minute) ? MINUTES : [...MINUTES, minute].sort((a, b) => a - b)),
     [minute]
   );
-
-  const DROPDOWN_HEIGHT = 240;
-
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const openUp = spaceBelow < DROPDOWN_HEIGHT && rect.top > spaceBelow;
-    const left = Math.min(rect.left, window.innerWidth - 228);
-    setDropdownPos({
-      top: openUp ? rect.top - DROPDOWN_HEIGHT - 8 : rect.bottom + 8,
-      left: Math.max(8, left),
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    updatePosition();
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-        triggerRef.current && !triggerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [isOpen, updatePosition]);
 
   useEffect(() => {
     if (isOpen) {

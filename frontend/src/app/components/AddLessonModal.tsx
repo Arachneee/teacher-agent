@@ -13,10 +13,9 @@ import {
   updateLesson,
 } from '../lib/api';
 import { padTwoDigits, parseDateTime } from '../lib/dateTimeUtils';
-import CustomSelect from './CustomSelect';
-import DatePicker from './DatePicker';
 import RecurringScopeModal from './RecurringScopeModal';
-import TimePicker from './TimePicker';
+import LessonDetailsStep from './AddLessonModal/LessonDetailsStep';
+import StudentSelectionStep from './AddLessonModal/StudentSelectionStep';
 
 interface Props {
   lesson?: Lesson;
@@ -282,20 +281,6 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
     }
   };
 
-  const currentAttendeeStudentIds = new Set(currentAttendees.map(attendee => attendee.student.id));
-
-  const selectedStudentsInStep2 = allStudents.filter(student => selectedStudentIds.has(student.id));
-  const unselectedStudentsInStep2 = allStudents.filter(
-    student =>
-      !selectedStudentIds.has(student.id) &&
-      student.name.toLowerCase().includes(studentSearchQuery.toLowerCase())
-  );
-  const addableStudents = allStudents.filter(
-    student =>
-      !currentAttendeeStudentIds.has(student.id) &&
-      student.name.toLowerCase().includes(studentSearchQuery.toLowerCase())
-  );
-
   return (
     <>
       {showEditScopeModal && lesson && (
@@ -316,476 +301,68 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
         onClick={event => event.target === event.currentTarget && onClose()}
       >
         <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
+          {step === 'details' && (
+            <LessonDetailsStep
+              isEditMode={isEditMode}
+              isRecurringLesson={isRecurringLesson}
+              title={title}
+              date={date}
+              startHour={startHour}
+              startMinute={startMinute}
+              endHour={endHour}
+              endMinute={endMinute}
+              recurrenceEnabled={recurrenceEnabled}
+              recurrenceType={recurrenceType}
+              intervalValue={intervalValue}
+              daysOfWeek={daysOfWeek}
+              recurrenceEndDate={recurrenceEndDate}
+              loading={loading}
+              errorMessage={errorMessage}
+              onTitleChange={setTitle}
+              onDateChange={setDate}
+              onStartHourChange={setStartHour}
+              onStartMinuteChange={setStartMinute}
+              onEndHourChange={setEndHour}
+              onEndMinuteChange={setEndMinute}
+              onRecurrenceEnabledChange={setRecurrenceEnabled}
+              onRecurrenceTypeChange={setRecurrenceType}
+              onIntervalValueChange={setIntervalValue}
+              onDaysOfWeekChange={setDaysOfWeek}
+              onRecurrenceEndDateChange={setRecurrenceEndDate}
+              onSubmit={handleDetailsSubmit}
+              onClose={onClose}
+            />
+          )}
 
-        {/* Step 1: 수업 정보 */}
-        {step === 'details' && (
-          <>
-            <div className="text-center pt-6 px-6 pb-4 shrink-0">
-              <div className="text-4xl mb-2">{isEditMode ? '✏️' : '📚'}</div>
-              <h2 className="text-2xl font-bold text-gray-800">
-                {isEditMode ? '수업 수정' : '새 수업 추가'}
-              </h2>
-              <p className="text-sm text-gray-400 mt-1">
-                {isEditMode ? '수업 정보를 수정해요' : '수업 정보를 입력해요'}
-              </p>
-              <div className="flex justify-center gap-1.5 mt-3">
-                <span className="w-2 h-2 rounded-full bg-purple-400" />
-                <span className="w-2 h-2 rounded-full bg-gray-200" />
-              </div>
-            </div>
-
-            <form onSubmit={handleDetailsSubmit} className="flex flex-col gap-4 px-6 pb-6 overflow-y-auto">
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
-                  수업 제목 <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  value={title}
-                  onChange={event => setTitle(event.target.value)}
-                  className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300 placeholder-gray-300"
-                  placeholder="수업 제목을 입력하세요"
-                  autoFocus
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
-                    날짜 <span className="text-rose-400">*</span>
-                  </label>
-                  <DatePicker
-                    value={date}
-                    onChange={setDate}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
-                    시간 <span className="text-rose-400">*</span>
-                  </label>
-                  <div className="bg-purple-50 rounded-2xl px-3 py-2.5 flex items-center gap-2">
-                    <TimePicker
-                      hour={startHour}
-                      minute={startMinute}
-                      onHourChange={setStartHour}
-                      onMinuteChange={setStartMinute}
-                    />
-                    <span className="text-gray-300 font-medium pb-2">–</span>
-                    <TimePicker
-                      hour={endHour}
-                      minute={endMinute}
-                      onHourChange={setEndHour}
-                      onMinuteChange={setEndMinute}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {(!isEditMode || (isEditMode && !lesson?.recurrenceGroupId)) && (
-                <div>
-                  <label className="flex items-center gap-2 cursor-pointer ml-1">
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={recurrenceEnabled}
-                      onClick={() => setRecurrenceEnabled(prev => !prev)}
-                      className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${recurrenceEnabled ? 'bg-purple-400' : 'bg-gray-200'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${recurrenceEnabled ? 'translate-x-5' : ''}`} />
-                    </button>
-                    <span className="text-sm font-medium text-gray-600 flex items-center gap-1">
-                      반복하기
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-purple-400">
-                        <path d="M17 1l4 4-4 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M3 11V9a4 4 0 014-4h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M7 23l-4-4 4-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M21 13v2a4 4 0 01-4 4H3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </span>
-                  </label>
-
-                  {recurrenceEnabled && (
-                    <div className="mt-3 flex flex-col gap-3 bg-purple-50 rounded-2xl px-4 py-4">
-                      <div className="flex gap-3">
-                        <div className="flex-1">
-                          <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">반복 유형</label>
-                          <CustomSelect
-                            value={recurrenceType}
-                            options={[
-                              { value: 'DAILY', label: '매일' },
-                              { value: 'WEEKLY', label: '매주' },
-                              { value: 'MONTHLY', label: '매월' },
-                            ]}
-                            onChange={value => setRecurrenceType(value as RecurrenceType)}
-                          />
-                        </div>
-                        <div className="w-24">
-                          <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">간격</label>
-                          <CustomSelect
-                            value={String(intervalValue)}
-                            options={[1, 2, 3, 4].map(value => ({
-                              value: String(value),
-                              label: `${value}${recurrenceType === 'DAILY' ? '일' : recurrenceType === 'WEEKLY' ? '주' : '개월'}`,
-                            }))}
-                            onChange={value => setIntervalValue(parseInt(value, 10))}
-                          />
-                        </div>
-                      </div>
-
-                      {recurrenceType === 'WEEKLY' && (
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-2 ml-1">요일 선택</label>
-                          <div className="flex gap-1.5">
-                            {([
-                              ['월', 'MONDAY'],
-                              ['화', 'TUESDAY'],
-                              ['수', 'WEDNESDAY'],
-                              ['목', 'THURSDAY'],
-                              ['금', 'FRIDAY'],
-                              ['토', 'SATURDAY'],
-                              ['일', 'SUNDAY'],
-                            ] as const).map(([label, day]) => (
-                              <button
-                                key={day}
-                                type="button"
-                                onClick={() => setDaysOfWeek(prev => {
-                                  const next = new Set(prev);
-                                  if (next.has(day)) next.delete(day);
-                                  else next.add(day);
-                                  return next;
-                                })}
-                                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors duration-150 ${
-                                  daysOfWeek.has(day)
-                                    ? 'bg-purple-400 text-white'
-                                    : 'bg-white text-gray-500 hover:bg-purple-100'
-                                }`}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">반복 종료일</label>
-                        <DatePicker
-                          value={recurrenceEndDate}
-                          onChange={setRecurrenceEndDate}
-                        />
-                      </div>
-
-                      <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                        <p className="text-xs text-amber-700 leading-relaxed">
-                          💡 반복 수업은 시작일로부터 최대 <strong>6개월</strong>까지 설정할 수 있어요.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {errorMessage && (
-                <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{errorMessage}</p>
-              )}
-
-              <div className="flex gap-3 mt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-medium py-3 rounded-2xl transition-colors duration-150"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || !title.trim() || !date}
-                  className="flex-1 bg-pink-400 hover:bg-pink-500 disabled:bg-pink-200 text-white font-medium py-3 rounded-2xl transition-colors duration-150"
-                >
-                  {loading ? '저장 중...' : '다음 →'}
-                </button>
-              </div>
-            </form>
-          </>
-        )}
-
-        {/* Step 2: 수강생 관리 */}
-        {step === 'students' && (
-          <>
-            <div className="text-center pt-6 px-6 pb-4 shrink-0">
-              <div className="text-4xl mb-2">👨‍🎓</div>
-              <h2 className="text-2xl font-bold text-gray-800">
-                {isEditMode ? '수강생 관리' : '수강생 선택'}
-              </h2>
-              <p className="text-sm text-gray-400 mt-1">
-                {isEditMode ? '수강생을 추가하거나 삭제해요' : '수업에 참여할 수강생을 선택해요 (선택사항)'}
-              </p>
-              <div className="flex justify-center gap-1.5 mt-3">
-                <span className="w-2 h-2 rounded-full bg-gray-200" />
-                <span className="w-2 h-2 rounded-full bg-purple-400" />
-              </div>
-            </div>
-
-            {errorMessage && (
-              <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2 mx-6 mb-3 shrink-0">
-                {errorMessage}
-              </p>
-            )}
-
-            {!showNewStudentForm ? (
-              <>
-                {/* 수정 모드: 현재 수강생 목록 */}
-                {isEditMode && (
-                  <div className="shrink-0 px-6 mb-3">
-                    <p className="text-xs font-semibold text-gray-400 mb-2">
-                      현재 수강생 {currentAttendees.length}명
-                    </p>
-                    {studentsLoading ? (
-                      <div className="flex justify-center py-3">
-                        <div className="w-6 h-6 border-4 border-purple-200 border-t-purple-400 rounded-full animate-spin" />
-                      </div>
-                    ) : currentAttendees.length === 0 ? (
-                      <p className="text-xs text-gray-300 text-center py-2">아직 수강생이 없어요</p>
-                    ) : (
-                      <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
-                        {currentAttendees.map(attendee => (
-                          <div
-                            key={attendee.attendeeId}
-                            className="flex items-center gap-3 px-3 py-2 bg-purple-50 rounded-xl"
-                          >
-                            <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-500 flex items-center justify-center font-semibold text-xs shrink-0">
-                              {attendee.student.name.charAt(0)}
-                            </div>
-                            <p className="text-sm font-medium text-gray-800 truncate flex-1">
-                              {attendee.student.name}
-                            </p>
-                            <button
-                              onClick={() => handleEditModeRemove(attendee.student.id)}
-                              disabled={loading}
-                              className="text-gray-300 hover:text-rose-400 transition-colors shrink-0 disabled:opacity-50"
-                              aria-label="수강생 삭제"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 검색 */}
-                <div className="shrink-0 px-6 mb-3">
-                  <input
-                    value={studentSearchQuery}
-                    onChange={event => setStudentSearchQuery(event.target.value)}
-                    className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300 placeholder-gray-300"
-                    placeholder={isEditMode ? '추가할 학생 이름으로 검색' : '등록된 학생 이름으로 검색'}
-                    autoFocus={!isEditMode}
-                  />
-                </div>
-
-                {/* 학생 목록 */}
-                <div className="flex-1 overflow-y-auto min-h-0 px-6">
-                  {studentsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-400 rounded-full animate-spin" />
-                    </div>
-                  ) : isEditMode ? (
-                    addableStudents.length === 0 ? (
-                      <div className="text-center text-gray-300 py-8">
-                        <p className="text-sm">
-                          {studentSearchQuery ? '검색 결과가 없어요' : allStudents.length === 0 ? '등록된 학생이 없어요' : '모두 추가됐어요'}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-1.5 pb-2">
-                        {addableStudents.map(student => (
-                          <button
-                            key={student.id}
-                            onClick={() => handleEditModeAdd(student)}
-                            disabled={loading}
-                            className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-2xl hover:bg-purple-50 transition-colors duration-150 disabled:opacity-50"
-                          >
-                            <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-500 flex items-center justify-center font-semibold text-sm shrink-0">
-                              {student.name.charAt(0)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-gray-800 truncate">{student.name}</p>
-                              {student.memo && (
-                                <p className="text-xs text-gray-400 truncate">{student.memo}</p>
-                              )}
-                            </div>
-                            <span className="text-purple-300 text-lg shrink-0">+</span>
-                          </button>
-                        ))}
-                      </div>
-                    )
-                  ) : (
-                    unselectedStudentsInStep2.length === 0 ? (
-                      <div className="text-center text-gray-300 py-8">
-                        <p className="text-sm">
-                          {studentSearchQuery ? '검색 결과가 없어요' : allStudents.length === 0 ? '등록된 학생이 없어요' : '모두 선택됐어요'}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-1.5 pb-2">
-                        {unselectedStudentsInStep2.map(student => (
-                          <button
-                            key={student.id}
-                            onClick={() => toggleStudent(student.id)}
-                            disabled={loading}
-                            className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-2xl hover:bg-purple-50 transition-colors duration-150 disabled:opacity-50"
-                          >
-                            <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-500 flex items-center justify-center font-semibold text-sm shrink-0">
-                              {student.name.charAt(0)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-gray-800 truncate">{student.name}</p>
-                              {student.memo && (
-                                <p className="text-xs text-gray-400 truncate">{student.memo}</p>
-                              )}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )
-                  )}
-                </div>
-
-                {/* 생성 모드: 선택된 수강생 고정 섹션 */}
-                {!isEditMode && selectedStudentsInStep2.length > 0 && (
-                  <div className="shrink-0 border-t border-gray-100 px-6 pt-3 pb-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-purple-600">
-                        선택된 수강생 {selectedStudentsInStep2.length}명
-                      </span>
-                      <button
-                        onClick={() => setSelectedStudentIds(new Set())}
-                        className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                      >
-                        전체 해제
-                      </button>
-                    </div>
-                    <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
-                      {selectedStudentsInStep2.map(student => (
-                        <div
-                          key={student.id}
-                          className="flex items-center gap-3 px-3 py-2 bg-purple-50 rounded-xl"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-500 flex items-center justify-center font-semibold text-xs shrink-0">
-                            {student.name.charAt(0)}
-                          </div>
-                          <p className="text-sm font-medium text-gray-800 truncate flex-1">{student.name}</p>
-                          <button
-                            onClick={() => toggleStudent(student.id)}
-                            disabled={loading}
-                            className="text-gray-300 hover:text-rose-400 transition-colors shrink-0 disabled:opacity-50"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 하단 버튼 */}
-                <div className="shrink-0 px-6 pt-3 pb-6 flex flex-col gap-2">
-                  {!isEditMode && selectedStudentIds.size > 0 && (
-                    <button
-                      onClick={() => handleCreateAndFinish([...selectedStudentIds])}
-                      disabled={loading}
-                      className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-purple-200 text-white font-semibold py-3 rounded-2xl transition-colors duration-150"
-                    >
-                      {loading ? '추가 중...' : `수강생 ${selectedStudentIds.size}명 추가하고 완료`}
-                    </button>
-                  )}
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setStep('details')}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-500 font-medium py-3 px-4 rounded-2xl transition-colors duration-150"
-                    >
-                      ←
-                    </button>
-                    <button
-                      onClick={isEditMode ? handleEditFinish : () => handleCreateAndFinish([])}
-                      disabled={loading}
-                      className="flex-1 bg-pink-400 hover:bg-pink-500 disabled:bg-pink-200 text-white font-medium py-3 rounded-2xl transition-colors duration-150"
-                    >
-                      {loading ? '저장 중...' : isEditMode ? '완료' : selectedStudentIds.size === 0 ? '나중에 추가하기' : '취소'}
-                    </button>
-                    <button
-                      onClick={() => setShowNewStudentForm(true)}
-                      disabled={loading}
-                      className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-500 font-medium py-3 rounded-2xl transition-colors duration-150"
-                    >
-                      새 학생 등록
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              /* 새 학생 등록 인라인 폼 */
-              <form onSubmit={handleCreateAndSelectStudent} className="flex flex-col gap-4 flex-1 px-6 pb-6 overflow-y-auto">
-                <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 shrink-0">
-                  <p className="text-xs text-amber-700 leading-relaxed">
-                    💡 <strong>학생 등록</strong>은 시스템 전체에 학생 정보를 추가해요.
-                    등록 후 이 수업 <strong>수강생으로 자동 추가</strong>돼요.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
-                    이름 <span className="text-rose-400">*</span>
-                  </label>
-                  <input
-                    value={newStudentName}
-                    onChange={event => setNewStudentName(event.target.value)}
-                    className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300 placeholder-gray-300"
-                    placeholder="학생 이름을 입력하세요"
-                    autoFocus
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">메모</label>
-                  <textarea
-                    value={newStudentMemo}
-                    onChange={event => setNewStudentMemo(event.target.value)}
-                    className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300 placeholder-gray-300 resize-none"
-                    placeholder="학생에 대한 메모 (선택)"
-                    rows={3}
-                    maxLength={500}
-                  />
-                  <p className="text-xs text-gray-300 text-right mt-1">{newStudentMemo.length}/500</p>
-                </div>
-
-                <div className="flex gap-3 mt-auto">
-                  <button
-                    type="button"
-                    onClick={() => setShowNewStudentForm(false)}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-medium py-3 rounded-2xl transition-colors duration-150"
-                  >
-                    뒤로
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading || !newStudentName.trim()}
-                    className="flex-1 bg-pink-400 hover:bg-pink-500 disabled:bg-pink-200 text-white font-medium py-3 rounded-2xl transition-colors duration-150"
-                  >
-                    {loading ? '등록 중...' : '등록하고 추가하기 ✨'}
-                  </button>
-                </div>
-              </form>
-            )}
-          </>
-        )}
+          {step === 'students' && (
+            <StudentSelectionStep
+              isEditMode={isEditMode}
+              studentsLoading={studentsLoading}
+              loading={loading}
+              errorMessage={errorMessage}
+              studentSearchQuery={studentSearchQuery}
+              showNewStudentForm={showNewStudentForm}
+              newStudentName={newStudentName}
+              newStudentMemo={newStudentMemo}
+              currentAttendees={currentAttendees}
+              selectedStudentIds={selectedStudentIds}
+              allStudents={allStudents}
+              onSearchQueryChange={setStudentSearchQuery}
+              onShowNewStudentForm={setShowNewStudentForm}
+              onNewStudentNameChange={setNewStudentName}
+              onNewStudentMemoChange={setNewStudentMemo}
+              onEditModeAdd={handleEditModeAdd}
+              onEditModeRemove={handleEditModeRemove}
+              onToggleStudent={toggleStudent}
+              onClearAllSelected={() => setSelectedStudentIds(new Set())}
+              onCreateAndSelectStudent={handleCreateAndSelectStudent}
+              onCreateAndFinish={handleCreateAndFinish}
+              onEditFinish={handleEditFinish}
+              onBackToDetails={() => setStep('details')}
+            />
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 }

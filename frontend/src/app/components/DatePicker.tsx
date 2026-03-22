@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useDropdown } from '../hooks/useDropdown';
 
 interface DatePickerProps {
   value: string;
@@ -10,14 +11,16 @@ interface DatePickerProps {
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const CALENDAR_HEIGHT = 380;
 
 export default function DatePicker({ value, onChange, required, className = '' }: DatePickerProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, setIsOpen, triggerRef, dropdownRef, dropdownPos } = useDropdown({
+    dropdownHeight: CALENDAR_HEIGHT,
+    includeOpenUp: true,
+  });
+
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, openUp: false });
 
   const selectedDate = value ? new Date(value) : null;
   const today = new Date();
@@ -29,44 +32,6 @@ export default function DatePicker({ value, onChange, required, className = '' }
       setViewMonth(selectedDate.getMonth());
     }
   }, []);
-
-  const CALENDAR_HEIGHT = 380;
-
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const openUp = spaceBelow < CALENDAR_HEIGHT && rect.top > spaceBelow;
-    const left = Math.min(rect.left, window.innerWidth - 328);
-    setDropdownPos({
-      top: openUp ? rect.top - CALENDAR_HEIGHT - 8 : rect.bottom + 8,
-      left: Math.max(8, left),
-      openUp,
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    updatePosition();
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-        triggerRef.current && !triggerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [isOpen, updatePosition]);
 
   const formatDisplayDate = (date: Date | null) => {
     if (!date) return '날짜 선택';

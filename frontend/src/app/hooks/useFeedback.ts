@@ -69,8 +69,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
       return initialFeedback ?? null;
     });
     feedbackIdRef.current = initialFeedback?.id ?? null;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFeedback?.id, initialFeedback?.updatedAt]);
+  }, [initialFeedback]);
 
   useEffect(() => {
     return () => {

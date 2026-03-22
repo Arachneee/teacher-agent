@@ -1,84 +1,34 @@
+import type {
+  Attendee,
+  AuthResponse,
+  DayOfWeek,
+  Feedback,
+  Lesson,
+  LessonDetail,
+  RecurrenceCreateRequest,
+  RecurrenceType,
+  Student,
+  UpdateScope,
+} from '../types/api';
+
+export type {
+  Attendee,
+  AttendeeStudent,
+  AuthResponse,
+  DayOfWeek,
+  Feedback,
+  FeedbackKeyword,
+  Lesson,
+  LessonDetail,
+  LessonDetailAttendee,
+  LessonDetailFeedback,
+  RecurrenceCreateRequest,
+  RecurrenceType,
+  Student,
+  UpdateScope,
+} from '../types/api';
+
 const BASE_URL = '/api';
-
-export interface Student {
-  id: number;
-  name: string;
-  memo: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface FeedbackKeyword {
-  id: number;
-  keyword: string;
-  createdAt: string;
-}
-
-export interface Feedback {
-  id: number;
-  studentId: number;
-  aiContent: string | null;
-  keywords: FeedbackKeyword[];
-  liked: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type UpdateScope = 'SINGLE' | 'THIS_AND_FOLLOWING' | 'ALL';
-
-export interface Lesson {
-  id: number;
-  title: string;
-  startTime: string;
-  endTime: string;
-  recurrenceGroupId: string | null;
-}
-
-export interface AttendeeStudent {
-  id: number;
-  name: string;
-  memo: string;
-}
-
-export interface Attendee {
-  id: number;
-  lessonId: number;
-  student: AttendeeStudent;
-  feedback: Feedback | null;
-  createdAt: string;
-}
-
-export interface LessonDetailFeedback {
-  id: number;
-  studentId: number;
-  lessonId: number;
-  aiContent: string | null;
-  keywords: FeedbackKeyword[];
-  liked: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface LessonDetailAttendee {
-  attendeeId: number;
-  student: Student;
-  feedback: LessonDetailFeedback | null;
-}
-
-export interface LessonDetail {
-  id: number;
-  title: string;
-  startTime: string;
-  endTime: string;
-  recurrenceGroupId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  attendees: LessonDetailAttendee[];
-}
-
-export interface AuthResponse {
-  userId: string;
-}
 
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   const res = await fetch(url, { credentials: 'include', ...options });
