@@ -2,27 +2,27 @@ package com.teacher.agent.service;
 
 import static com.teacher.agent.util.ErrorMessages.PROMPT_FILE_READ_ERROR;
 
+import com.teacher.agent.config.OpenAiLoggingAdvisor;
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackKeyword;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j
 public class FeedbackAiService {
 
-  private final ChatClient.Builder chatClientBuilder;
+  private final ChatClient chatClient;
   private final String feedbackMessagePrompt;
 
   public FeedbackAiService(ChatClient.Builder chatClientBuilder,
-      @Value("classpath:prompts/feedback_message.md") Resource feedbackMessagePromptResource) {
-    this.chatClientBuilder = chatClientBuilder;
+      @Value("classpath:prompts/feedback_message.md") Resource feedbackMessagePromptResource,
+      OpenAiLoggingAdvisor openAiLoggingAdvisor) {
+    this.chatClient = chatClientBuilder.defaultAdvisors(openAiLoggingAdvisor).build();
 
     try {
       this.feedbackMessagePrompt =
@@ -37,13 +37,8 @@ public class FeedbackAiService {
     String keywordText = feedback.getKeywords().stream().map(FeedbackKeyword::getKeyword)
         .collect(Collectors.joining(", "));
 
-    String prompt = feedbackMessagePrompt.formatted(studentName, keywordText);
-
-    log.info("OpenAI 요청 시작: studentName={}, keywords={}", studentName, keywordText);
-    long start = System.currentTimeMillis();
-    String content = chatClientBuilder.build().prompt(prompt).call().content();
-    log.info("OpenAI 응답 완료: {}ms", System.currentTimeMillis() - start);
-
-    return content;
+    return chatClient.prompt(feedbackMessagePrompt.formatted(studentName, keywordText))
+        .call()
+        .content();
   }
 }
