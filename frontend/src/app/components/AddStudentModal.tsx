@@ -8,10 +8,11 @@ import GradeSelect from './GradeSelect';
 interface Props {
   onAdd: () => void;
   onClose: () => void;
+  initialName?: string;
 }
 
-export default function AddStudentModal({ onAdd, onClose }: Props) {
-  const [name, setName] = useState('');
+export default function AddStudentModal({ onAdd, onClose, initialName = '' }: Props) {
+  const [name, setName] = useState(initialName);
   const [memo, setMemo] = useState('');
   const [grade, setGrade] = useState<SchoolGrade>('ELEMENTARY_1');
   const [loading, setLoading] = useState(false);

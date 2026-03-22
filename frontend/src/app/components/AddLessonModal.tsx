@@ -350,7 +350,10 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
               selectedStudentIds={selectedStudentIds}
               allStudents={allStudents}
               onSearchQueryChange={setStudentSearchQuery}
-              onShowNewStudentForm={setShowNewStudentForm}
+              onShowNewStudentForm={value => {
+                setShowNewStudentForm(value);
+                if (value) setNewStudentName(studentSearchQuery);
+              }}
               onNewStudentNameChange={setNewStudentName}
               onNewStudentMemoChange={setNewStudentMemo}
               onNewStudentGradeChange={setNewStudentGrade}

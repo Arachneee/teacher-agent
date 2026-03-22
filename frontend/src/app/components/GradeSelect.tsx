@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { SchoolGrade } from '../lib/api';
 import { SCHOOL_GRADE_GROUPS, SCHOOL_GRADE_LABELS } from '../lib/constants';
 
@@ -36,7 +37,10 @@ export default function GradeSelect({ value, onChange }: Props) {
   useEffect(() => {
     if (!open) return;
     const handleClose = (event: MouseEvent) => {
-      if (triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+      if (
+        triggerRef.current && !triggerRef.current.contains(event.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -70,7 +74,7 @@ export default function GradeSelect({ value, onChange }: Props) {
         </svg>
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
           ref={dropdownRef}
           style={{ ...dropdownStyle, position: 'fixed' }}
@@ -98,7 +102,8 @@ export default function GradeSelect({ value, onChange }: Props) {
               ))}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

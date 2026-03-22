@@ -351,6 +351,7 @@ export default function StudentsView() {
         <AddStudentModal
           onAdd={handleAdd}
           onClose={() => setShowAddModal(false)}
+          initialName={searchQuery.trim()}
         />
       )}
     </>
