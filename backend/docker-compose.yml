@@ -15,5 +15,12 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
 
+  adminer:
+    image: adminer
+    ports:
+      - "9090:8080"
+    depends_on:
+      - mysql
+
 volumes:
   mysql-data:
