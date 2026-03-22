@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { useRouter } from 'next/navigation';
 import { Lesson, deleteLesson, UpdateScope } from '../lib/api';
 import { padTwoDigits } from '../lib/dateTimeUtils';
@@ -45,10 +46,12 @@ interface Props {
   onEdit: (lesson: Lesson) => void;
   onDelete: (id: number, didDeleteMultiple: boolean) => void;
   onCellClick: (startTime: string, endTime: string) => void;
+  mobileSelectedDayIndex: number;
 }
 
-export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelete, onCellClick }: Props) {
+export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelete, onCellClick, mobileSelectedDayIndex }: Props) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
@@ -149,7 +152,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
         </div>
       )}
       {/* Scrollable container wrapping header + grid for consistent width */}
-      <div ref={scrollRef} className="overflow-y-scroll flex-1" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <div ref={scrollRef} className="overflow-y-scroll flex-1 max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-200px)]" style={{ maxHeight: 'min(calc(100vh - 200px), calc(100dvh - 200px))' }}>
 
       {/* Day Headers - sticky inside scroll container */}
       <div className="flex border-b border-gray-100 bg-white sticky top-0 z-20" style={{ paddingLeft: '56px' }}>
@@ -164,7 +167,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
           return (
             <div
               key={i}
-              className={`flex-1 py-3 text-center border-l border-gray-100 ${isWeekend ? 'bg-slate-50/80' : ''}`}
+              className={`py-3 text-center border-l border-gray-100 ${isWeekend ? 'bg-slate-50/80' : ''} ${i === mobileSelectedDayIndex ? 'flex-1' : 'hidden md:block md:flex-1'}`}
             >
               <div
                 className={`text-xs font-medium mb-1.5 ${
@@ -215,12 +218,16 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
               day.getDate() === today.getDate();
             const isWeekend = dayIndex === 5 || dayIndex === 6;
 
+            const isSelected = dayIndex === mobileSelectedDayIndex;
+            const shouldRenderContent = !isMobile || isSelected;
+
             return (
               <div
                 key={dayIndex}
-                className={`flex-1 relative border-l border-gray-100 min-w-0 ${isWeekend ? 'bg-slate-50/40' : ''}`}
+                className={`relative border-l border-gray-100 min-w-0 ${isWeekend ? 'bg-slate-50/40' : ''} ${isSelected ? 'flex-1' : 'hidden md:block md:flex-1'}`}
                 style={{ height: `${TOTAL_HOURS * CELL_HEIGHT}px` }}
               >
+                {shouldRenderContent && <>
                 {/* Hour slot click targets */}
                 {hours.map(hour => (
                   <div
@@ -324,6 +331,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                     </div>
                   );
                 })}
+                </>}
               </div>
             );
           })}

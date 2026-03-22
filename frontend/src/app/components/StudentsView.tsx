@@ -122,7 +122,7 @@ export default function StudentsView() {
       {/* FAB */}
       <button
         onClick={() => setShowAddModal(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-pink-400 hover:bg-pink-500 active:scale-95 text-white text-3xl rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 right-5 md:bottom-8 md:right-8 w-14 h-14 md:w-16 md:h-16 bg-pink-400 hover:bg-pink-500 active:scale-95 text-white text-3xl rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
         aria-label="학생 추가"
       >
         +
