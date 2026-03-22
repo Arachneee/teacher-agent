@@ -147,8 +147,9 @@ class FeedbackServiceTest {
   }
 
   @Test
-  void 학생_ID로_피드백_목록을_조회한다() {
-    feedbackCommandService.create(userId, studentId, lessonId);
+  void AI_콘텐츠가_있는_피드백만_목록에_포함된다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "AI 내용");
 
     var feedbacks = feedbackQueryService.getAll(userId, studentId);
 
@@ -156,6 +157,15 @@ class FeedbackServiceTest {
     assertThat(feedbacks.get(0).studentId()).isEqualTo(studentId);
     assertThat(feedbacks.get(0).lessonTitle()).isEqualTo("수학");
     assertThat(feedbacks.get(0).lessonStartTime()).isEqualTo(START);
+  }
+
+  @Test
+  void AI_콘텐츠가_없는_피드백은_목록에_포함되지_않는다() {
+    feedbackCommandService.create(userId, studentId, lessonId);
+
+    var feedbacks = feedbackQueryService.getAll(userId, studentId);
+
+    assertThat(feedbacks).isEmpty();
   }
 
   @Test
@@ -178,8 +188,11 @@ class FeedbackServiceTest {
     olderLesson.addAttendee(studentId);
     lessonRepository.save(olderLesson);
 
-    feedbackCommandService.create(userId, studentId, olderLesson.getId());
-    feedbackCommandService.create(userId, studentId, lessonId);
+    FeedbackResponse olderFeedback =
+        feedbackCommandService.create(userId, studentId, olderLesson.getId());
+    FeedbackResponse recentFeedback = feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, olderFeedback.id(), "AI 내용");
+    feedbackCommandService.update(userId, recentFeedback.id(), "AI 내용");
 
     var feedbacks = feedbackQueryService.getAll(userId, studentId);
 

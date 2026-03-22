@@ -22,8 +22,8 @@ public record FeedbackResponse(
         feedback.getKeywords().stream().map(KeywordItem::from).toList();
     return new FeedbackResponse(feedback.getId(), feedback.getStudentId(), feedback.getLessonId(),
         null, null,
-        feedback.getAiContent(), keywordItems, liked, feedback.getCreatedAt(),
-        feedback.getUpdatedAt());
+        feedback.getAiContent(), keywordItems, liked,
+        feedback.getCreatedAt(), feedback.getUpdatedAt());
   }
 
   public static FeedbackResponse withLesson(Feedback feedback, boolean liked,
@@ -32,8 +32,8 @@ public record FeedbackResponse(
         feedback.getKeywords().stream().map(KeywordItem::from).toList();
     return new FeedbackResponse(feedback.getId(), feedback.getStudentId(), feedback.getLessonId(),
         lessonTitle, lessonStartTime,
-        feedback.getAiContent(), keywordItems, liked, feedback.getCreatedAt(),
-        feedback.getUpdatedAt());
+        feedback.getAiContent(), keywordItems, liked,
+        feedback.getCreatedAt(), feedback.getUpdatedAt());
   }
 
   public record KeywordItem(Long id, String keyword, LocalDateTime createdAt) {

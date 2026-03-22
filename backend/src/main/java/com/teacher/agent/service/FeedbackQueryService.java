@@ -39,6 +39,7 @@ public class FeedbackQueryService {
 
     return feedbacks.stream()
         .filter(feedback -> lessonMap.containsKey(feedback.getLessonId()))
+        .filter(feedback -> feedback.getAiContent() != null)
         .map(feedback -> {
           Lesson lesson = lessonMap.get(feedback.getLessonId());
           return FeedbackResponse.withLesson(feedback, feedback.isLiked(),
