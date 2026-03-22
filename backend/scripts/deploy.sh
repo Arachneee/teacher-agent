@@ -72,8 +72,8 @@ nohup env \
   INITIAL_TEACHER_PASSWORD="$INITIAL_TEACHER_PASSWORD" \
   java \
     -Xms256m -Xmx512m \
-    -XX:+UseG1GC \
-    -XX:MaxGCPauseMillis=200 \
+    -XX:+UseZGC \
+    -Djava.security.egd=file:/dev/./urandom \
     -jar $JAR_FILE > $LOG_FILE 2>&1 &
 
 sleep 3
