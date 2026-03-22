@@ -2,7 +2,6 @@ package com.teacher.agent.service;
 
 import static com.teacher.agent.util.ErrorMessages.PROMPT_FILE_READ_ERROR;
 
-import com.teacher.agent.config.OpenAiLoggingAdvisor;
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackKeyword;
 import java.io.IOException;
@@ -19,10 +18,9 @@ public class FeedbackAiService {
   private final ChatClient chatClient;
   private final String feedbackMessagePrompt;
 
-  public FeedbackAiService(ChatClient.Builder chatClientBuilder,
-      @Value("classpath:prompts/feedback_message.md") Resource feedbackMessagePromptResource,
-      OpenAiLoggingAdvisor openAiLoggingAdvisor) {
-    this.chatClient = chatClientBuilder.defaultAdvisors(openAiLoggingAdvisor).build();
+  public FeedbackAiService(ChatClient chatClient,
+      @Value("classpath:prompts/feedback_message.md") Resource feedbackMessagePromptResource) {
+    this.chatClient = chatClient;
 
     try {
       this.feedbackMessagePrompt =
