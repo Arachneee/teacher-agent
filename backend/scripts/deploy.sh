@@ -71,8 +71,9 @@ nohup env \
   OPENAI_API_KEY="$OPENAI_API_KEY" \
   INITIAL_TEACHER_PASSWORD="$INITIAL_TEACHER_PASSWORD" \
   java \
-    -Xms256m -Xmx512m \
-    -XX:+UseZGC \
+    -Xms128m -Xmx384m \
+    -XX:+UseG1GC \
+    -XX:MaxMetaspaceSize=128m \
     -Djava.security.egd=file:/dev/./urandom \
     -jar $JAR_FILE > $LOG_FILE 2>&1 &
 
