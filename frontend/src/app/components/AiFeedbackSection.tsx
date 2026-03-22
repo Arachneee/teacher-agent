@@ -38,7 +38,7 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
             ref={textareaRef}
             value={feedback.aiContent}
             onChange={event => onUpdateAiContent(event.target.value)}
-            className="w-full text-sm text-gray-700 leading-relaxed bg-transparent outline-none resize-none pr-8 overflow-hidden"
+            className="w-full text-sm text-gray-700 leading-relaxed bg-transparent outline-none resize-none pr-8 pb-8 overflow-hidden"
           />
           <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
             <span className="text-xs text-indigo-300 select-none">

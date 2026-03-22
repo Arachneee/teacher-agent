@@ -10,7 +10,7 @@ export function useGridLayout(storageSuffix = '') {
   const gridOrderStorageKey = `gridOrder_${storageSuffix}`;
 
   const [gridSlots, setGridSlots] = useState<(number | null)[]>([]);
-  const [columnCount, setColumnCount] = useState(3);
+  const [columnCount, setColumnCount] = useState(4);
   const [isInitialized, setIsInitialized] = useState(false);
   const isInitializedRef = useRef(false);
 
