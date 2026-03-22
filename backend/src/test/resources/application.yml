@@ -24,3 +24,6 @@ app:
     password: 123
     name: 관리자
     subject:
+  warmup-teacher:
+    user-id: warmup
+    password: warmup-password
