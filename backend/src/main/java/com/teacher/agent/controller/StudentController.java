@@ -26,7 +26,8 @@ public class StudentController {
   @PostMapping
   public ResponseEntity<StudentResponse> create(UserId userId,
       @RequestBody @Valid StudentCreateRequest request) {
-    return ResponseEntity.ok(studentCommandService.create(userId, request.name(), request.memo()));
+    return ResponseEntity
+        .ok(studentCommandService.create(userId, request.name(), request.memo(), request.grade()));
   }
 
   @GetMapping
@@ -43,7 +44,8 @@ public class StudentController {
   public ResponseEntity<StudentResponse> update(UserId userId, @PathVariable @Positive Long id,
       @RequestBody @Valid StudentUpdateRequest request) {
     return ResponseEntity
-        .ok(studentCommandService.update(userId, id, request.name(), request.memo()));
+        .ok(studentCommandService.update(userId, id, request.name(), request.memo(),
+            request.grade()));
   }
 
   @DeleteMapping("/{id}")

@@ -10,6 +10,7 @@ import com.teacher.agent.domain.repository.LessonRepository;
 import com.teacher.agent.domain.repository.StudentRepository;
 import com.teacher.agent.domain.repository.TeacherRepository;
 import com.teacher.agent.domain.vo.RecurrenceType;
+import com.teacher.agent.domain.vo.SchoolGrade;
 import com.teacher.agent.domain.vo.UpdateScope;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
@@ -376,7 +377,7 @@ class LessonServiceTest {
     void 삭제_시_aiContent가_없는_Feedback만_삭제된다() {
       // given
       Student student = studentRepository.save(
-          Student.create(teacher.getUserId(), "학생1", null));
+          Student.create(teacher.getUserId(), "학생1", null, SchoolGrade.ELEMENTARY_1));
       createWeeklyRecurringLessonsWithStudents(List.of(student.getId()));
       List<LessonResponse> allLessons = lessonRepository.findAllByUserId(teacher.getUserId())
           .stream().map(LessonResponse::from).toList();
@@ -395,7 +396,7 @@ class LessonServiceTest {
     void 삭제_시_aiContent가_있는_Feedback은_보존된다() {
       // given
       Student student = studentRepository.save(
-          Student.create(teacher.getUserId(), "학생1", null));
+          Student.create(teacher.getUserId(), "학생1", null, SchoolGrade.ELEMENTARY_1));
       createWeeklyRecurringLessonsWithStudents(List.of(student.getId()));
       List<LessonResponse> allLessons = lessonRepository.findAllByUserId(teacher.getUserId())
           .stream().map(LessonResponse::from).toList();

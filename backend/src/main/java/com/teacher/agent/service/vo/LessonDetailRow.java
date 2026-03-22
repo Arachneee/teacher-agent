@@ -1,5 +1,6 @@
 package com.teacher.agent.service.vo;
 
+import com.teacher.agent.domain.vo.SchoolGrade;
 import java.time.LocalDateTime;
 
 public record LessonDetailRow(
@@ -7,6 +8,7 @@ public record LessonDetailRow(
     Long studentId,
     String studentName,
     String studentMemo,
+    SchoolGrade studentGrade,
     LocalDateTime studentCreatedAt,
     LocalDateTime studentUpdatedAt,
     Long feedbackId,

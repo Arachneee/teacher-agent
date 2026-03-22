@@ -12,6 +12,7 @@ import com.teacher.agent.domain.repository.LessonRepository;
 import com.teacher.agent.domain.repository.StudentRepository;
 import com.teacher.agent.domain.repository.TeacherRepository;
 import com.teacher.agent.domain.vo.RecurrenceType;
+import com.teacher.agent.domain.vo.SchoolGrade;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.RecurrenceCreateRequest;
@@ -56,8 +57,10 @@ class LessonStudentEnrollmentTest {
   @BeforeEach
   void setUp() {
     teacher = teacherRepository.save(Teacher.create("testteacher", "password", "교사", null));
-    student1 = studentRepository.save(Student.create(teacher.getUserId(), "학생1", null));
-    student2 = studentRepository.save(Student.create(teacher.getUserId(), "학생2", null));
+    student1 = studentRepository
+        .save(Student.create(teacher.getUserId(), "학생1", null, SchoolGrade.ELEMENTARY_1));
+    student2 = studentRepository
+        .save(Student.create(teacher.getUserId(), "학생2", null, SchoolGrade.ELEMENTARY_1));
   }
 
   @AfterEach
@@ -166,7 +169,7 @@ class LessonStudentEnrollmentTest {
     Teacher otherTeacher = teacherRepository.save(
         Teacher.create("otherteacher", "password", "다른교사", null));
     Student otherStudent = studentRepository.save(
-        Student.create(otherTeacher.getUserId(), "다른학생", null));
+        Student.create(otherTeacher.getUserId(), "다른학생", null, SchoolGrade.ELEMENTARY_1));
 
     assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
         new LessonCreateRequest("수학", START, END, null, List.of(otherStudent.getId()))

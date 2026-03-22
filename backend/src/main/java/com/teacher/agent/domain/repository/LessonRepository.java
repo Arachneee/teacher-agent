@@ -43,6 +43,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
           s.id,
           s.name,
           s.memo,
+          s.grade,
           s.createdAt,
           s.updatedAt,
           f.id,

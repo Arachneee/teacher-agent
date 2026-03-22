@@ -3,6 +3,7 @@ package com.teacher.agent.domain;
 import static com.teacher.agent.util.Parameter.*;
 import static com.teacher.agent.util.ValidationUtil.*;
 
+import com.teacher.agent.domain.vo.SchoolGrade;
 import com.teacher.agent.domain.vo.UserId;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -30,19 +31,25 @@ public class Student extends BaseEntity {
   @Column(columnDefinition = "TEXT")
   private String memo;
 
-  public static Student create(UserId userId, String name, String memo) {
+  @Enumerated(EnumType.STRING)
+  @Column(length = 20)
+  private SchoolGrade grade;
+
+  public static Student create(UserId userId, String name, String memo, SchoolGrade grade) {
     Student student = new Student();
 
     checkNotNull(userId, USER_ID);
     student.userId = new UserId(checkNotBlank(userId.value(), USER_ID));
     student.name = checkNotBlank(name, NAME);
     student.memo = checkMaxLength(memo, 500, MEMO);
+    student.grade = checkNotNull(grade, GRADE);
 
     return student;
   }
 
-  public void update(String name, String memo) {
+  public void update(String name, String memo, SchoolGrade grade) {
     this.name = checkNotBlank(name, NAME);
     this.memo = checkMaxLength(memo, 500, MEMO);
+    this.grade = checkNotNull(grade, GRADE);
   }
 }

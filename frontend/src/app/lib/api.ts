@@ -7,6 +7,7 @@ import type {
   LessonDetail,
   RecurrenceCreateRequest,
   RecurrenceType,
+  SchoolGrade,
   Student,
   UpdateScope,
 } from '../types/api';
@@ -24,6 +25,7 @@ export type {
   LessonDetailFeedback,
   RecurrenceCreateRequest,
   RecurrenceType,
+  SchoolGrade,
   Student,
   UpdateScope,
 } from '../types/api';
@@ -87,21 +89,21 @@ export async function getStudents(): Promise<Student[]> {
   return res.json();
 }
 
-export async function createStudent(name: string, memo: string): Promise<Student> {
+export async function createStudent(name: string, memo: string, grade: SchoolGrade): Promise<Student> {
   const res = await fetchWithAuth(`${BASE_URL}/students`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, memo }),
+    body: JSON.stringify({ name, memo, grade }),
   });
   if (!res.ok) throw new Error('학생을 추가하지 못했어요');
   return res.json();
 }
 
-export async function updateStudent(id: number, name: string, memo: string): Promise<Student> {
+export async function updateStudent(id: number, name: string, memo: string, grade: SchoolGrade): Promise<Student> {
   const res = await fetchWithAuth(`${BASE_URL}/students/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, memo }),
+    body: JSON.stringify({ name, memo, grade }),
   });
   if (!res.ok) throw new Error('학생 정보를 수정하지 못했어요');
   return res.json();

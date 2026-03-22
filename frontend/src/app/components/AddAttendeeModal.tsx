@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { SchoolGrade } from '../lib/api';
 import { Student, UpdateScope, addAttendee, createStudent, getStudents } from '../lib/api';
+import { SCHOOL_GRADE_GROUPS, SCHOOL_GRADE_LABELS } from '../lib/constants';
 import RecurringScopeModal from './RecurringScopeModal';
 
 interface Props {
@@ -22,6 +24,7 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, isRecur
   const [showNewStudentForm, setShowNewStudentForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [newMemo, setNewMemo] = useState('');
+  const [newGrade, setNewGrade] = useState<SchoolGrade>('ELEMENTARY_1');
   const [showScopeModal, setShowScopeModal] = useState(false);
   const [pendingStudentIds, setPendingStudentIds] = useState<number[]>([]);
 
@@ -94,7 +97,7 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, isRecur
     setSubmitting(true);
     setErrorMessage(null);
     try {
-      const created = await createStudent(newName.trim(), newMemo.trim());
+      const created = await createStudent(newName.trim(), newMemo.trim(), newGrade);
       
       if (isRecurring) {
         setPendingStudentIds([created.id]);

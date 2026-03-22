@@ -16,6 +16,7 @@ import com.teacher.agent.domain.repository.FeedbackRepository;
 import com.teacher.agent.domain.repository.LessonRepository;
 import com.teacher.agent.domain.repository.StudentRepository;
 import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.SchoolGrade;
 import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.exception.BadRequestException;
@@ -83,7 +84,8 @@ class FeedbackServiceTest {
         teacherRepository.save(Teacher.create("teacher2", "encoded", "선생님2", "영어"));
     userId = teacher.getUserId();
     otherUserId = otherTeacher.getUserId();
-    Student student = studentRepository.save(Student.create(teacher.getUserId(), "홍길동", "메모"));
+    Student student = studentRepository
+        .save(Student.create(teacher.getUserId(), "홍길동", "메모", SchoolGrade.ELEMENTARY_1));
     studentId = student.getId();
     Lesson lesson = lessonRepository.save(Lesson.create(teacher.getUserId(), "수학", START, END));
     lesson.addAttendee(studentId);
@@ -139,7 +141,8 @@ class FeedbackServiceTest {
 
   @Test
   void 수업에_등록되지_않은_학생으로_피드백_생성_시_예외가_발생한다() {
-    Student unenrolledStudent = studentRepository.save(Student.create(userId, "미등록학생", null));
+    Student unenrolledStudent =
+        studentRepository.save(Student.create(userId, "미등록학생", null, SchoolGrade.ELEMENTARY_1));
 
     assertThatThrownBy(
         () -> feedbackCommandService.create(userId, unenrolledStudent.getId(), lessonId))

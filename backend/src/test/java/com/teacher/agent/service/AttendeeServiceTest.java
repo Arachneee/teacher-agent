@@ -11,6 +11,7 @@ import com.teacher.agent.domain.repository.LessonRepository;
 import com.teacher.agent.domain.repository.StudentRepository;
 import com.teacher.agent.domain.repository.TeacherRepository;
 import com.teacher.agent.domain.vo.RecurrenceType;
+import com.teacher.agent.domain.vo.SchoolGrade;
 import com.teacher.agent.domain.vo.UpdateScope;
 import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.AttendeeResponse;
@@ -64,7 +65,8 @@ class AttendeeServiceTest {
     teacher =
         teacherRepository.save(Teacher.create("testteacher", "encodedPassword", "테스트 선생님", ""));
     userId = teacher.getUserId();
-    student = studentRepository.save(Student.create(teacher.getUserId(), "홍길동", "메모"));
+    student = studentRepository
+        .save(Student.create(teacher.getUserId(), "홍길동", "메모", SchoolGrade.ELEMENTARY_1));
   }
 
   private Lesson saveLesson() {
@@ -130,7 +132,8 @@ class AttendeeServiceTest {
   void 수업의_참가자_목록을_조회한다() {
     Lesson lesson = saveLesson();
     Student anotherStudent =
-        studentRepository.save(Student.create(teacher.getUserId(), "김철수", null));
+        studentRepository
+            .save(Student.create(teacher.getUserId(), "김철수", null, SchoolGrade.ELEMENTARY_1));
     attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
     attendeeCommandService.add(userId, lesson.getId(), anotherStudent.getId(), null);
 
@@ -144,7 +147,8 @@ class AttendeeServiceTest {
     Lesson lesson1 = saveLesson();
     Lesson lesson2 = lessonRepository.save(Lesson.create(teacher.getUserId(), "영어", START, END));
     Student anotherStudent =
-        studentRepository.save(Student.create(teacher.getUserId(), "김철수", null));
+        studentRepository
+            .save(Student.create(teacher.getUserId(), "김철수", null, SchoolGrade.ELEMENTARY_1));
     attendeeCommandService.add(userId, lesson1.getId(), student.getId(), null);
     attendeeCommandService.add(userId, lesson2.getId(), anotherStudent.getId(), null);
 

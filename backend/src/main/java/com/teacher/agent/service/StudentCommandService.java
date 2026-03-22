@@ -4,6 +4,7 @@ import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrTh
 
 import com.teacher.agent.domain.Student;
 import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.vo.SchoolGrade;
 import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.StudentResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +18,18 @@ public class StudentCommandService {
   private final StudentRepository studentRepository;
 
   @Transactional
-  public StudentResponse create(UserId userId, String name, String memo) {
-    Student student = Student.create(userId, name, memo);
+  public StudentResponse create(UserId userId, String name, String memo, SchoolGrade grade) {
+    Student student = Student.create(userId, name, memo, grade);
 
     return StudentResponse.from(studentRepository.save(student));
   }
 
   @Transactional
-  public StudentResponse update(UserId userId, Long id, String name, String memo) {
+  public StudentResponse update(UserId userId, Long id, String name, String memo,
+      SchoolGrade grade) {
     Student student = findStudentByIdAndUserIdOrThrow(studentRepository, id, userId);
 
-    student.update(name, memo);
+    student.update(name, memo, grade);
 
     return StudentResponse.from(student);
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { DayOfWeek, RecurrenceCreateRequest, RecurrenceType, UpdateScope } from '../lib/api';
+import type { DayOfWeek, RecurrenceCreateRequest, RecurrenceType, SchoolGrade, UpdateScope } from '../lib/api';
 import {
   Lesson,
   LessonDetailAttendee,
@@ -89,6 +89,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
   const [showNewStudentForm, setShowNewStudentForm] = useState(false);
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentMemo, setNewStudentMemo] = useState('');
+  const [newStudentGrade, setNewStudentGrade] = useState<SchoolGrade>('ELEMENTARY_1');
   const [showEditScopeModal, setShowEditScopeModal] = useState(false);
 
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
@@ -263,7 +264,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
     setLoading(true);
     setErrorMessage(null);
     try {
-      const created = await createStudent(newStudentName.trim(), newStudentMemo.trim());
+      const created = await createStudent(newStudentName.trim(), newStudentMemo.trim(), newStudentGrade);
       setAllStudents(prev => [...prev, created]);
       setSelectedStudentIds(prev => new Set([...prev, created.id]));
       
@@ -344,6 +345,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
               showNewStudentForm={showNewStudentForm}
               newStudentName={newStudentName}
               newStudentMemo={newStudentMemo}
+              newStudentGrade={newStudentGrade}
               currentAttendees={currentAttendees}
               selectedStudentIds={selectedStudentIds}
               allStudents={allStudents}
@@ -351,6 +353,7 @@ export default function AddLessonModal({ lesson, initialStartTime, initialEndTim
               onShowNewStudentForm={setShowNewStudentForm}
               onNewStudentNameChange={setNewStudentName}
               onNewStudentMemoChange={setNewStudentMemo}
+              onNewStudentGradeChange={setNewStudentGrade}
               onEditModeAdd={handleEditModeAdd}
               onEditModeRemove={handleEditModeRemove}
               onToggleStudent={toggleStudent}

@@ -1,11 +1,16 @@
 'use client';
 
+import type { SchoolGrade } from '../../lib/api';
+import { SCHOOL_GRADE_GROUPS, SCHOOL_GRADE_LABELS } from '../../lib/constants';
+
 interface NewStudentFormProps {
   newStudentName: string;
   newStudentMemo: string;
+  newStudentGrade: SchoolGrade;
   loading: boolean;
   onNameChange: (value: string) => void;
   onMemoChange: (value: string) => void;
+  onGradeChange: (value: SchoolGrade) => void;
   onSubmit: (event: React.FormEvent) => void;
   onCancel: () => void;
 }
@@ -13,9 +18,11 @@ interface NewStudentFormProps {
 export default function NewStudentForm({
   newStudentName,
   newStudentMemo,
+  newStudentGrade,
   loading,
   onNameChange,
   onMemoChange,
+  onGradeChange,
   onSubmit,
   onCancel,
 }: NewStudentFormProps) {
@@ -40,6 +47,28 @@ export default function NewStudentForm({
           autoFocus
           required
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
+          학년 <span className="text-rose-400">*</span>
+        </label>
+        <select
+          value={newStudentGrade}
+          onChange={event => onGradeChange(event.target.value as SchoolGrade)}
+          className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300"
+          required
+        >
+          {SCHOOL_GRADE_GROUPS.map(group => (
+            <optgroup key={group.label} label={group.label}>
+              {group.grades.map(gradeOption => (
+                <option key={gradeOption} value={gradeOption}>
+                  {SCHOOL_GRADE_LABELS[gradeOption]}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
       </div>
 
       <div>

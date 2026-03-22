@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import type { SchoolGrade } from '../lib/api';
 import { Student, deleteStudent, updateStudent } from '../lib/api';
-import { getAvatarColor } from '../lib/constants';
+import { SCHOOL_GRADE_GROUPS, SCHOOL_GRADE_LABELS, getAvatarColor } from '../lib/constants';
 import { formatDateKorean } from '../lib/dateTimeUtils';
 import ConfirmModal from './ConfirmModal';
 
@@ -18,6 +19,7 @@ export default function StudentManagementCard({ student, onUpdate, onDelete, dra
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(student.name);
   const [memo, setMemo] = useState(student.memo || '');
+  const [grade, setGrade] = useState<SchoolGrade>(student.grade ?? 'ELEMENTARY_1');
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -29,7 +31,7 @@ export default function StudentManagementCard({ student, onUpdate, onDelete, dra
     setSaving(true);
     setErrorMessage(null);
     try {
-      await updateStudent(student.id, name.trim(), memo.trim());
+      await updateStudent(student.id, name.trim(), memo.trim(), grade);
       onUpdate();
       setEditing(false);
     } catch {
@@ -42,6 +44,7 @@ export default function StudentManagementCard({ student, onUpdate, onDelete, dra
   const handleCancel = () => {
     setName(student.name);
     setMemo(student.memo || '');
+    setGrade(student.grade ?? 'ELEMENTARY_1');
     setEditing(false);
     setErrorMessage(null);
   };
@@ -97,9 +100,16 @@ export default function StudentManagementCard({ student, onUpdate, onDelete, dra
                 autoFocus
               />
             ) : (
-              <p className="flex-1 min-w-0 text-base font-semibold text-gray-800 truncate">
-                {student.name}
-              </p>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <p className="text-base font-semibold text-gray-800 truncate">
+                  {student.name}
+                </p>
+                {student.grade && (
+                  <span className="shrink-0 text-xs font-medium bg-purple-100 text-purple-600 rounded-lg px-2 py-0.5">
+                    {SCHOOL_GRADE_LABELS[student.grade]}
+                  </span>
+                )}
+              </div>
             )}
             {!editing && (
               <div className="flex items-center gap-1 shrink-0">
@@ -131,6 +141,25 @@ export default function StudentManagementCard({ student, onUpdate, onDelete, dra
           <p className="text-xs text-gray-400">{formatDateKorean(student.createdAt)} 등록</p>
         </div>
       </div>
+
+      {/* Grade select in edit mode */}
+      {editing && (
+        <select
+          value={grade}
+          onChange={event => setGrade(event.target.value as SchoolGrade)}
+          className="w-full text-sm text-gray-700 bg-purple-50 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-purple-300"
+        >
+          {SCHOOL_GRADE_GROUPS.map(group => (
+            <optgroup key={group.label} label={group.label}>
+              {group.grades.map(gradeOption => (
+                <option key={gradeOption} value={gradeOption}>
+                  {SCHOOL_GRADE_LABELS[gradeOption]}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      )}
 
       {/* Error */}
       {errorMessage && (

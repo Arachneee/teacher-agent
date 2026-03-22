@@ -11,6 +11,7 @@ import com.teacher.agent.domain.repository.FeedbackRepository;
 import com.teacher.agent.domain.repository.LessonRepository;
 import com.teacher.agent.domain.repository.StudentRepository;
 import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.SchoolGrade;
 import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.LessonDetailResponse;
 import com.teacher.agent.exception.ResourceNotFoundException;
@@ -71,7 +72,8 @@ class LessonDetailQueryServiceTest {
 
   @Test
   void 수업_상세_조회_시_참가자와_피드백이_반환된다() {
-    Student student = studentRepository.save(Student.create(userId, "홍길동", "메모"));
+    Student student =
+        studentRepository.save(Student.create(userId, "홍길동", "메모", SchoolGrade.ELEMENTARY_1));
     attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
 
     LessonDetailResponse response = lessonDetailQueryService.getDetail(userId, lesson.getId());
@@ -98,8 +100,10 @@ class LessonDetailQueryServiceTest {
 
   @Test
   void 여러_참가자가_각자의_피드백을_가진다() {
-    Student student1 = studentRepository.save(Student.create(userId, "홍길동", null));
-    Student student2 = studentRepository.save(Student.create(userId, "김철수", null));
+    Student student1 =
+        studentRepository.save(Student.create(userId, "홍길동", null, SchoolGrade.ELEMENTARY_1));
+    Student student2 =
+        studentRepository.save(Student.create(userId, "김철수", null, SchoolGrade.ELEMENTARY_1));
     attendeeCommandService.add(userId, lesson.getId(), student1.getId(), null);
     attendeeCommandService.add(userId, lesson.getId(), student2.getId(), null);
 
@@ -112,7 +116,8 @@ class LessonDetailQueryServiceTest {
 
   @Test
   void 피드백에_키워드가_있으면_키워드_목록이_반환된다() {
-    Student student = studentRepository.save(Student.create(userId, "홍길동", null));
+    Student student =
+        studentRepository.save(Student.create(userId, "홍길동", null, SchoolGrade.ELEMENTARY_1));
     attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
     Long feedbackId = feedbackRepository.findByStudentIdAndLessonId(student.getId(), lesson.getId())
         .orElseThrow().getId();
@@ -130,7 +135,8 @@ class LessonDetailQueryServiceTest {
 
   @Test
   void 피드백에_좋아요가_있으면_liked가_true다() {
-    Student student = studentRepository.save(Student.create(userId, "홍길동", null));
+    Student student =
+        studentRepository.save(Student.create(userId, "홍길동", null, SchoolGrade.ELEMENTARY_1));
     attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
     Long feedbackId = feedbackRepository.findByStudentIdAndLessonId(student.getId(), lesson.getId())
         .orElseThrow().getId();
@@ -156,7 +162,8 @@ class LessonDetailQueryServiceTest {
 
   @Test
   void 참가자_재추가_시_기존_피드백이_유지된다() {
-    Student student = studentRepository.save(Student.create(userId, "홍길동", null));
+    Student student =
+        studentRepository.save(Student.create(userId, "홍길동", null, SchoolGrade.ELEMENTARY_1));
     attendeeCommandService.add(userId, lesson.getId(), student.getId(), null);
     Long originalFeedbackId = feedbackRepository
         .findByStudentIdAndLessonId(student.getId(), lesson.getId()).orElseThrow().getId();

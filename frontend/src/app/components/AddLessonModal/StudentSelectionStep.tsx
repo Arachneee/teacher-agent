@@ -1,6 +1,6 @@
 'use client';
 
-import type { LessonDetailAttendee, Student } from '../../lib/api';
+import type { LessonDetailAttendee, SchoolGrade, Student } from '../../lib/api';
 import NewStudentForm from './NewStudentForm';
 
 interface StudentSelectionStepProps {
@@ -12,6 +12,7 @@ interface StudentSelectionStepProps {
   showNewStudentForm: boolean;
   newStudentName: string;
   newStudentMemo: string;
+  newStudentGrade: SchoolGrade;
   currentAttendees: LessonDetailAttendee[];
   selectedStudentIds: Set<number>;
   allStudents: Student[];
@@ -19,6 +20,7 @@ interface StudentSelectionStepProps {
   onShowNewStudentForm: (value: boolean) => void;
   onNewStudentNameChange: (value: string) => void;
   onNewStudentMemoChange: (value: string) => void;
+  onNewStudentGradeChange: (value: SchoolGrade) => void;
   onEditModeAdd: (student: Student) => void;
   onEditModeRemove: (studentId: number) => void;
   onToggleStudent: (studentId: number) => void;
@@ -38,6 +40,7 @@ export default function StudentSelectionStep({
   showNewStudentForm,
   newStudentName,
   newStudentMemo,
+  newStudentGrade,
   currentAttendees,
   selectedStudentIds,
   allStudents,
@@ -45,6 +48,7 @@ export default function StudentSelectionStep({
   onShowNewStudentForm,
   onNewStudentNameChange,
   onNewStudentMemoChange,
+  onNewStudentGradeChange,
   onEditModeAdd,
   onEditModeRemove,
   onToggleStudent,
@@ -291,6 +295,8 @@ export default function StudentSelectionStep({
           loading={loading}
           onNameChange={onNewStudentNameChange}
           onMemoChange={onNewStudentMemoChange}
+          newStudentGrade={newStudentGrade}
+          onGradeChange={onNewStudentGradeChange}
           onSubmit={onCreateAndSelectStudent}
           onCancel={() => onShowNewStudentForm(false)}
         />

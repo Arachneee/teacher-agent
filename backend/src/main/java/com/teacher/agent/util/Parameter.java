@@ -12,6 +12,7 @@ public class Parameter {
   public static final String KEYWORD = "keyword";
   public static final String STUDENT_ID = "studentId";
   public static final String AI_CONTENT = "aiContent";
+  public static final String GRADE = "grade";
   public static final String USER_ID = "userId";
   public static final String PASSWORD = "password";
   public static final String SUBJECT = "subject";

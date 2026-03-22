@@ -39,7 +39,8 @@ public record LessonDetailResponse(
       LessonDetailRow first = rows.getFirst();
 
       StudentResponse student = new StudentResponse(first.studentId(), first.studentName(),
-          first.studentMemo(), first.studentCreatedAt(), first.studentUpdatedAt());
+          first.studentMemo(), first.studentGrade(), first.studentCreatedAt(),
+          first.studentUpdatedAt());
 
       List<FeedbackResponse.KeywordItem> keywords = rows.stream()
           .filter(row -> row.keywordId() != null)
