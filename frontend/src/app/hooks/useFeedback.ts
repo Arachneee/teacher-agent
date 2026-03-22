@@ -80,7 +80,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
   }, []);
 
   const handleUpdateAiContent = (content: string) => {
-    setFeedback(prev => prev ? { ...prev, aiContent: content || null } : null);
+    setFeedback(prev => prev ? { ...prev, aiContent: content || null, liked: false } : null);
     setIsEditingAiContent(true);
 
     if (debounceTimerRef.current) {
@@ -93,6 +93,8 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
       if (feedbackId === null) return;
       try {
         await updateFeedback(feedbackId, content);
+        const loaded = await reloadFeedback(feedbackId);
+        setFeedback(prev => prev ? { ...loaded, aiContent: prev.aiContent } : loaded);
       } catch {
         // 조용히 실패
       } finally {

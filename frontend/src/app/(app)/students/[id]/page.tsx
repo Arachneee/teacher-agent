@@ -99,11 +99,15 @@ export default function StudentHistoryPage() {
             onClick={() => setActiveTab('liked')}
             className={`px-4 py-2 rounded-2xl text-sm font-medium transition-colors duration-150 ${
               activeTab === 'liked'
-                ? 'bg-pink-400 text-white'
-                : 'bg-white text-gray-500 hover:bg-pink-50'
+                ? 'bg-indigo-500 text-white'
+                : 'bg-white text-gray-500 hover:bg-indigo-50'
             }`}
           >
-            ♥ 보관 {likedCount}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-1">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+            </svg>
+            보관 {likedCount}
           </button>
         </div>
 
@@ -128,7 +132,7 @@ export default function StudentHistoryPage() {
         ) : displayedFeedbacks.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             {activeTab === 'liked'
-              ? '보관한 문자가 없어요. 마음에 드는 AI 문자에 ♥를 눌러보세요.'
+              ? '보관한 문자가 없어요. 마음에 드는 AI 문자에 따봉을 눌러보세요.'
               : '아직 피드백 기록이 없어요. 수업에서 키워드를 입력해보세요.'}
           </div>
         ) : (
