@@ -120,7 +120,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col flex-1 px-4 md:px-6 py-5 md:py-8">
-      <header className="mb-4 md:mb-6 flex items-center justify-between">
+      <header className="relative mb-4 md:mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-2xl md:text-3xl font-bold text-purple-500">내 수업</h1>
 

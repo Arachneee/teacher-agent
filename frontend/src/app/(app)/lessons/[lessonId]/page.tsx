@@ -226,12 +226,12 @@ export default function LessonDetailPage() {
 
   const displaySlots = useMemo(() => {
     const filledCount = gridSlots.filter(id => id !== null).length;
-    const nextRowStart = Math.ceil(filledCount / columnCount) * columnCount;
-    const padTo = Math.max(nextRowStart, gridSlots.length) + (isDragActive ? columnCount : 0);
+    const nextRowStart = Math.ceil(filledCount / effectiveColumnCount) * effectiveColumnCount;
+    const padTo = Math.max(nextRowStart, gridSlots.length) + (isDragActive ? effectiveColumnCount : 0);
     const padded = [...gridSlots];
     while (padded.length < padTo) padded.push(null);
     return padded;
-  }, [gridSlots, columnCount, isDragActive]);
+  }, [gridSlots, effectiveColumnCount, isDragActive]);
 
   const existingStudentIds = useMemo(
     () => new Set(attendees.map(attendee => attendee.student.id)),
