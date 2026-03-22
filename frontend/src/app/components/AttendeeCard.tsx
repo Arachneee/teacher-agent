@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Attendee, updateStudent } from '../lib/api';
 import { getAvatarColor } from '../lib/constants';
 import { formatDateKorean } from '../lib/dateTimeUtils';
@@ -15,6 +16,7 @@ export interface AttendeeCardHandle {
 
 interface Props {
   attendee: Attendee;
+  lessonId: number;
   isRecurring: boolean;
   onUpdate: () => void;
   onRemove: (attendeeId: number) => void;
@@ -22,7 +24,7 @@ interface Props {
 }
 
 const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
-  { attendee, isRecurring, onUpdate, onRemove, dragHandleProps },
+  { attendee, lessonId, isRecurring, onUpdate, onRemove, dragHandleProps },
   ref
 ) => {
   const keywordInputRef = useRef<HTMLInputElement>(null);
@@ -165,6 +167,19 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
             <p className="flex-1 min-w-0 text-lg font-semibold text-gray-800 truncate">
               {attendee.student.name}
             </p>
+            <Link
+              href={`/students/${attendee.student.id}?from=/lessons/${lessonId}`}
+              className="w-7 h-7 flex items-center justify-center rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-400 transition-colors duration-150 shrink-0"
+              aria-label="피드백 기록 보기"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </Link>
             <button
               onClick={handleRemoveClick}
               className="w-7 h-7 flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-400 transition-colors duration-150 shrink-0"

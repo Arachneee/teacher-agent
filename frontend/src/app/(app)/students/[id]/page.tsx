@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import FeedbackHistoryCard from '../../../components/FeedbackHistoryCard';
 import { getFeedbacks, getStudent } from '../../../lib/api';
@@ -12,7 +12,9 @@ type FilterTab = 'all' | 'liked';
 
 export default function StudentHistoryPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const studentId = Number(params.id);
+  const backHref = searchParams.get('from') ?? '/students';
 
   const [student, setStudent] = useState<Student | null>(null);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
@@ -53,9 +55,9 @@ export default function StudentHistoryPage() {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <Link
-            href="/students"
+            href={backHref}
             className="w-9 h-9 flex items-center justify-center rounded-2xl bg-white shadow-sm hover:shadow-md text-gray-400 hover:text-gray-600 transition-all duration-150 shrink-0"
-            aria-label="학생 목록으로"
+            aria-label="이전 페이지로"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />

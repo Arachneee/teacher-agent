@@ -59,12 +59,13 @@ function SortableEmptySlot({ id, isDragActive }: { id: string; isDragActive: boo
 
 interface SortableAttendeeCardProps {
   attendee: Attendee;
+  lessonId: number;
   isRecurring: boolean;
   onUpdate: () => void;
   onRemove: (attendeeId: number) => void;
 }
 
-function SortableAttendeeCard({ attendee, isRecurring, onUpdate, onRemove }: SortableAttendeeCardProps) {
+function SortableAttendeeCard({ attendee, lessonId, isRecurring, onUpdate, onRemove }: SortableAttendeeCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: attendee.id,
   });
@@ -82,6 +83,7 @@ function SortableAttendeeCard({ attendee, isRecurring, onUpdate, onRemove }: Sor
     >
       <AttendeeCard
         attendee={attendee}
+        lessonId={lessonId}
         isRecurring={isRecurring}
         onUpdate={onUpdate}
         onRemove={onRemove}
@@ -413,6 +415,7 @@ export default function LessonDetailPage() {
                     <SortableAttendeeCard
                       key={attendee.id}
                       attendee={attendee}
+                      lessonId={lessonId}
                       isRecurring={!!lesson?.recurrenceGroupId}
                       onUpdate={fetchData}
                       onRemove={handleRemoveAttendee}
