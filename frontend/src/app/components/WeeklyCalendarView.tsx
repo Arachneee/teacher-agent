@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { useRouter } from 'next/navigation';
 import { Lesson, deleteLesson, UpdateScope } from '../lib/api';
 import { padTwoDigits } from '../lib/dateTimeUtils';
@@ -50,6 +51,7 @@ interface Props {
 
 export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelete, onCellClick, mobileSelectedDayIndex }: Props) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
@@ -216,12 +218,16 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
               day.getDate() === today.getDate();
             const isWeekend = dayIndex === 5 || dayIndex === 6;
 
+            const isSelected = dayIndex === mobileSelectedDayIndex;
+            const shouldRenderContent = !isMobile || isSelected;
+
             return (
               <div
                 key={dayIndex}
-                className={`relative border-l border-gray-100 min-w-0 ${isWeekend ? 'bg-slate-50/40' : ''} ${dayIndex === mobileSelectedDayIndex ? 'flex-1' : 'hidden md:block md:flex-1'}`}
+                className={`relative border-l border-gray-100 min-w-0 ${isWeekend ? 'bg-slate-50/40' : ''} ${isSelected ? 'flex-1' : 'hidden md:block md:flex-1'}`}
                 style={{ height: `${TOTAL_HOURS * CELL_HEIGHT}px` }}
               >
+                {shouldRenderContent && <>
                 {/* Hour slot click targets */}
                 {hours.map(hour => (
                   <div
@@ -325,6 +331,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                     </div>
                   );
                 })}
+                </>}
               </div>
             );
           })}
