@@ -67,6 +67,7 @@ public class FeedbackCommandService {
     String aiContent = feedbackAiService.generateFeedbackContent(feedback, student.getName());
 
     feedback.updateAiContent(aiContent);
+    feedbackRepository.save(feedback);
 
     return feedbackQueryService.toResponse(
         feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId));
