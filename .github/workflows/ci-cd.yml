@@ -84,9 +84,19 @@ jobs:
             backend/scripts/setup-ec2.sh \
             ec2-user@${{ secrets.EC2_HOST }}:~/setup-ec2.sh
 
+          scp -i ~/.ssh/deploy_key \
+            backend/scripts/setup-swap.sh \
+            ec2-user@${{ secrets.EC2_HOST }}:~/setup-swap.sh
+
           ssh -i ~/.ssh/deploy_key \
             ec2-user@${{ secrets.EC2_HOST }} \
             'if ! command -v java &> /dev/null; then chmod +x ~/setup-ec2.sh && ~/setup-ec2.sh; else echo "Java already installed: $(java -version 2>&1 | head -1)"; fi'
+
+      - name: Setup swap if needed
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            ec2-user@${{ secrets.EC2_HOST }} \
+            'chmod +x ~/setup-swap.sh && ~/setup-swap.sh 2G'
 
       - name: Deploy to EC2
         run: |

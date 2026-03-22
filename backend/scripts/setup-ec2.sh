@@ -18,6 +18,8 @@ rm -f /tmp/temurin-25.tar.gz
 
 mkdir -p /home/ec2-user/app
 
+bash ~/setup-swap.sh 2G
+
 echo ""
 echo "=== Setup Complete ==="
 echo "JDK version:"

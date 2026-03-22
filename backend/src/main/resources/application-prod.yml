@@ -1,8 +1,19 @@
 cors:
   allowed-origin-patterns: https://teacher-agent-nine.vercel.app
 
+server:
+  tomcat:
+    threads:
+      max: 50
+      min-spare: 10
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
