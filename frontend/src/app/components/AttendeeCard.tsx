@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Attendee, updateStudent } from '../lib/api';
-import { getAvatarColor } from '../lib/constants';
+import { SCHOOL_GRADE_LABELS, getAvatarColor } from '../lib/constants';
 import { formatDateKorean } from '../lib/dateTimeUtils';
 import { useFeedback } from '../hooks/useFeedback';
 import AiFeedbackSection from './AiFeedbackSection';
@@ -71,7 +71,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
     setSavingMemo(true);
     setEditErrorMessage(null);
     try {
-      await updateStudent(attendee.student.id, attendee.student.name, trimmed);
+      await updateStudent(attendee.student.id, attendee.student.name, trimmed, attendee.student.grade ?? 'ELEMENTARY_1');
       onUpdate();
       setEditingMemo(false);
     } catch {
@@ -164,9 +164,16 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">
-            <p className="flex-1 min-w-0 text-lg font-semibold text-gray-800 truncate">
-              {attendee.student.name}
-            </p>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <p className="text-lg font-semibold text-gray-800 truncate">
+                {attendee.student.name}
+              </p>
+              {attendee.student.grade && (
+                <span className="shrink-0 text-xs font-medium bg-purple-100 text-purple-600 rounded-lg px-2 py-0.5">
+                  {SCHOOL_GRADE_LABELS[attendee.student.grade]}
+                </span>
+              )}
+            </div>
             <Link
               href={`/students/${attendee.student.id}?from=/lessons/${lessonId}`}
               className="w-7 h-7 flex items-center justify-center rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-400 transition-colors duration-150 shrink-0"

@@ -13,6 +13,7 @@ import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sort
 import { CSS } from '@dnd-kit/utilities';
 import { Student, getStudents } from '../lib/api';
 import { MAX_COLUMNS, MIN_COLUMNS, useGridLayout } from '../hooks/useGridLayout';
+import { SCHOOL_GRADE_ORDER } from '../lib/constants';
 import { useIsMobile } from '../hooks/useIsMobile';
 import StudentManagementCard from './StudentManagementCard';
 import AddStudentModal from './AddStudentModal';
@@ -94,12 +95,21 @@ export default function StudentsView() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
+  const sortStudents = (data: Student[]) =>
+    [...data].sort((a, b) => {
+      const gradeA = a.grade != null ? SCHOOL_GRADE_ORDER[a.grade] : -1;
+      const gradeB = b.grade != null ? SCHOOL_GRADE_ORDER[b.grade] : -1;
+      if (gradeA !== gradeB) return gradeA - gradeB;
+      return a.name.localeCompare(b.name, 'ko');
+    });
+
   const fetchStudents = useCallback(() => {
     setLoading(true);
     getStudents()
       .then(data => {
-        setStudents(data);
-        initializeGridSlots(data.map(student => student.id));
+        const sorted = sortStudents(data);
+        setStudents(sorted);
+        initializeGridSlots(sorted.map(student => student.id));
       })
       .catch(console.error)
       .finally(() => setLoading(false));

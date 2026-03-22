@@ -46,6 +46,7 @@ export interface AttendeeStudent {
   id: number;
   name: string;
   memo: string;
+  grade: SchoolGrade | null;
 }
 
 export interface Attendee {

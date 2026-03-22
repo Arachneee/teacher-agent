@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import FeedbackHistoryCard from '../../../components/FeedbackHistoryCard';
 import { getFeedbacks, getStudent } from '../../../lib/api';
-import { getAvatarColor } from '../../../lib/constants';
+import { SCHOOL_GRADE_LABELS, getAvatarColor } from '../../../lib/constants';
 import type { Feedback, Student } from '../../../types/api';
 
 type FilterTab = 'all' | 'liked';
@@ -73,7 +73,14 @@ export default function StudentHistoryPage() {
               {student.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-base font-semibold text-gray-800">{student.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-base font-semibold text-gray-800">{student.name}</p>
+                {student.grade && (
+                  <span className="shrink-0 text-xs font-medium bg-purple-100 text-purple-600 rounded-lg px-2 py-0.5">
+                    {SCHOOL_GRADE_LABELS[student.grade]}
+                  </span>
+                )}
+              </div>
               {student.memo && (
                 <p className="text-sm text-gray-400 truncate">{student.memo}</p>
               )}

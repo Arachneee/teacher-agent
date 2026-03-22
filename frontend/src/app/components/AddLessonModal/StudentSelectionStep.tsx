@@ -1,6 +1,7 @@
 'use client';
 
 import type { LessonDetailAttendee, SchoolGrade, Student } from '../../lib/api';
+import { SCHOOL_GRADE_LABELS } from '../../lib/constants';
 import NewStudentForm from './NewStudentForm';
 
 interface StudentSelectionStepProps {
@@ -173,7 +174,14 @@ export default function StudentSelectionStep({
                         {student.name.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-800 truncate">{student.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-gray-800 truncate">{student.name}</p>
+                          {student.grade && (
+                            <span className="shrink-0 text-xs font-medium bg-purple-100 text-purple-600 rounded-md px-1.5 py-0.5">
+                              {SCHOOL_GRADE_LABELS[student.grade]}
+                            </span>
+                          )}
+                        </div>
                         {student.memo && (
                           <p className="text-xs text-gray-400 truncate">{student.memo}</p>
                         )}
@@ -203,7 +211,14 @@ export default function StudentSelectionStep({
                         {student.name.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-800 truncate">{student.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-gray-800 truncate">{student.name}</p>
+                          {student.grade && (
+                            <span className="shrink-0 text-xs font-medium bg-purple-100 text-purple-600 rounded-md px-1.5 py-0.5">
+                              {SCHOOL_GRADE_LABELS[student.grade]}
+                            </span>
+                          )}
+                        </div>
                         {student.memo && (
                           <p className="text-xs text-gray-400 truncate">{student.memo}</p>
                         )}

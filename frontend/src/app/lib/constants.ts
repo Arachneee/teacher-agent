@@ -13,6 +13,13 @@ export const SCHOOL_GRADE_GROUPS: { label: string; grades: SchoolGrade[] }[] = [
   { label: '고등학교', grades: ['HIGH_1', 'HIGH_2', 'HIGH_3'] },
 ];
 
+export const SCHOOL_GRADE_ORDER: Record<SchoolGrade, number> = {
+  ELEMENTARY_1: 0, ELEMENTARY_2: 1, ELEMENTARY_3: 2,
+  ELEMENTARY_4: 3, ELEMENTARY_5: 4, ELEMENTARY_6: 5,
+  MIDDLE_1: 6, MIDDLE_2: 7, MIDDLE_3: 8,
+  HIGH_1: 9, HIGH_2: 10, HIGH_3: 11,
+};
+
 export const AVATAR_COLORS = [
   'bg-pink-200 text-pink-600',
   'bg-purple-200 text-purple-600',

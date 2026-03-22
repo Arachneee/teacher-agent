@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { SchoolGrade } from '../lib/api';
 import { createStudent } from '../lib/api';
-import { SCHOOL_GRADE_GROUPS, SCHOOL_GRADE_LABELS } from '../lib/constants';
+import GradeSelect from './GradeSelect';
 
 interface Props {
   onAdd: () => void;
@@ -60,25 +60,10 @@ export default function AddStudentModal({ onAdd, onClose }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">
+            <label className="block text-sm font-medium text-gray-600 mb-2 ml-1">
               학년 <span className="text-rose-400">*</span>
             </label>
-            <select
-              value={grade}
-              onChange={event => setGrade(event.target.value as SchoolGrade)}
-              className="w-full bg-purple-50 rounded-2xl px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-purple-300"
-              required
-            >
-              {SCHOOL_GRADE_GROUPS.map(group => (
-                <optgroup key={group.label} label={group.label}>
-                  {group.grades.map(gradeOption => (
-                    <option key={gradeOption} value={gradeOption}>
-                      {SCHOOL_GRADE_LABELS[gradeOption]}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            <GradeSelect value={grade} onChange={setGrade} />
           </div>
 
           <div>

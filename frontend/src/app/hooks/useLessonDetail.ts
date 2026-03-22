@@ -5,7 +5,7 @@ function toAttendee({ attendeeId, student, feedback }: LessonDetailAttendee, les
   return {
     id: attendeeId,
     lessonId: lessonDetailId,
-    student: { id: student.id, name: student.name, memo: student.memo },
+    student: { id: student.id, name: student.name, memo: student.memo, grade: student.grade },
     feedback: feedback ? {
       id: feedback.id,
       studentId: feedback.studentId,

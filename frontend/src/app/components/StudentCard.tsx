@@ -1,8 +1,10 @@
 'use client';
 
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import type { SchoolGrade } from '../lib/api';
 import { Student, deleteStudent, updateStudent } from '../lib/api';
-import { getAvatarColor } from '../lib/constants';
+import { SCHOOL_GRADE_LABELS, getAvatarColor } from '../lib/constants';
+import GradeSelect from './GradeSelect';
 import { formatDateKorean } from '../lib/dateTimeUtils';
 import { useFeedback } from '../hooks/useFeedback';
 import AiFeedbackSection from './AiFeedbackSection';
@@ -33,6 +35,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(student.name);
   const [memo, setMemo] = useState(student.memo || '');
+  const [grade, setGrade] = useState<SchoolGrade>(student.grade ?? 'ELEMENTARY_1');
   const [saving, setSaving] = useState(false);
   const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');
@@ -60,7 +63,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
     setSaving(true);
     setEditErrorMessage(null);
     try {
-      await updateStudent(student.id, name.trim(), memo.trim());
+      await updateStudent(student.id, name.trim(), memo.trim(), grade);
       onUpdate();
       setEditing(false);
     } catch (error) {
@@ -73,6 +76,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   const handleCancel = () => {
     setName(student.name);
     setMemo(student.memo || '');
+    setGrade(student.grade ?? 'ELEMENTARY_1');
     setEditing(false);
     setEditErrorMessage(null);
   };
@@ -159,7 +163,14 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
                 autoFocus
               />
             ) : (
-              <p className="flex-1 min-w-0 text-lg font-semibold text-gray-800 truncate">{student.name}</p>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <p className="text-lg font-semibold text-gray-800 truncate">{student.name}</p>
+                {student.grade && (
+                  <span className="shrink-0 text-xs font-medium bg-purple-100 text-purple-600 rounded-lg px-2 py-0.5">
+                    {SCHOOL_GRADE_LABELS[student.grade]}
+                  </span>
+                )}
+              </div>
             )}
             {!editing && (
               <div className="flex items-center gap-1 shrink-0">
@@ -195,6 +206,11 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
       {/* Edit / Delete Error */}
       {editErrorMessage && (
         <p className="text-xs text-rose-400 bg-rose-50 rounded-xl px-3 py-2">{editErrorMessage}</p>
+      )}
+
+      {/* Grade select in edit mode */}
+      {editing && (
+        <GradeSelect value={grade} onChange={setGrade} />
       )}
 
       {/* Memo */}

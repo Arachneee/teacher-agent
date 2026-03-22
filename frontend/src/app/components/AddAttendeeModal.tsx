@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import type { SchoolGrade } from '../lib/api';
 import { Student, UpdateScope, addAttendee, createStudent, getStudents } from '../lib/api';
-import { SCHOOL_GRADE_GROUPS, SCHOOL_GRADE_LABELS } from '../lib/constants';
+import { SCHOOL_GRADE_LABELS } from '../lib/constants';
+import GradeSelect from './GradeSelect';
 import RecurringScopeModal from './RecurringScopeModal';
 
 interface Props {
@@ -190,7 +191,14 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, isRecur
                         {student.name.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-800 truncate">{student.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-gray-800 truncate">{student.name}</p>
+                          {student.grade && (
+                            <span className="shrink-0 text-xs font-medium bg-purple-100 text-purple-600 rounded-md px-1.5 py-0.5">
+                              {SCHOOL_GRADE_LABELS[student.grade]}
+                            </span>
+                          )}
+                        </div>
                         {student.memo && (
                           <p className="text-xs text-gray-400 truncate">{student.memo}</p>
                         )}
@@ -287,6 +295,13 @@ export default function AddAttendeeModal({ lessonId, existingStudentIds, isRecur
                 autoFocus
                 required
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2 ml-1">
+                학년 <span className="text-rose-400">*</span>
+              </label>
+              <GradeSelect value={newGrade} onChange={setNewGrade} />
             </div>
 
             <div>

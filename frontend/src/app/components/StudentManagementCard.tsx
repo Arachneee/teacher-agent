@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { SchoolGrade } from '../lib/api';
 import { Student, deleteStudent, updateStudent } from '../lib/api';
-import { SCHOOL_GRADE_GROUPS, SCHOOL_GRADE_LABELS, getAvatarColor } from '../lib/constants';
+import { SCHOOL_GRADE_LABELS, getAvatarColor } from '../lib/constants';
+import GradeSelect from './GradeSelect';
 import { formatDateKorean } from '../lib/dateTimeUtils';
 import ConfirmModal from './ConfirmModal';
 
@@ -144,21 +145,7 @@ export default function StudentManagementCard({ student, onUpdate, onDelete, dra
 
       {/* Grade select in edit mode */}
       {editing && (
-        <select
-          value={grade}
-          onChange={event => setGrade(event.target.value as SchoolGrade)}
-          className="w-full text-sm text-gray-700 bg-purple-50 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-purple-300"
-        >
-          {SCHOOL_GRADE_GROUPS.map(group => (
-            <optgroup key={group.label} label={group.label}>
-              {group.grades.map(gradeOption => (
-                <option key={gradeOption} value={gradeOption}>
-                  {SCHOOL_GRADE_LABELS[gradeOption]}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <GradeSelect value={grade} onChange={setGrade} />
       )}
 
       {/* Error */}
