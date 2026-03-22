@@ -20,6 +20,10 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 50
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: 100
 
   ai:
     openai:
