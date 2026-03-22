@@ -68,25 +68,39 @@ RESPONSE=$(http -X POST "$APP_URL/auth/login" \
 echo "$RESPONSE" | grep -q "userId" || fail "Login failed"
 log "1. Login OK"
 
-# ─── 2. 학생 추가 ─────────────────────────────────────────────
+# ─── 2. 선생님 정보 조회 ──────────────────────────────────────
+http -o /dev/null "$APP_URL/teachers/me"
+log "2. GET /teachers/me OK"
+
+# ─── 3. 선생님 정보 수정 ──────────────────────────────────────
+http -o /dev/null -X PUT "$APP_URL/teachers/me" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"워밍업선생님","subject":"워밍업과목"}'
+log "3. PUT /teachers/me OK"
+
+# ─── 4. 학생 추가 ─────────────────────────────────────────────
 RESPONSE=$(http -X POST "$APP_URL/students" \
   -H "Content-Type: application/json" \
   -d '{"name":"워밍업학생","memo":"워밍업용"}')
 STUDENT_ID=$(extract "$RESPONSE" "id")
 [ -z "$STUDENT_ID" ] && fail "Student create failed: $RESPONSE"
-log "2. POST /students OK (studentId=$STUDENT_ID)"
+log "4. POST /students OK (studentId=$STUDENT_ID)"
 
-# ─── 3. 학생 조회 ─────────────────────────────────────────────
+# ─── 5. 학생 목록 조회 ────────────────────────────────────────
 http -o /dev/null "$APP_URL/students"
-log "3. GET /students OK"
+log "5. GET /students OK"
 
-# ─── 4. 학생 수정 ─────────────────────────────────────────────
+# ─── 6. 학생 단건 조회 ────────────────────────────────────────
+http -o /dev/null "$APP_URL/students/$STUDENT_ID"
+log "6. GET /students/$STUDENT_ID OK"
+
+# ─── 7. 학생 수정 ─────────────────────────────────────────────
 http -o /dev/null -X PUT "$APP_URL/students/$STUDENT_ID" \
   -H "Content-Type: application/json" \
   -d '{"name":"워밍업학생(수정)","memo":"워밍업용"}'
-log "4. PUT /students/$STUDENT_ID OK"
+log "7. PUT /students/$STUDENT_ID OK"
 
-# ─── 5. 반복 레슨 추가 ────────────────────────────────────────
+# ─── 8. 반복 레슨 추가 ────────────────────────────────────────
 RESPONSE=$(http -X POST "$APP_URL/lessons" \
   -H "Content-Type: application/json" \
   -d "{
@@ -102,64 +116,102 @@ RESPONSE=$(http -X POST "$APP_URL/lessons" \
   }")
 LESSON_ID=$(extract "$RESPONSE" "id")
 [ -z "$LESSON_ID" ] && fail "Lesson create failed: $RESPONSE"
-log "5. POST /lessons OK (lessonId=$LESSON_ID)"
+log "8. POST /lessons OK (lessonId=$LESSON_ID)"
 
-# ─── 6. 수강생 추가 (attendee API) ───────────────────────────
-http -o /dev/null -X POST "$APP_URL/lessons/$LESSON_ID/attendees" \
+# ─── 9. 레슨 수정 ─────────────────────────────────────────────
+http -o /dev/null -X PUT "$APP_URL/lessons/$LESSON_ID" \
   -H "Content-Type: application/json" \
-  -d "{\"studentId\":$STUDENT_ID,\"scope\":\"SINGLE\"}"
-log "6. POST /lessons/$LESSON_ID/attendees OK"
+  -d "{
+    \"title\":\"워밍업레슨(수정)\",
+    \"startTime\":\"${TOMORROW}T10:00:00\",
+    \"endTime\":\"${TOMORROW}T11:00:00\",
+    \"scope\":\"SINGLE\"
+  }"
+log "9. PUT /lessons/$LESSON_ID OK"
 
-# ─── 7. 레슨 목록 조회 ───────────────────────────────────────
+# ─── 10. 수강생 추가 (attendee API) ──────────────────────────
+RESPONSE=$(http -X POST "$APP_URL/lessons/$LESSON_ID/attendees" \
+  -H "Content-Type: application/json" \
+  -d "{\"studentId\":$STUDENT_ID,\"scope\":\"SINGLE\"}")
+ATTENDEE_ID=$(extract "$RESPONSE" "id")
+[ -z "$ATTENDEE_ID" ] && fail "Attendee add failed: $RESPONSE"
+log "10. POST /lessons/$LESSON_ID/attendees OK (attendeeId=$ATTENDEE_ID)"
+
+# ─── 11. 수강생 목록 조회 ─────────────────────────────────────
+http -o /dev/null "$APP_URL/lessons/$LESSON_ID/attendees"
+log "11. GET /lessons/$LESSON_ID/attendees OK"
+
+# ─── 12. 레슨 목록 조회 ───────────────────────────────────────
 http -o /dev/null "$APP_URL/lessons?weekStart=$WEEK_START"
-log "7. GET /lessons OK"
+log "12. GET /lessons OK"
 
-# ─── 8. 레슨 상세 조회 (feedbackId 추출) ─────────────────────
+# ─── 13. 레슨 상세 조회 (feedbackId 추출) ─────────────────────
 RESPONSE=$(http "$APP_URL/lessons/$LESSON_ID/detail")
 FEEDBACK_ID=$(echo "$RESPONSE" | grep -o '"feedback":{"id":[0-9]*' | grep -o '[0-9]*$')
 [ -z "$FEEDBACK_ID" ] && fail "Lesson detail failed or feedbackId not found: $RESPONSE"
-log "8. GET /lessons/$LESSON_ID/detail OK (feedbackId=$FEEDBACK_ID)"
+log "13. GET /lessons/$LESSON_ID/detail OK (feedbackId=$FEEDBACK_ID)"
 
-# ─── 9. 키워드 3개 추가 ──────────────────────────────────────
+# ─── 14. 피드백 단건 조회 ─────────────────────────────────────
+http -o /dev/null "$APP_URL/feedbacks/$FEEDBACK_ID"
+log "14. GET /feedbacks/$FEEDBACK_ID OK"
+
+# ─── 15. 키워드 3개 추가 ──────────────────────────────────────
 RESPONSE=$(http -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/keywords" \
   -H "Content-Type: application/json" \
   -d '{"keyword":"워밍업키워드1"}')
 KEYWORD_ID=$(echo "$RESPONSE" | grep -o '"keywords":\[{"id":[0-9]*' | grep -o '[0-9]*$')
-log "9-1. POST /feedbacks/$FEEDBACK_ID/keywords OK (keywordId=$KEYWORD_ID)"
+log "15-1. POST /feedbacks/$FEEDBACK_ID/keywords OK (keywordId=$KEYWORD_ID)"
 
 http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/keywords" \
   -H "Content-Type: application/json" \
   -d '{"keyword":"워밍업키워드2"}'
-log "9-2. POST /feedbacks/$FEEDBACK_ID/keywords OK"
+log "15-2. POST /feedbacks/$FEEDBACK_ID/keywords OK"
 
 http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/keywords" \
   -H "Content-Type: application/json" \
   -d '{"keyword":"워밍업키워드3"}'
-log "9-3. POST /feedbacks/$FEEDBACK_ID/keywords OK"
+log "15-3. POST /feedbacks/$FEEDBACK_ID/keywords OK"
 
-# ─── 10. 키워드 수정 ─────────────────────────────────────────
+# ─── 16. 키워드 수정 ─────────────────────────────────────────
 [ -n "$KEYWORD_ID" ] && \
   http -o /dev/null -X PUT "$APP_URL/feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID" \
     -H "Content-Type: application/json" \
     -d '{"keyword":"워밍업키워드1(수정)"}'
-log "10. PUT /feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID OK"
+log "16. PUT /feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID OK"
 
-# ─── 11. AI 피드백 생성 ──────────────────────────────────────
+# ─── 17. 키워드 삭제 ─────────────────────────────────────────
+[ -n "$KEYWORD_ID" ] && \
+  http -o /dev/null -X DELETE "$APP_URL/feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID"
+log "17. DELETE /feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID OK"
+
+# ─── 18. AI 피드백 생성 ──────────────────────────────────────
 http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/generate"
-log "11. POST /feedbacks/$FEEDBACK_ID/generate OK"
+log "18. POST /feedbacks/$FEEDBACK_ID/generate OK"
 
-# ─── 12. AI 피드백 수정 ──────────────────────────────────────
+# ─── 19. AI 피드백 수정 ──────────────────────────────────────
 http -o /dev/null -X PATCH "$APP_URL/feedbacks/$FEEDBACK_ID" \
   -H "Content-Type: application/json" \
   -d '{"aiContent":"워밍업 AI 내용"}'
-log "12. PATCH /feedbacks/$FEEDBACK_ID OK"
+log "19. PATCH /feedbacks/$FEEDBACK_ID OK"
 
-# ─── 13. 레슨 삭제 (ALL) ─────────────────────────────────────
+# ─── 20. 학생 피드백 목록 조회 ───────────────────────────────
+http -o /dev/null "$APP_URL/feedbacks?studentId=$STUDENT_ID"
+log "20. GET /feedbacks?studentId=$STUDENT_ID OK"
+
+# ─── 21. 수강생 삭제 ─────────────────────────────────────────
+http -o /dev/null -X DELETE "$APP_URL/lessons/$LESSON_ID/attendees/$ATTENDEE_ID"
+log "21. DELETE /lessons/$LESSON_ID/attendees/$ATTENDEE_ID OK"
+
+# ─── 22. 레슨 삭제 (ALL) ─────────────────────────────────────
 http -o /dev/null -X DELETE "$APP_URL/lessons/$LESSON_ID?scope=ALL"
-log "13. DELETE /lessons/$LESSON_ID?scope=ALL OK"
+log "22. DELETE /lessons/$LESSON_ID?scope=ALL OK"
 
-# ─── 14. 학생 삭제 ───────────────────────────────────────────
+# ─── 23. 학생 삭제 ───────────────────────────────────────────
 http -o /dev/null -X DELETE "$APP_URL/students/$STUDENT_ID"
-log "14. DELETE /students/$STUDENT_ID OK"
+log "23. DELETE /students/$STUDENT_ID OK"
+
+# ─── 24. 로그아웃 ────────────────────────────────────────────
+http -o /dev/null -X POST "$APP_URL/auth/logout"
+log "24. POST /auth/logout OK"
 
 log "Warmup complete."
