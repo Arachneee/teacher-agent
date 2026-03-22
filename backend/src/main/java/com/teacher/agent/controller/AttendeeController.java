@@ -1,7 +1,7 @@
 package com.teacher.agent.controller;
 
-import com.teacher.agent.domain.UpdateScope;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.vo.UpdateScope;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.AttendeeCreateRequest;
 import com.teacher.agent.dto.AttendeeResponse;
 import com.teacher.agent.service.AttendeeCommandService;

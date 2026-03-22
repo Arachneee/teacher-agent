@@ -1,7 +1,7 @@
 package com.teacher.agent.controller;
 
-import com.teacher.agent.domain.UpdateScope;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.vo.UpdateScope;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonDetailResponse;
 import com.teacher.agent.dto.LessonResponse;
@@ -32,7 +32,7 @@ public class LessonController {
   @PostMapping
   public ResponseEntity<LessonResponse> create(UserId userId,
       @RequestBody @Valid LessonCreateRequest request) {
-    return ResponseEntity.ok(lessonCommandService.create(userId, request));
+    return ResponseEntity.ok(lessonCommandService.create(userId, request.toCommand(userId)));
   }
 
   @GetMapping
@@ -56,7 +56,7 @@ public class LessonController {
   @PutMapping("/{id}")
   public ResponseEntity<LessonResponse> update(UserId userId, @PathVariable @Positive Long id,
       @RequestBody @Valid LessonUpdateRequest request) {
-    return ResponseEntity.ok(lessonCommandService.update(userId, id, request));
+    return ResponseEntity.ok(lessonCommandService.update(userId, id, request.toUpdateCommand()));
   }
 
   @DeleteMapping("/{id}")

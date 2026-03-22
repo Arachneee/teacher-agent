@@ -44,15 +44,17 @@ public StudentResponse create(@RequestBody StudentCreateRequest request) { ... }
 ## DTO
 
 - `record` 사용.
-- **DTO ↔ Domain 변환 로직은 반드시 DTO 내부 팩토리 메서드로 처리한다.** Service에서 직접 변환하지 않는다.
-  - Request → Entity: `toEntity()` 메서드
+- **Service는 Request DTO를 직접 받지 않는다.** Controller에서 Request를 분해하여 primitive 파라미터 또는 Command 객체로 전달한다.
+  - 파라미터 1~3개: primitive 파라미터로 직접 전달
+  - 파라미터 4개 이상 또는 복잡한 구조: `service/vo/` 패키지에 Command record를 생성하여 전달
+  - Request → Command 변환: Request DTO 내부 `toCommand()` 메서드 사용
   - Entity → Response: `static from(Entity)` 메서드
 
 ```java
-// Request DTO
-public record StudentCreateRequest(String name, String memo) {
-    public Student toEntity() {
-        return Student.create(name, memo);
+// Request DTO (복잡한 경우 — Command 변환 메서드 제공)
+public record LessonCreateRequest(String title, ...) {
+    public LessonCreateCommand toCommand(UserId userId) {
+        return new LessonCreateCommand(userId, title, ...);
     }
 }
 
@@ -63,12 +65,14 @@ public record StudentResponse(...) {
 ```
 
 ```java
-// Good — Service에서 변환 책임 없음
-studentRepository.save(request.toEntity());
-StudentResponse.from(student);
+// Good — Controller에서 분해 후 Service에 전달 (primitive)
+studentCommandService.create(userId, request.name(), request.memo());
 
-// Bad — Service에서 직접 변환
-Student.create(request.name(), request.memo());
+// Good — Controller에서 Command로 변환 후 Service에 전달 (복잡한 경우)
+lessonCommandService.create(request.toCommand(userId));
+
+// Bad — Service가 Request DTO를 직접 받음
+studentCommandService.create(userId, request);
 ```
 
 ## Domain (Entity)

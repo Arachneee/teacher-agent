@@ -1,10 +1,8 @@
 package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Feedback;
-import com.teacher.agent.domain.FeedbackRepository;
-import com.teacher.agent.domain.UserId;
-import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
-import com.teacher.agent.dto.FeedbackKeywordUpdateRequest;
+import com.teacher.agent.domain.repository.FeedbackRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +19,10 @@ public class FeedbackKeywordService {
   private final FeedbackRepository feedbackRepository;
 
   @Transactional
-  public FeedbackResponse addKeyword(UserId userId, Long feedbackId,
-      FeedbackKeywordCreateRequest request) {
+  public FeedbackResponse addKeyword(UserId userId, Long feedbackId, String keyword) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
 
-    feedback.addKeyword(request.keyword());
+    feedback.addKeyword(keyword);
     feedbackRepository.flush();
 
     return feedbackQueryService.toResponse(feedback);
@@ -45,11 +42,11 @@ public class FeedbackKeywordService {
 
   @Transactional
   public FeedbackResponse updateKeyword(UserId userId, Long feedbackId, Long keywordId,
-      FeedbackKeywordUpdateRequest request) {
+      String keyword) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
 
     try {
-      feedback.updateKeyword(keywordId, request.keyword());
+      feedback.updateKeyword(keywordId, keyword);
     } catch (IllegalArgumentException e) {
       log.warn("키워드 수정 실패 - 존재하지 않음: feedbackId={}, keywordId={}", feedbackId, keywordId);
       throw ResourceNotFoundException.feedbackKeyword(keywordId);

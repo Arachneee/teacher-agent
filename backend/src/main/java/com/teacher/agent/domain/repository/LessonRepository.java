@@ -1,6 +1,8 @@
-package com.teacher.agent.domain;
+package com.teacher.agent.domain.repository;
 
-import com.teacher.agent.dto.LessonDetailRow;
+import com.teacher.agent.domain.Lesson;
+import com.teacher.agent.domain.vo.UserId;
+import com.teacher.agent.service.vo.LessonDetailRow;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +38,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
       UUID recurrenceGroupId, UserId userId, LocalDateTime startTime);
 
   @Query("""
-      SELECT new com.teacher.agent.dto.LessonDetailRow(
+      SELECT new com.teacher.agent.service.vo.LessonDetailRow(
           a.id,
           s.id,
           s.name,

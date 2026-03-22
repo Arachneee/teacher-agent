@@ -3,9 +3,9 @@ package com.teacher.agent.service;
 import static com.teacher.agent.util.RepositoryUtil.findLessonByIdAndUserIdOrThrow;
 
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.LessonRepository;
-import com.teacher.agent.domain.UpdateScope;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.vo.UpdateScope;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.LessonResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

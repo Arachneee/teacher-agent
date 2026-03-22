@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.Recurrence;
-import com.teacher.agent.domain.RecurrenceType;
-import com.teacher.agent.domain.UserId;
-import com.teacher.agent.dto.LessonCreateCommand;
+import com.teacher.agent.domain.vo.Recurrence;
+import com.teacher.agent.domain.vo.RecurrenceType;
+import com.teacher.agent.domain.vo.UserId;
+import com.teacher.agent.service.vo.LessonCreateCommand;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

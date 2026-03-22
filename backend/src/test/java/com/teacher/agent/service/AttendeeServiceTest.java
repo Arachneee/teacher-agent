@@ -3,16 +3,16 @@ package com.teacher.agent.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.LessonRepository;
-import com.teacher.agent.domain.RecurrenceType;
 import com.teacher.agent.domain.Student;
-import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UpdateScope;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.FeedbackRepository;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.RecurrenceType;
+import com.teacher.agent.domain.vo.UpdateScope;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.AttendeeResponse;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.RecurrenceCreateRequest;
@@ -194,7 +194,7 @@ class AttendeeServiceTest {
     RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
         RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 20));
     lessonCommandService.create(userId,
-        new LessonCreateRequest("수학", START, END, recurrence, null));
+        new LessonCreateRequest("수학", START, END, recurrence, null).toCommand(userId));
 
     List<Lesson> lessons = lessonRepository.findAll();
     assertThat(lessons).hasSizeGreaterThan(1);
@@ -214,7 +214,8 @@ class AttendeeServiceTest {
     RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
         RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 20));
     lessonCommandService.create(userId,
-        new LessonCreateRequest("수학", START, END, recurrence, List.of(student.getId())));
+        new LessonCreateRequest("수학", START, END, recurrence, List.of(student.getId()))
+            .toCommand(userId));
 
     List<Lesson> lessons = lessonRepository.findAll();
     for (Lesson l : lessons) {
@@ -237,7 +238,7 @@ class AttendeeServiceTest {
     RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
         RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 20));
     lessonCommandService.create(userId,
-        new LessonCreateRequest("수학", START, END, recurrence, null));
+        new LessonCreateRequest("수학", START, END, recurrence, null).toCommand(userId));
 
     List<Lesson> lessons = lessonRepository.findAll();
     assertThat(lessons).hasSizeGreaterThan(1);

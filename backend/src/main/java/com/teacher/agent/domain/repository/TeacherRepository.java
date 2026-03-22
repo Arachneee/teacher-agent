@@ -1,5 +1,7 @@
-package com.teacher.agent.domain;
+package com.teacher.agent.domain.repository;
 
+import com.teacher.agent.domain.Teacher;
+import com.teacher.agent.domain.vo.UserId;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

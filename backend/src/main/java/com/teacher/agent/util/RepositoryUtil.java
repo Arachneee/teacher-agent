@@ -1,12 +1,12 @@
 package com.teacher.agent.util;
 
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.LessonRepository;
 import com.teacher.agent.domain.Student;
-import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.exception.ResourceNotFoundException;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.repository.JpaRepository;

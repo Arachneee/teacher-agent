@@ -3,6 +3,9 @@ package com.teacher.agent.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.teacher.agent.domain.vo.Recurrence;
+import com.teacher.agent.domain.vo.RecurrenceType;
+import com.teacher.agent.domain.vo.UserId;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;

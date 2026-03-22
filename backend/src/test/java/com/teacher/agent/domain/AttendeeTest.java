@@ -3,6 +3,7 @@ package com.teacher.agent.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.teacher.agent.domain.vo.UserId;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 

@@ -1,8 +1,8 @@
 package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.TeacherResponse;
 import com.teacher.agent.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;

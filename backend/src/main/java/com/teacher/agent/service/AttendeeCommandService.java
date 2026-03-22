@@ -4,12 +4,12 @@ import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrTh
 
 import com.teacher.agent.domain.Attendee;
 import com.teacher.agent.domain.Feedback;
-import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.LessonRepository;
-import com.teacher.agent.domain.StudentRepository;
-import com.teacher.agent.domain.UpdateScope;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.FeedbackRepository;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.vo.UpdateScope;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.AttendeeResponse;
 import com.teacher.agent.exception.ResourceNotFoundException;
 import java.util.List;

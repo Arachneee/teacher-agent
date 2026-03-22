@@ -3,20 +3,19 @@ package com.teacher.agent.service;
 import static com.teacher.agent.util.ErrorMessages.SOME_STUDENTS_NOT_FOUND;
 
 import com.teacher.agent.domain.Feedback;
-import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.LessonRepository;
-import com.teacher.agent.domain.Recurrence;
 import com.teacher.agent.domain.Student;
-import com.teacher.agent.domain.StudentRepository;
-import com.teacher.agent.domain.UpdateScope;
-import com.teacher.agent.domain.UserId;
-import com.teacher.agent.dto.LessonCreateCommand;
-import com.teacher.agent.dto.LessonCreateRequest;
+import com.teacher.agent.domain.repository.FeedbackRepository;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.vo.Recurrence;
+import com.teacher.agent.domain.vo.UpdateScope;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.LessonResponse;
-import com.teacher.agent.dto.LessonUpdateRequest;
 import com.teacher.agent.exception.BadRequestException;
 import com.teacher.agent.exception.ResourceNotFoundException;
+import com.teacher.agent.service.vo.LessonCreateCommand;
+import com.teacher.agent.service.vo.LessonUpdateCommand;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -35,8 +34,7 @@ public class LessonCommandService {
   private final FeedbackRepository feedbackRepository;
 
   @Transactional
-  public LessonResponse create(UserId userId, LessonCreateRequest request) {
-    var command = request.toCommand(userId);
+  public LessonResponse create(UserId userId, LessonCreateCommand command) {
     List<Lesson> lessons = lessonFactory.createFrom(command);
     if (lessons.isEmpty()) {
       throw BadRequestException.noLessonGenerated();
@@ -65,34 +63,34 @@ public class LessonCommandService {
   }
 
   @Transactional
-  public LessonResponse update(UserId userId, Long id, LessonUpdateRequest request) {
+  public LessonResponse update(UserId userId, Long id, LessonUpdateCommand command) {
     Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(id, userId);
 
-    if (request.recurrence() != null && lesson.getRecurrenceGroupId() == null) {
-      return convertToRecurring(lesson, request);
+    if (command.recurrence() != null && lesson.getRecurrenceGroupId() == null) {
+      return convertToRecurring(lesson, command);
     }
 
-    UpdateScope scope = request.resolvedScope();
+    UpdateScope scope = command.scope();
     List<Lesson> targets = lessonQueryService.findSeriesLessons(lesson, userId, scope);
 
     if (scope == UpdateScope.SINGLE) {
-      lesson.update(request.title(), request.startTime(), request.endTime());
+      lesson.update(command.title(), command.startTime(), command.endTime());
     } else {
-      long durationMinutes = Duration.between(request.startTime(), request.endTime()).toMinutes();
+      long durationMinutes = Duration.between(command.startTime(), command.endTime()).toMinutes();
       for (Lesson target : targets) {
-        target.updateTime(request.title(), request.startTime().toLocalTime(), durationMinutes);
+        target.updateTime(command.title(), command.startTime().toLocalTime(), durationMinutes);
       }
     }
 
-    applyAttendeeChanges(userId, targets, request);
+    applyAttendeeChanges(userId, targets, command);
 
     return LessonResponse.from(lesson);
   }
 
   private void applyAttendeeChanges(
-      UserId userId, List<Lesson> targets, LessonUpdateRequest request) {
-    List<Long> addStudentIds = request.resolvedAddStudentIds();
-    List<Long> removeStudentIds = request.resolvedRemoveStudentIds();
+      UserId userId, List<Lesson> targets, LessonUpdateCommand command) {
+    List<Long> addStudentIds = command.addStudentIds();
+    List<Long> removeStudentIds = command.removeStudentIds();
 
     if (addStudentIds.isEmpty() && removeStudentIds.isEmpty()) {
       return;
@@ -137,20 +135,20 @@ public class LessonCommandService {
     }
   }
 
-  private LessonResponse convertToRecurring(Lesson lesson, LessonUpdateRequest request) {
-    Recurrence recurrence = request.recurrence().toEntity();
+  private LessonResponse convertToRecurring(Lesson lesson, LessonUpdateCommand command) {
+    Recurrence recurrence = command.recurrence();
 
-    lesson.update(request.title(), request.startTime(), request.endTime());
+    lesson.update(command.title(), command.startTime(), command.endTime());
 
-    var command =
+    var createCommand =
         new LessonCreateCommand(
             lesson.getUserId(),
-            request.title(),
-            request.startTime(),
-            request.endTime(),
+            command.title(),
+            command.startTime(),
+            command.endTime(),
             recurrence,
             null);
-    List<Lesson> generated = lessonFactory.createFrom(command);
+    List<Lesson> generated = lessonFactory.createFrom(createCommand);
 
     if (generated.isEmpty()) {
       throw BadRequestException.noLessonGenerated();

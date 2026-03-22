@@ -1,7 +1,7 @@
 package com.teacher.agent.service;
 
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;

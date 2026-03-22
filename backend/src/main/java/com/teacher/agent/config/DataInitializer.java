@@ -1,8 +1,8 @@
 package com.teacher.agent.config;
 
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;

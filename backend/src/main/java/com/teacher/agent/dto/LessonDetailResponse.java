@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 import com.teacher.agent.domain.Lesson;
+import com.teacher.agent.service.vo.LessonDetailRow;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;

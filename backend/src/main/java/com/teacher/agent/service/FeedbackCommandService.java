@@ -1,14 +1,12 @@
 package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Feedback;
-import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.Student;
-import com.teacher.agent.domain.StudentRepository;
-import com.teacher.agent.domain.UserId;
-import com.teacher.agent.dto.FeedbackCreateRequest;
+import com.teacher.agent.domain.repository.FeedbackRepository;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.FeedbackResponse;
-import com.teacher.agent.dto.FeedbackUpdateRequest;
 import com.teacher.agent.exception.BadRequestException;
 import com.teacher.agent.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,23 +25,23 @@ public class FeedbackCommandService {
   private final StudentRepository studentRepository;
 
   @Transactional
-  public FeedbackResponse create(UserId userId, FeedbackCreateRequest request) {
-    feedbackQueryService.findStudentByIdAndVerifyOwner(request.studentId(), userId);
-    Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(request.lessonId(), userId);
-    verifyStudentEnrolled(lesson, request.studentId());
+  public FeedbackResponse create(UserId userId, Long studentId, Long lessonId) {
+    feedbackQueryService.findStudentByIdAndVerifyOwner(studentId, userId);
+    Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(lessonId, userId);
+    verifyStudentEnrolled(lesson, studentId);
 
     return feedbackQueryService.toResponse(
-        feedbackRepository.save(Feedback.create(request.studentId(), request.lessonId())));
+        feedbackRepository.save(Feedback.create(studentId, lessonId)));
   }
 
   @Transactional
-  public FeedbackResponse update(UserId userId, Long feedbackId, FeedbackUpdateRequest request) {
+  public FeedbackResponse update(UserId userId, Long feedbackId, String aiContent) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
 
-    if (request.aiContent() == null || request.aiContent().isBlank()) {
+    if (aiContent == null || aiContent.isBlank()) {
       feedback.clearAiContent();
     } else {
-      feedback.updateAiContent(request.aiContent());
+      feedback.updateAiContent(aiContent);
     }
 
     return feedbackQueryService.toResponse(feedback);

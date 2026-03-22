@@ -8,10 +8,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.AuthResponse;
-import com.teacher.agent.dto.LoginRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -46,7 +45,6 @@ class AuthServiceTest {
   void 로그인에_성공한다() {
     HttpServletRequest httpRequest = mock(HttpServletRequest.class);
     HttpServletResponse httpResponse = mock(HttpServletResponse.class);
-    LoginRequest request = new LoginRequest("teacher1", "password");
     Authentication authentication = mock(Authentication.class);
     given(authentication.getName()).willReturn("teacher1");
     given(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -56,7 +54,7 @@ class AuthServiceTest {
     given(teacherRepository.findByUserId(new UserId("teacher1")))
         .willReturn(Optional.of(teacher));
 
-    AuthResponse response = authService.login(request, httpRequest, httpResponse);
+    AuthResponse response = authService.login("teacher1", "password", httpRequest, httpResponse);
 
     assertThat(response.userId()).isEqualTo("teacher1");
     assertThat(response.name()).isEqualTo("김선생");
@@ -67,11 +65,11 @@ class AuthServiceTest {
   void 잘못된_비밀번호로_로그인_시_예외가_발생한다() {
     HttpServletRequest httpRequest = mock(HttpServletRequest.class);
     HttpServletResponse httpResponse = mock(HttpServletResponse.class);
-    LoginRequest request = new LoginRequest("teacher1", "wrongPassword");
     given(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
         .willThrow(new BadCredentialsException("Bad credentials"));
 
-    assertThatThrownBy(() -> authService.login(request, httpRequest, httpResponse))
+    assertThatThrownBy(
+        () -> authService.login("teacher1", "wrongPassword", httpRequest, httpResponse))
         .isInstanceOf(BadCredentialsException.class);
   }
 
@@ -79,7 +77,6 @@ class AuthServiceTest {
   void 존재하지_않는_교사로_로그인_성공_시_기본_응답을_반환한다() {
     HttpServletRequest httpRequest = mock(HttpServletRequest.class);
     HttpServletResponse httpResponse = mock(HttpServletResponse.class);
-    LoginRequest request = new LoginRequest("unknown", "password");
     Authentication authentication = mock(Authentication.class);
     given(authentication.getName()).willReturn("unknown");
     given(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -87,7 +84,7 @@ class AuthServiceTest {
     given(teacherRepository.findByUserId(new UserId("unknown")))
         .willReturn(Optional.empty());
 
-    AuthResponse response = authService.login(request, httpRequest, httpResponse);
+    AuthResponse response = authService.login("unknown", "password", httpRequest, httpResponse);
 
     assertThat(response.userId()).isEqualTo("unknown");
     assertThat(response.name()).isNull();

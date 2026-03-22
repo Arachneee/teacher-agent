@@ -7,8 +7,17 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-import com.teacher.agent.domain.*;
-import com.teacher.agent.dto.*;
+import com.teacher.agent.domain.FeedbackLike;
+import com.teacher.agent.domain.Lesson;
+import com.teacher.agent.domain.Student;
+import com.teacher.agent.domain.Teacher;
+import com.teacher.agent.domain.repository.FeedbackLikeRepository;
+import com.teacher.agent.domain.repository.FeedbackRepository;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
+import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.exception.BadRequestException;
 import com.teacher.agent.exception.BusinessException;
 import jakarta.persistence.EntityManager;
@@ -97,7 +106,7 @@ class FeedbackServiceTest {
   @Test
   void 피드백을_생성한다() {
     FeedbackResponse response =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThat(response.id()).isNotNull();
     assertThat(response.studentId()).isEqualTo(studentId);
@@ -108,24 +117,23 @@ class FeedbackServiceTest {
 
   @Test
   void 같은_수업에_동일_학생의_피드백을_중복_생성_시_예외가_발생한다() {
-    feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+    feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThatThrownBy(
-        () -> feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId)))
+        () -> feedbackCommandService.create(userId, studentId, lessonId))
         .isInstanceOf(Exception.class);
   }
 
   @Test
   void 다른_선생님_학생으로_피드백_생성_시_예외가_발생한다() {
-    assertThatThrownBy(() -> feedbackCommandService.create(otherUserId,
-        new FeedbackCreateRequest(studentId, lessonId)))
+    assertThatThrownBy(() -> feedbackCommandService.create(otherUserId, studentId, lessonId))
         .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 존재하지_않는_학생으로_피드백_생성_시_예외가_발생한다() {
     assertThatThrownBy(
-        () -> feedbackCommandService.create(userId, new FeedbackCreateRequest(999L, lessonId)))
+        () -> feedbackCommandService.create(userId, 999L, lessonId))
         .isInstanceOf(BusinessException.class);
   }
 
@@ -133,14 +141,14 @@ class FeedbackServiceTest {
   void 수업에_등록되지_않은_학생으로_피드백_생성_시_예외가_발생한다() {
     Student unenrolledStudent = studentRepository.save(Student.create(userId, "미등록학생", null));
 
-    assertThatThrownBy(() -> feedbackCommandService.create(userId,
-        new FeedbackCreateRequest(unenrolledStudent.getId(), lessonId)))
+    assertThatThrownBy(
+        () -> feedbackCommandService.create(userId, unenrolledStudent.getId(), lessonId))
         .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 학생_ID로_피드백_목록을_조회한다() {
-    feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+    feedbackCommandService.create(userId, studentId, lessonId);
 
     var feedbacks = feedbackQueryService.getAll(userId, studentId);
 
@@ -157,7 +165,7 @@ class FeedbackServiceTest {
   @Test
   void 피드백을_단건_조회한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     FeedbackResponse found = feedbackQueryService.getOne(userId, created.id());
 
@@ -167,7 +175,7 @@ class FeedbackServiceTest {
   @Test
   void 다른_선생님의_피드백_단건_조회_시_예외가_발생한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThatThrownBy(() -> feedbackQueryService.getOne(otherUserId, created.id()))
         .isInstanceOf(BusinessException.class);
@@ -182,10 +190,10 @@ class FeedbackServiceTest {
   @Test
   void 피드백의_AI_콘텐츠를_수정한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     FeedbackResponse updated = feedbackCommandService.update(userId, created.id(),
-        new FeedbackUpdateRequest("수정된 AI 콘텐츠"));
+        "수정된 AI 콘텐츠");
 
     assertThat(updated.aiContent()).isEqualTo("수정된 AI 콘텐츠");
   }
@@ -193,11 +201,11 @@ class FeedbackServiceTest {
   @Test
   void 빈_문자열로_수정하면_AI_콘텐츠가_초기화된다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI 콘텐츠"));
+        feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "AI 콘텐츠");
 
     FeedbackResponse updated =
-        feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest(""));
+        feedbackCommandService.update(userId, created.id(), "");
 
     assertThat(updated.aiContent()).isNull();
   }
@@ -205,11 +213,11 @@ class FeedbackServiceTest {
   @Test
   void null로_수정하면_AI_콘텐츠가_초기화된다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI 콘텐츠"));
+        feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "AI 콘텐츠");
 
     FeedbackResponse updated =
-        feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest(null));
+        feedbackCommandService.update(userId, created.id(), null);
 
     assertThat(updated.aiContent()).isNull();
   }
@@ -217,7 +225,7 @@ class FeedbackServiceTest {
   @Test
   void 피드백을_삭제한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     feedbackCommandService.delete(userId, created.id());
 
@@ -228,7 +236,7 @@ class FeedbackServiceTest {
   @Test
   void 다른_선생님의_피드백_삭제_시_예외가_발생한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThatThrownBy(() -> feedbackCommandService.delete(otherUserId, created.id()))
         .isInstanceOf(BusinessException.class);
@@ -237,10 +245,10 @@ class FeedbackServiceTest {
   @Test
   void 키워드를_추가한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     FeedbackResponse updated = feedbackKeywordService.addKeyword(userId, created.id(),
-        new FeedbackKeywordCreateRequest("성실함"));
+        "성실함");
 
     assertThat(updated.keywords()).hasSize(1);
     assertThat(updated.keywords().get(0).keyword()).isEqualTo("성실함");
@@ -250,9 +258,9 @@ class FeedbackServiceTest {
   @Test
   void 키워드를_삭제한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
     FeedbackResponse withKeyword = feedbackKeywordService.addKeyword(userId, created.id(),
-        new FeedbackKeywordCreateRequest("성실함"));
+        "성실함");
     Long keywordId = withKeyword.keywords().get(0).id();
 
     feedbackKeywordService.removeKeyword(userId, created.id(), keywordId);
@@ -264,7 +272,7 @@ class FeedbackServiceTest {
   @Test
   void 존재하지_않는_키워드_삭제_시_예외가_발생한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThatThrownBy(() -> feedbackKeywordService.removeKeyword(userId, created.id(), 999L))
         .isInstanceOf(BusinessException.class);
@@ -273,13 +281,13 @@ class FeedbackServiceTest {
   @Test
   void 키워드를_수정한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
     FeedbackResponse withKeyword = feedbackKeywordService.addKeyword(userId, created.id(),
-        new FeedbackKeywordCreateRequest("성실함"));
+        "성실함");
     Long keywordId = withKeyword.keywords().get(0).id();
 
     FeedbackResponse updated = feedbackKeywordService.updateKeyword(userId, created.id(), keywordId,
-        new FeedbackKeywordUpdateRequest("꼼꼼함"));
+        "꼼꼼함");
 
     assertThat(updated.keywords()).hasSize(1);
     assertThat(updated.keywords().get(0).keyword()).isEqualTo("꼼꼼함");
@@ -289,32 +297,32 @@ class FeedbackServiceTest {
   @Test
   void 존재하지_않는_키워드_수정_시_예외가_발생한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThatThrownBy(() -> feedbackKeywordService.updateKeyword(userId, created.id(), 999L,
-        new FeedbackKeywordUpdateRequest("꼼꼼함")))
+        "꼼꼼함"))
         .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 다른_선생님_피드백의_키워드_수정_시_예외가_발생한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
     FeedbackResponse withKeyword = feedbackKeywordService.addKeyword(userId, created.id(),
-        new FeedbackKeywordCreateRequest("성실함"));
+        "성실함");
     Long keywordId = withKeyword.keywords().get(0).id();
 
     assertThatThrownBy(() -> feedbackKeywordService.updateKeyword(otherUserId, created.id(),
-        keywordId, new FeedbackKeywordUpdateRequest("꼼꼼함")))
+        keywordId, "꼼꼼함"))
         .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void AI_콘텐츠를_생성한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
-        new FeedbackKeywordCreateRequest("성실함"));
+        "성실함");
     given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동"))).willReturn("AI가 생성한 피드백");
 
     feedbackCommandService.generateAiContent(userId, created.id());
@@ -325,7 +333,7 @@ class FeedbackServiceTest {
   @Test
   void 키워드_없이_AI_콘텐츠_생성_시_예외가_발생한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThatThrownBy(() -> feedbackCommandService.generateAiContent(userId, created.id()))
         .isInstanceOf(BadRequestException.class);
@@ -334,8 +342,8 @@ class FeedbackServiceTest {
   @Test
   void 피드백에_좋아요를_누른다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "AI 피드백 내용");
 
     FeedbackResponse liked = feedbackLikeService.like(userId, created.id());
 
@@ -345,7 +353,7 @@ class FeedbackServiceTest {
   @Test
   void AI_콘텐츠가_없으면_좋아요에_실패한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThatThrownBy(() -> feedbackLikeService.like(userId, created.id()))
         .isInstanceOf(BadRequestException.class);
@@ -354,8 +362,8 @@ class FeedbackServiceTest {
   @Test
   void 같은_내용에_좋아요를_중복으로_누르면_실패한다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "AI 피드백 내용");
     feedbackLikeService.like(userId, created.id());
 
     assertThatThrownBy(() -> feedbackLikeService.like(userId, created.id()))
@@ -365,12 +373,12 @@ class FeedbackServiceTest {
   @Test
   void 좋아요_후_수정하면_다시_좋아요할_수_있다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("원본 내용"));
+        feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "원본 내용");
     feedbackLikeService.like(userId, created.id());
 
     FeedbackResponse updated =
-        feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("수정된 내용"));
+        feedbackCommandService.update(userId, created.id(), "수정된 내용");
     assertThat(updated.liked()).isFalse();
 
     FeedbackResponse reLiked = feedbackLikeService.like(userId, created.id());
@@ -380,15 +388,15 @@ class FeedbackServiceTest {
   @Test
   void 좋아요_후_AI_재생성하면_다시_좋아요할_수_있다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
-        new FeedbackKeywordCreateRequest("성실함"));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI가 생성한 피드백"));
+        "성실함");
+    feedbackCommandService.update(userId, created.id(), "AI가 생성한 피드백");
     feedbackLikeService.like(userId, created.id());
 
     FeedbackResponse regenerated =
         feedbackCommandService.update(userId, created.id(),
-            new FeedbackUpdateRequest("새로 생성한 피드백"));
+            "새로 생성한 피드백");
     assertThat(regenerated.liked()).isFalse();
 
     FeedbackResponse reLiked = feedbackLikeService.like(userId, created.id());
@@ -398,10 +406,10 @@ class FeedbackServiceTest {
   @Test
   void 좋아요_이력은_누적_저장된다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("버전 1"));
+        feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "버전 1");
     feedbackLikeService.like(userId, created.id());
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("버전 2"));
+    feedbackCommandService.update(userId, created.id(), "버전 2");
     feedbackLikeService.like(userId, created.id());
 
     Long likeCount = entityManager
@@ -414,10 +422,10 @@ class FeedbackServiceTest {
   @Test
   void 좋아요_시_스냅샷이_저장된다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
+        feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
-        new FeedbackKeywordCreateRequest("성실함"));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        "성실함");
+    feedbackCommandService.update(userId, created.id(), "AI 피드백 내용");
     feedbackLikeService.like(userId, created.id());
 
     FeedbackLike feedbackLike = entityManager
@@ -431,8 +439,8 @@ class FeedbackServiceTest {
   @Test
   void 피드백_삭제_시_좋아요_이력도_삭제된다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "AI 피드백 내용");
     feedbackLikeService.like(userId, created.id());
 
     feedbackCommandService.delete(userId, created.id());
@@ -445,8 +453,8 @@ class FeedbackServiceTest {
   @Test
   void 수정_사항이_없으면_좋아요_상태가_유지된다() {
     FeedbackResponse created =
-        feedbackCommandService.create(userId, new FeedbackCreateRequest(studentId, lessonId));
-    feedbackCommandService.update(userId, created.id(), new FeedbackUpdateRequest("AI 피드백 내용"));
+        feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "AI 피드백 내용");
     feedbackLikeService.like(userId, created.id());
 
     FeedbackResponse fetched = feedbackQueryService.getOne(userId, created.id());

@@ -1,4 +1,4 @@
-package com.teacher.agent.dto;
+package com.teacher.agent.service.vo;
 
 import java.time.LocalDateTime;
 

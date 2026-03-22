@@ -1,6 +1,6 @@
 package com.teacher.agent.dto;
 
-import com.teacher.agent.domain.UpdateScope;
+import com.teacher.agent.domain.vo.UpdateScope;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 

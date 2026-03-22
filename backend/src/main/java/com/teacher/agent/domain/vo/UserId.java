@@ -1,4 +1,4 @@
-package com.teacher.agent.domain;
+package com.teacher.agent.domain.vo;
 
 import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
 

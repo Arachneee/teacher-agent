@@ -2,8 +2,8 @@ package com.teacher.agent.service;
 
 import static com.teacher.agent.util.RepositoryUtil.findStudentByIdAndUserIdOrThrow;
 
-import com.teacher.agent.domain.StudentRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.StudentResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

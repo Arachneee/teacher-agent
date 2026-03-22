@@ -3,13 +3,11 @@ package com.teacher.agent.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
-import com.teacher.agent.dto.StudentCreateRequest;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.StudentResponse;
-import com.teacher.agent.dto.StudentUpdateRequest;
 import com.teacher.agent.exception.BusinessException;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -59,7 +57,7 @@ class StudentServiceTest {
   @Test
   void 학생을_생성한다() {
     StudentResponse response =
-        studentCommandService.create(userId, new StudentCreateRequest("홍길동", "성실한 학생"));
+        studentCommandService.create(userId, "홍길동", "성실한 학생");
 
     assertThat(response.id()).isNotNull();
     assertThat(response.name()).isEqualTo("홍길동");
@@ -70,9 +68,9 @@ class StudentServiceTest {
 
   @Test
   void 내_학생_목록을_조회한다() {
-    studentCommandService.create(userId, new StudentCreateRequest("홍길동", null));
-    studentCommandService.create(userId, new StudentCreateRequest("김철수", null));
-    studentCommandService.create(otherUserId, new StudentCreateRequest("다른선생학생", null));
+    studentCommandService.create(userId, "홍길동", null);
+    studentCommandService.create(userId, "김철수", null);
+    studentCommandService.create(otherUserId, "다른선생학생", null);
 
     List<StudentResponse> students = studentQueryService.getAll(userId);
 
@@ -82,7 +80,7 @@ class StudentServiceTest {
   @Test
   void 학생을_단건_조회한다() {
     StudentResponse created =
-        studentCommandService.create(userId, new StudentCreateRequest("홍길동", "메모"));
+        studentCommandService.create(userId, "홍길동", "메모");
 
     StudentResponse found = studentQueryService.getOne(userId, created.id());
 
@@ -94,7 +92,7 @@ class StudentServiceTest {
   @Test
   void 다른_선생님_학생_조회_시_예외가_발생한다() {
     StudentResponse created =
-        studentCommandService.create(userId, new StudentCreateRequest("홍길동", "메모"));
+        studentCommandService.create(userId, "홍길동", "메모");
 
     assertThatThrownBy(() -> studentQueryService.getOne(otherUserId, created.id()))
         .isInstanceOf(BusinessException.class);
@@ -109,10 +107,10 @@ class StudentServiceTest {
   @Test
   void 학생_정보를_수정한다() {
     StudentResponse created =
-        studentCommandService.create(userId, new StudentCreateRequest("홍길동", "메모"));
+        studentCommandService.create(userId, "홍길동", "메모");
 
     StudentResponse updated =
-        studentCommandService.update(userId, created.id(), new StudentUpdateRequest("김철수", "새 메모"));
+        studentCommandService.update(userId, created.id(), "김철수", "새 메모");
 
     assertThat(updated.id()).isEqualTo(created.id());
     assertThat(updated.name()).isEqualTo("김철수");
@@ -122,23 +120,23 @@ class StudentServiceTest {
   @Test
   void 다른_선생님_학생_수정_시_예외가_발생한다() {
     StudentResponse created =
-        studentCommandService.create(userId, new StudentCreateRequest("홍길동", "메모"));
+        studentCommandService.create(userId, "홍길동", "메모");
 
     assertThatThrownBy(() -> studentCommandService.update(otherUserId, created.id(),
-        new StudentUpdateRequest("이름", "메모"))).isInstanceOf(BusinessException.class);
+        "이름", "메모")).isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 존재하지_않는_학생_수정_시_예외가_발생한다() {
     assertThatThrownBy(
-        () -> studentCommandService.update(userId, 999L, new StudentUpdateRequest("이름", "메모")))
+        () -> studentCommandService.update(userId, 999L, "이름", "메모"))
         .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 학생을_삭제한다() {
     StudentResponse created =
-        studentCommandService.create(userId, new StudentCreateRequest("홍길동", null));
+        studentCommandService.create(userId, "홍길동", null);
 
     studentCommandService.delete(userId, created.id());
 
@@ -149,7 +147,7 @@ class StudentServiceTest {
   @Test
   void 다른_선생님_학생_삭제_시_예외가_발생한다() {
     StudentResponse created =
-        studentCommandService.create(userId, new StudentCreateRequest("홍길동", null));
+        studentCommandService.create(userId, "홍길동", null);
 
     assertThatThrownBy(() -> studentCommandService.delete(otherUserId, created.id()))
         .isInstanceOf(BusinessException.class);

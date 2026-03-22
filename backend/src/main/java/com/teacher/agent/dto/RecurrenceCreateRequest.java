@@ -1,7 +1,7 @@
 package com.teacher.agent.dto;
 
-import com.teacher.agent.domain.Recurrence;
-import com.teacher.agent.domain.RecurrenceType;
+import com.teacher.agent.domain.vo.Recurrence;
+import com.teacher.agent.domain.vo.RecurrenceType;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

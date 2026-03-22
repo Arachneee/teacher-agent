@@ -4,14 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.teacher.agent.domain.Attendee;
-import com.teacher.agent.domain.FeedbackRepository;
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.LessonRepository;
-import com.teacher.agent.domain.RecurrenceType;
 import com.teacher.agent.domain.Student;
-import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.repository.FeedbackRepository;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.RecurrenceType;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.RecurrenceCreateRequest;
@@ -71,7 +71,8 @@ class LessonStudentEnrollmentTest {
   @Test
   void 수업_생성_시_학생을_수강생으로_등록한다() {
     LessonResponse response = lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null, List.of(student1.getId())));
+        new LessonCreateRequest("수학", START, END, null, List.of(student1.getId()))
+            .toCommand(teacher.getUserId()));
 
     Lesson lesson = lessonRepository.findById(response.id()).orElseThrow();
     List<Attendee> attendees = lesson.getAttendees();
@@ -84,7 +85,7 @@ class LessonStudentEnrollmentTest {
   void 수업_생성_시_여러_학생을_수강생으로_등록한다() {
     LessonResponse response = lessonCommandService.create(teacher.getUserId(),
         new LessonCreateRequest("수학", START, END, null,
-            List.of(student1.getId(), student2.getId())));
+            List.of(student1.getId(), student2.getId())).toCommand(teacher.getUserId()));
 
     Lesson lesson = lessonRepository.findById(response.id()).orElseThrow();
     List<Attendee> attendees = lesson.getAttendees();
@@ -97,7 +98,8 @@ class LessonStudentEnrollmentTest {
   @Test
   void 수업_생성_시_수강생_등록과_함께_피드백이_생성된다() {
     LessonResponse response = lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null, List.of(student1.getId())));
+        new LessonCreateRequest("수학", START, END, null, List.of(student1.getId()))
+            .toCommand(teacher.getUserId()));
 
     assertThat(feedbackRepository.findByStudentIdAndLessonId(student1.getId(), response.id()))
         .isPresent();
@@ -110,7 +112,7 @@ class LessonStudentEnrollmentTest {
 
     lessonCommandService.create(teacher.getUserId(),
         new LessonCreateRequest("수학", START, END, recurrence,
-            List.of(student1.getId(), student2.getId())));
+            List.of(student1.getId(), student2.getId())).toCommand(teacher.getUserId()));
 
     List<Lesson> lessons = lessonRepository.findAll();
     assertThat(lessons).hasSize(3);
@@ -128,7 +130,8 @@ class LessonStudentEnrollmentTest {
         RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 18));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, recurrence, List.of(student1.getId())));
+        new LessonCreateRequest("수학", START, END, recurrence, List.of(student1.getId()))
+            .toCommand(teacher.getUserId()));
 
     List<Lesson> lessons = lessonRepository.findAll();
     assertThat(lessons).hasSize(3);
@@ -146,7 +149,8 @@ class LessonStudentEnrollmentTest {
         LocalDate.of(2026, 3, 25));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, recurrence, List.of(student1.getId())));
+        new LessonCreateRequest("수학", START, END, recurrence, List.of(student1.getId()))
+            .toCommand(teacher.getUserId()));
 
     List<Lesson> lessons = lessonRepository.findAll();
     assertThat(lessons).hasSizeGreaterThan(1);
@@ -165,14 +169,15 @@ class LessonStudentEnrollmentTest {
         Student.create(otherTeacher.getUserId(), "다른학생", null));
 
     assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null, List.of(otherStudent.getId()))))
+        new LessonCreateRequest("수학", START, END, null, List.of(otherStudent.getId()))
+            .toCommand(teacher.getUserId())))
         .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void studentIds가_null이면_수강생_없이_수업만_생성된다() {
     LessonResponse response = lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null, null));
+        new LessonCreateRequest("수학", START, END, null, null).toCommand(teacher.getUserId()));
 
     Lesson lesson = lessonRepository.findById(response.id()).orElseThrow();
     assertThat(lesson.getAttendees()).isEmpty();
@@ -181,7 +186,7 @@ class LessonStudentEnrollmentTest {
   @Test
   void studentIds가_빈_리스트이면_수강생_없이_수업만_생성된다() {
     LessonResponse response = lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null, List.of()));
+        new LessonCreateRequest("수학", START, END, null, List.of()).toCommand(teacher.getUserId()));
 
     Lesson lesson = lessonRepository.findById(response.id()).orElseThrow();
     assertThat(lesson.getAttendees()).isEmpty();

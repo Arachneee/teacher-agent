@@ -1,4 +1,4 @@
-package com.teacher.agent.domain;
+package com.teacher.agent.domain.vo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

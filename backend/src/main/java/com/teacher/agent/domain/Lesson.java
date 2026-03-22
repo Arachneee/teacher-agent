@@ -5,6 +5,8 @@ import static com.teacher.agent.util.ErrorMessages.ATTENDEE_NOT_FOUND;
 import static com.teacher.agent.util.Parameter.*;
 import static com.teacher.agent.util.ValidationUtil.*;
 
+import com.teacher.agent.domain.vo.Recurrence;
+import com.teacher.agent.domain.vo.UserId;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;

@@ -1,4 +1,4 @@
-package com.teacher.agent.domain;
+package com.teacher.agent.domain.vo;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

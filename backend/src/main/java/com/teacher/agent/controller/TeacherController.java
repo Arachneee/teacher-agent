@@ -1,6 +1,6 @@
 package com.teacher.agent.controller;
 
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.TeacherResponse;
 import com.teacher.agent.dto.TeacherUpdateRequest;
 import com.teacher.agent.service.TeacherCommandService;
@@ -26,6 +26,7 @@ public class TeacherController {
   @PutMapping("/me")
   public ResponseEntity<TeacherResponse> updateMe(UserId userId,
       @RequestBody @Valid TeacherUpdateRequest request) {
-    return ResponseEntity.ok(teacherCommandService.updateByUserId(userId, request));
+    return ResponseEntity
+        .ok(teacherCommandService.updateByUserId(userId, request.name(), request.subject()));
   }
 }

@@ -1,6 +1,6 @@
 package com.teacher.agent.controller;
 
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.StudentCreateRequest;
 import com.teacher.agent.dto.StudentResponse;
 import com.teacher.agent.dto.StudentUpdateRequest;
@@ -26,7 +26,7 @@ public class StudentController {
   @PostMapping
   public ResponseEntity<StudentResponse> create(UserId userId,
       @RequestBody @Valid StudentCreateRequest request) {
-    return ResponseEntity.ok(studentCommandService.create(userId, request));
+    return ResponseEntity.ok(studentCommandService.create(userId, request.name(), request.memo()));
   }
 
   @GetMapping
@@ -42,7 +42,8 @@ public class StudentController {
   @PutMapping("/{id}")
   public ResponseEntity<StudentResponse> update(UserId userId, @PathVariable @Positive Long id,
       @RequestBody @Valid StudentUpdateRequest request) {
-    return ResponseEntity.ok(studentCommandService.update(userId, id, request));
+    return ResponseEntity
+        .ok(studentCommandService.update(userId, id, request.name(), request.memo()));
   }
 
   @DeleteMapping("/{id}")

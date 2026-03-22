@@ -1,7 +1,8 @@
 package com.teacher.agent.dto;
 
-import com.teacher.agent.domain.Recurrence;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.vo.Recurrence;
+import com.teacher.agent.domain.vo.UserId;
+import com.teacher.agent.service.vo.LessonCreateCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;

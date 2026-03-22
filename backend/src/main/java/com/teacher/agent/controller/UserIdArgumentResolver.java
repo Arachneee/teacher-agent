@@ -1,6 +1,6 @@
 package com.teacher.agent.controller;
 
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.exception.UnauthorizedException;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;

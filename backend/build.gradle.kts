@@ -48,6 +48,7 @@ dependencyManagement {
 }
 
 spotless {
+    ratchetFrom("origin/main")
     java {
         eclipse().configFile("config/eclipse-java-google-style.xml")
         removeUnusedImports()

@@ -1,6 +1,7 @@
 package com.teacher.agent.dto;
 
-import com.teacher.agent.domain.UpdateScope;
+import com.teacher.agent.domain.vo.UpdateScope;
+import com.teacher.agent.service.vo.LessonUpdateCommand;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,5 +31,16 @@ public record LessonUpdateRequest(
 
   public List<Long> resolvedRemoveStudentIds() {
     return removeStudentIds != null ? removeStudentIds : List.of();
+  }
+
+  public LessonUpdateCommand toUpdateCommand() {
+    return new LessonUpdateCommand(
+        title,
+        startTime,
+        endTime,
+        resolvedScope(),
+        recurrence != null ? recurrence.toEntity() : null,
+        resolvedAddStudentIds(),
+        resolvedRemoveStudentIds());
   }
 }

@@ -3,9 +3,9 @@ package com.teacher.agent.service;
 import static com.teacher.agent.util.ErrorMessages.MAX_RECURRENCE_PERIOD_ERROR;
 
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.Recurrence;
-import com.teacher.agent.dto.GenerationContext;
-import com.teacher.agent.dto.LessonCreateCommand;
+import com.teacher.agent.domain.vo.Recurrence;
+import com.teacher.agent.service.vo.GenerationContext;
+import com.teacher.agent.service.vo.LessonCreateCommand;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -1,6 +1,6 @@
 package com.teacher.agent.controller;
 
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.FeedbackCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordUpdateRequest;
@@ -32,7 +32,8 @@ public class FeedbackController {
   @PostMapping
   public ResponseEntity<FeedbackResponse> create(UserId userId,
       @RequestBody @Valid FeedbackCreateRequest request) {
-    return ResponseEntity.ok(feedbackCommandService.create(userId, request));
+    return ResponseEntity
+        .ok(feedbackCommandService.create(userId, request.studentId(), request.lessonId()));
   }
 
   @GetMapping
@@ -49,7 +50,7 @@ public class FeedbackController {
   @PatchMapping("/{id}")
   public ResponseEntity<FeedbackResponse> update(UserId userId, @PathVariable @Positive Long id,
       @RequestBody @Valid FeedbackUpdateRequest request) {
-    return ResponseEntity.ok(feedbackCommandService.update(userId, id, request));
+    return ResponseEntity.ok(feedbackCommandService.update(userId, id, request.aiContent()));
   }
 
   @DeleteMapping("/{id}")
@@ -67,14 +68,15 @@ public class FeedbackController {
   @PostMapping("/{id}/keywords")
   public ResponseEntity<FeedbackResponse> addKeyword(UserId userId, @PathVariable @Positive Long id,
       @RequestBody @Valid FeedbackKeywordCreateRequest request) {
-    return ResponseEntity.ok(feedbackKeywordService.addKeyword(userId, id, request));
+    return ResponseEntity.ok(feedbackKeywordService.addKeyword(userId, id, request.keyword()));
   }
 
   @PutMapping("/{id}/keywords/{keywordId}")
   public ResponseEntity<FeedbackResponse> updateKeyword(UserId userId,
       @PathVariable @Positive Long id, @PathVariable @Positive Long keywordId,
       @RequestBody @Valid FeedbackKeywordUpdateRequest request) {
-    return ResponseEntity.ok(feedbackKeywordService.updateKeyword(userId, id, keywordId, request));
+    return ResponseEntity
+        .ok(feedbackKeywordService.updateKeyword(userId, id, keywordId, request.keyword()));
   }
 
   @DeleteMapping("/{id}/keywords/{keywordId}")

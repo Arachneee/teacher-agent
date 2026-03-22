@@ -3,14 +3,14 @@ package com.teacher.agent.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.teacher.agent.domain.FeedbackRepository;
-import com.teacher.agent.domain.LessonRepository;
-import com.teacher.agent.domain.RecurrenceType;
 import com.teacher.agent.domain.Student;
-import com.teacher.agent.domain.StudentRepository;
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UpdateScope;
+import com.teacher.agent.domain.repository.FeedbackRepository;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.RecurrenceType;
+import com.teacher.agent.domain.vo.UpdateScope;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonResponse;
 import com.teacher.agent.dto.LessonUpdateRequest;
@@ -75,7 +75,7 @@ class LessonServiceTest {
   @Test
   void 수업을_생성한다() {
     LessonResponse response = lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학 1교시", START, END, null, null));
+        new LessonCreateRequest("수학 1교시", START, END, null, null).toCommand(teacher.getUserId()));
 
     assertThat(response.id()).isNotNull();
     assertThat(response.userId()).isEqualTo(teacher.getUserId().value());
@@ -90,7 +90,7 @@ class LessonServiceTest {
   void 수업을_단건_조회한다() {
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null, null));
+            new LessonCreateRequest("수학", START, END, null, null).toCommand(teacher.getUserId()));
 
     LessonResponse found = lessonQueryService.getOne(teacher.getUserId(), created.id());
 
@@ -108,12 +108,12 @@ class LessonServiceTest {
   void 수업_정보를_수정한다() {
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null, null));
+            new LessonCreateRequest("수학", START, END, null, null).toCommand(teacher.getUserId()));
     LocalDateTime newStart = LocalDateTime.of(2026, 3, 17, 14, 0);
     LocalDateTime newEnd = LocalDateTime.of(2026, 3, 17, 15, 0);
 
     LessonResponse updated = lessonCommandService.update(teacher.getUserId(), created.id(),
-        new LessonUpdateRequest("영어 2교시", newStart, newEnd));
+        new LessonUpdateRequest("영어 2교시", newStart, newEnd).toUpdateCommand());
 
     assertThat(updated.id()).isEqualTo(created.id());
     assertThat(updated.title()).isEqualTo("영어 2교시");
@@ -124,14 +124,15 @@ class LessonServiceTest {
   @Test
   void 존재하지_않는_수업_수정_시_예외가_발생한다() {
     assertThatThrownBy(() -> lessonCommandService.update(teacher.getUserId(), 999L,
-        new LessonUpdateRequest("수학", START, END))).isInstanceOf(BusinessException.class);
+        new LessonUpdateRequest("수학", START, END).toUpdateCommand()))
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
   void 수업을_삭제한다() {
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null, null));
+            new LessonCreateRequest("수학", START, END, null, null).toCommand(teacher.getUserId()));
 
     lessonCommandService.delete(teacher.getUserId(), created.id(), UpdateScope.SINGLE);
 
@@ -152,10 +153,11 @@ class LessonServiceTest {
         teacherRepository.save(Teacher.create("otherteacher2", "encodedPassword", "다른교사2", null));
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null, null));
+            new LessonCreateRequest("수학", START, END, null, null).toCommand(teacher.getUserId()));
 
     assertThatThrownBy(() -> lessonCommandService.update(otherTeacher.getUserId(), created.id(),
-        new LessonUpdateRequest("영어", START, END))).isInstanceOf(BusinessException.class);
+        new LessonUpdateRequest("영어", START, END).toUpdateCommand()))
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test
@@ -164,7 +166,7 @@ class LessonServiceTest {
         teacherRepository.save(Teacher.create("otherteacher3", "encodedPassword", "다른교사3", null));
     LessonResponse created =
         lessonCommandService.create(teacher.getUserId(),
-            new LessonCreateRequest("수학", START, END, null, null));
+            new LessonCreateRequest("수학", START, END, null, null).toCommand(teacher.getUserId()));
 
     assertThatThrownBy(() -> lessonCommandService.delete(otherTeacher.getUserId(), created.id(),
         UpdateScope.SINGLE))
@@ -174,11 +176,12 @@ class LessonServiceTest {
   @Test
   void 주간_수업_목록을_조회한다() {
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null, null));
+        new LessonCreateRequest("수학", START, END, null, null).toCommand(teacher.getUserId()));
     LocalDateTime nextWeekStart = LocalDateTime.of(2026, 3, 23, 9, 0);
     LocalDateTime nextWeekEnd = LocalDateTime.of(2026, 3, 23, 10, 0);
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("영어", nextWeekStart, nextWeekEnd, null, null));
+        new LessonCreateRequest("영어", nextWeekStart, nextWeekEnd, null, null)
+            .toCommand(teacher.getUserId()));
 
     List<LessonResponse> lessons =
         lessonQueryService.getByTeacherAndWeek(teacher.getUserId(), LocalDate.of(2026, 3, 16));
@@ -190,7 +193,7 @@ class LessonServiceTest {
   @Test
   void 해당_주에_수업이_없으면_빈_목록을_반환한다() {
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", START, END, null, null));
+        new LessonCreateRequest("수학", START, END, null, null).toCommand(teacher.getUserId()));
 
     List<LessonResponse> lessons =
         lessonQueryService.getByTeacherAndWeek(teacher.getUserId(), LocalDate.of(2026, 3, 23));
@@ -204,14 +207,16 @@ class LessonServiceTest {
     RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
         RecurrenceType.WEEKLY, 1, List.of(DayOfWeek.MONDAY), RECURRENCE_END);
     return lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("반복수학", START, END, recurrence, null));
+        new LessonCreateRequest("반복수학", START, END, recurrence, null)
+            .toCommand(teacher.getUserId()));
   }
 
   private LessonResponse createWeeklyRecurringLessonsWithStudents(List<Long> studentIds) {
     RecurrenceCreateRequest recurrence = new RecurrenceCreateRequest(
         RecurrenceType.WEEKLY, 1, List.of(DayOfWeek.MONDAY), RECURRENCE_END);
     return lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("반복수학", START, END, recurrence, studentIds));
+        new LessonCreateRequest("반복수학", START, END, recurrence, studentIds)
+            .toCommand(teacher.getUserId()));
   }
 
   @Nested
@@ -228,7 +233,8 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), targetId,
-          new LessonUpdateRequest("변경된수학", START, END, UpdateScope.SINGLE, null, null, null));
+          new LessonUpdateRequest("변경된수학", START, END, UpdateScope.SINGLE, null, null, null)
+              .toUpdateCommand());
 
       // then
       LessonResponse updated = lessonQueryService.getOne(teacher.getUserId(), targetId);
@@ -252,7 +258,8 @@ class LessonServiceTest {
 
       // when
       lessonCommandService.update(teacher.getUserId(), targetId,
-          new LessonUpdateRequest("전체변경", newStart, newEnd, UpdateScope.ALL, null, null, null));
+          new LessonUpdateRequest("전체변경", newStart, newEnd, UpdateScope.ALL, null, null, null)
+              .toUpdateCommand());
 
       // then
       List<LessonResponse> allLessons = lessonRepository.findAllByUserId(teacher.getUserId())
@@ -279,7 +286,7 @@ class LessonServiceTest {
       // when
       lessonCommandService.update(teacher.getUserId(), secondId,
           new LessonUpdateRequest("이후변경", newStart, newEnd, UpdateScope.THIS_AND_FOLLOWING, null,
-              null, null));
+              null, null).toUpdateCommand());
 
       // then
       LessonResponse first = lessonQueryService.getOne(teacher.getUserId(), allLessons.get(0).id());
@@ -296,11 +303,12 @@ class LessonServiceTest {
     void 반복이_아닌_수업을_ALL로_수정하면_해당_수업만_변경된다() {
       // given
       LessonResponse created = lessonCommandService.create(teacher.getUserId(),
-          new LessonCreateRequest("단일수학", START, END, null, null));
+          new LessonCreateRequest("단일수학", START, END, null, null).toCommand(teacher.getUserId()));
 
       // when
       lessonCommandService.update(teacher.getUserId(), created.id(),
-          new LessonUpdateRequest("변경됨", START, END, UpdateScope.ALL, null, null, null));
+          new LessonUpdateRequest("변경됨", START, END, UpdateScope.ALL, null, null, null)
+              .toUpdateCommand());
 
       // then
       LessonResponse updated = lessonQueryService.getOne(teacher.getUserId(), created.id());
@@ -410,7 +418,7 @@ class LessonServiceTest {
     void 반복이_아닌_수업을_ALL로_삭제하면_해당_수업만_삭제된다() {
       // given
       LessonResponse created = lessonCommandService.create(teacher.getUserId(),
-          new LessonCreateRequest("단일수학", START, END, null, null));
+          new LessonCreateRequest("단일수학", START, END, null, null).toCommand(teacher.getUserId()));
 
       // when
       lessonCommandService.delete(teacher.getUserId(), created.id(), UpdateScope.ALL);

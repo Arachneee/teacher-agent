@@ -4,6 +4,8 @@ import static com.teacher.agent.util.Parameter.*;
 import static com.teacher.agent.util.ValidationUtil.checkMaxLength;
 import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
 
+import com.teacher.agent.domain.vo.UserId;
+import com.teacher.agent.domain.vo.UserIdConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;

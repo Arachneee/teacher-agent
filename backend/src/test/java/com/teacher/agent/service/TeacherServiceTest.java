@@ -4,10 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.TeacherResponse;
-import com.teacher.agent.dto.TeacherUpdateRequest;
 import com.teacher.agent.exception.BusinessException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -65,7 +64,7 @@ class TeacherServiceTest {
     createTeacher("teacher1", "김선생", "수학");
 
     TeacherResponse response = teacherCommandService.updateByUserId(new UserId("teacher1"),
-        new TeacherUpdateRequest("박선생", "영어"));
+        "박선생", "영어");
 
     assertThat(response.name()).isEqualTo("박선생");
     assertThat(response.subject()).isEqualTo("영어");
@@ -76,7 +75,7 @@ class TeacherServiceTest {
     createTeacher("teacher1", "김선생", "수학");
 
     TeacherResponse response = teacherCommandService.updateByUserId(new UserId("teacher1"),
-        new TeacherUpdateRequest("김선생", null));
+        "김선생", null);
 
     assertThat(response.subject()).isNull();
   }
@@ -84,6 +83,6 @@ class TeacherServiceTest {
   @Test
   void 존재하지_않는_교사의_프로필_수정_시_예외가_발생한다() {
     assertThatThrownBy(() -> teacherCommandService.updateByUserId(new UserId("nonexistent"),
-        new TeacherUpdateRequest("박선생", "영어"))).isInstanceOf(BusinessException.class);
+        "박선생", "영어")).isInstanceOf(BusinessException.class);
   }
 }

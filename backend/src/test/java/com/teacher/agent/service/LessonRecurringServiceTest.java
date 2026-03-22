@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.teacher.agent.domain.Lesson;
-import com.teacher.agent.domain.LessonRepository;
-import com.teacher.agent.domain.RecurrenceType;
 import com.teacher.agent.domain.Teacher;
-import com.teacher.agent.domain.TeacherRepository;
+import com.teacher.agent.domain.repository.LessonRepository;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.RecurrenceType;
 import com.teacher.agent.dto.LessonCreateRequest;
 import com.teacher.agent.dto.LessonUpdateRequest;
 import com.teacher.agent.dto.RecurrenceCreateRequest;
@@ -57,7 +57,7 @@ class LessonRecurringServiceTest {
         LocalDate.of(2026, 4, 30));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence, null));
+        new LessonCreateRequest("수학", start, end, recurrence, null).toCommand(teacher.getUserId()));
 
     assertThat(lessonRepository.findAll()).hasSize(14);
   }
@@ -70,7 +70,7 @@ class LessonRecurringServiceTest {
         RecurrenceType.DAILY, 1, null, start.toLocalDate().plusMonths(7));
 
     assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence, null)))
+        new LessonCreateRequest("수학", start, end, recurrence, null).toCommand(teacher.getUserId())))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -82,7 +82,7 @@ class LessonRecurringServiceTest {
         RecurrenceType.DAILY, 1, null, LocalDate.of(2026, 3, 31));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence, null));
+        new LessonCreateRequest("수학", start, end, recurrence, null).toCommand(teacher.getUserId()));
 
     assertThat(lessonRepository.findAll()).hasSize(16);
   }
@@ -96,7 +96,7 @@ class LessonRecurringServiceTest {
         LocalDate.of(2026, 4, 30));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence, null));
+        new LessonCreateRequest("수학", start, end, recurrence, null).toCommand(teacher.getUserId()));
 
     // 3/16, 3/30, 4/13, 4/27 = 4 lessons (every other Monday)
     assertThat(lessonRepository.findAll()).hasSize(4);
@@ -110,7 +110,7 @@ class LessonRecurringServiceTest {
         RecurrenceType.MONTHLY, 1, null, LocalDate.of(2026, 6, 30));
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence, null));
+        new LessonCreateRequest("수학", start, end, recurrence, null).toCommand(teacher.getUserId()));
 
     // 3/16, 4/16, 5/16, 6/16 = 4 lessons
     assertThat(lessonRepository.findAll()).hasSize(4);
@@ -125,7 +125,7 @@ class LessonRecurringServiceTest {
         LocalDate.of(2026, 3, 16)); // 종료일이 같은 월요일 → 화요일 없음
 
     assertThatThrownBy(() -> lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, recurrence, null)))
+        new LessonCreateRequest("수학", start, end, recurrence, null).toCommand(teacher.getUserId())))
         .isInstanceOf(com.teacher.agent.exception.BadRequestException.class);
   }
 
@@ -135,7 +135,7 @@ class LessonRecurringServiceTest {
     LocalDateTime end = LocalDateTime.of(2026, 3, 16, 10, 0);
 
     lessonCommandService.create(teacher.getUserId(),
-        new LessonCreateRequest("수학", start, end, null, null));
+        new LessonCreateRequest("수학", start, end, null, null).toCommand(teacher.getUserId()));
 
     Lesson original = lessonRepository.findAll().get(0);
     assertThat(original.getRecurrenceGroupId()).isNull();
@@ -145,7 +145,8 @@ class LessonRecurringServiceTest {
     LessonUpdateRequest updateRequest = new LessonUpdateRequest(
         "수학", start, end, null, recurrence, null, null);
 
-    lessonCommandService.update(teacher.getUserId(), original.getId(), updateRequest);
+    lessonCommandService.update(teacher.getUserId(), original.getId(),
+        updateRequest.toUpdateCommand());
 
     Lesson updated = lessonRepository.findById(original.getId()).orElseThrow();
     assertThat(updated.getRecurrenceGroupId()).isNotNull();

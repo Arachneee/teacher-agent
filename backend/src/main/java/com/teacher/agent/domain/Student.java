@@ -3,6 +3,7 @@ package com.teacher.agent.domain;
 import static com.teacher.agent.util.Parameter.*;
 import static com.teacher.agent.util.ValidationUtil.*;
 
+import com.teacher.agent.domain.vo.UserId;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;

@@ -1,9 +1,8 @@
 package com.teacher.agent.service;
 
-import com.teacher.agent.domain.TeacherRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.TeacherRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.AuthResponse;
-import com.teacher.agent.dto.LoginRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -29,12 +28,12 @@ public class AuthService {
   private final SecurityContextRepository securityContextRepository =
       new HttpSessionSecurityContextRepository();
 
-  public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest,
+  public AuthResponse login(String userId, String password, HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {
-    log.info("로그인 시도: userId={}", request.userId());
+    log.info("로그인 시도: userId={}", userId);
 
     UsernamePasswordAuthenticationToken authToken =
-        new UsernamePasswordAuthenticationToken(request.userId(), request.password());
+        new UsernamePasswordAuthenticationToken(userId, password);
     Authentication authentication = authenticationManager.authenticate(authToken);
 
     SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
@@ -42,7 +41,7 @@ public class AuthService {
     SecurityContextHolder.setContext(securityContext);
     securityContextRepository.saveContext(securityContext, httpRequest, httpResponse);
 
-    log.info("로그인 성공: userId={}", request.userId());
+    log.info("로그인 성공: userId={}", userId);
     return buildAuthResponse(authentication.getName());
   }
 

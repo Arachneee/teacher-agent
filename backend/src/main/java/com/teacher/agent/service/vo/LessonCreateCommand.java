@@ -1,7 +1,7 @@
-package com.teacher.agent.dto;
+package com.teacher.agent.service.vo;
 
-import com.teacher.agent.domain.Recurrence;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.vo.Recurrence;
+import com.teacher.agent.domain.vo.UserId;
 import java.time.LocalDateTime;
 import java.util.List;
 

@@ -2,8 +2,8 @@ package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackLike;
-import com.teacher.agent.domain.FeedbackLikeRepository;
-import com.teacher.agent.domain.UserId;
+import com.teacher.agent.domain.repository.FeedbackLikeRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
