@@ -1,0 +1,165 @@
+#!/bin/bash
+
+APP_URL="http://localhost:8080"
+WARMUP_USER_ID="${WARMUP_TEACHER_USER_ID:-warmup}"
+WARMUP_PASSWORD="${WARMUP_TEACHER_PASSWORD:-warmup-password}"
+MAX_WAIT_SECONDS=600
+INTERVAL=10
+
+COOKIE_FILE=$(mktemp /tmp/warmup-cookie-XXXXXX)
+STUDENT_ID=""
+LESSON_ID=""
+
+cleanup() {
+  [ -n "$LESSON_ID" ] && \
+    curl -s -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null \
+      -X DELETE "$APP_URL/lessons/$LESSON_ID?scope=ALL"
+  [ -n "$STUDENT_ID" ] && \
+    curl -s -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null \
+      -X DELETE "$APP_URL/students/$STUDENT_ID"
+  rm -f "$COOKIE_FILE"
+}
+trap cleanup EXIT
+
+log() { echo "[warmup] $1"; }
+fail() { log "ERROR: $1. Aborting warmup."; exit 1; }
+
+extract() {
+  local json="$1" field="$2"
+  echo "$json" | grep -o "\"$field\":[0-9]*" | head -1 | grep -o '[0-9]*$'
+}
+
+http() {
+  curl -s -b "$COOKIE_FILE" -c "$COOKIE_FILE" "$@"
+}
+
+# ─── 앱 기동 대기 ──────────────────────────────────────────────
+log "Waiting for application to start..."
+elapsed=0
+until curl -s -o /dev/null "$APP_URL/auth/me"; do
+  [ $elapsed -ge $MAX_WAIT_SECONDS ] && fail "Application did not start within ${MAX_WAIT_SECONDS}s"
+  sleep $INTERVAL
+  elapsed=$((elapsed + INTERVAL))
+  log "  Still waiting... (${elapsed}s elapsed)"
+done
+log "Application is up. Starting warmup..."
+
+# ─── 날짜 계산 (GNU/BSD 호환) ────────────────────────────────
+if date -d "+1 day" +%Y-%m-%d > /dev/null 2>&1; then
+  # GNU date (Linux/EC2)
+  DAY_OF_WEEK=$(date +%u)
+  WEEK_START=$(date -d "-$((DAY_OF_WEEK - 1)) days" +%Y-%m-%d)
+  TOMORROW=$(date -d "+1 day" +%Y-%m-%d)
+  RECURRENCE_END=$(date -d "+30 days" +%Y-%m-%d)
+  TOMORROW_DOW=$(date -d '+1 day' +%A | tr '[:lower:]' '[:upper:]')
+else
+  # BSD date (macOS)
+  DAY_OF_WEEK=$(date +%u)
+  WEEK_START=$(date -v-$((DAY_OF_WEEK - 1))d +%Y-%m-%d)
+  TOMORROW=$(date -v+1d +%Y-%m-%d)
+  RECURRENCE_END=$(date -v+30d +%Y-%m-%d)
+  TOMORROW_DOW=$(LC_ALL=C date -v+1d +%A | tr '[:lower:]' '[:upper:]')
+fi
+
+# ─── 1. 로그인 ────────────────────────────────────────────────
+RESPONSE=$(http -X POST "$APP_URL/auth/login" \
+  -H "Content-Type: application/json" \
+  -d "{\"userId\":\"$WARMUP_USER_ID\",\"password\":\"$WARMUP_PASSWORD\"}")
+echo "$RESPONSE" | grep -q "userId" || fail "Login failed"
+log "1. Login OK"
+
+# ─── 2. 학생 추가 ─────────────────────────────────────────────
+RESPONSE=$(http -X POST "$APP_URL/students" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"워밍업학생","memo":"워밍업용"}')
+STUDENT_ID=$(extract "$RESPONSE" "id")
+[ -z "$STUDENT_ID" ] && fail "Student create failed: $RESPONSE"
+log "2. POST /students OK (studentId=$STUDENT_ID)"
+
+# ─── 3. 학생 조회 ─────────────────────────────────────────────
+http -o /dev/null "$APP_URL/students"
+log "3. GET /students OK"
+
+# ─── 4. 학생 수정 ─────────────────────────────────────────────
+http -o /dev/null -X PUT "$APP_URL/students/$STUDENT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"워밍업학생(수정)","memo":"워밍업용"}'
+log "4. PUT /students/$STUDENT_ID OK"
+
+# ─── 5. 반복 레슨 추가 ────────────────────────────────────────
+RESPONSE=$(http -X POST "$APP_URL/lessons" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"title\":\"워밍업레슨\",
+    \"startTime\":\"${TOMORROW}T10:00:00\",
+    \"endTime\":\"${TOMORROW}T11:00:00\",
+    \"recurrence\":{
+      \"recurrenceType\":\"WEEKLY\",
+      \"intervalValue\":1,
+      \"daysOfWeek\":[\"$TOMORROW_DOW\"],
+      \"endDate\":\"$RECURRENCE_END\"
+    }
+  }")
+LESSON_ID=$(extract "$RESPONSE" "id")
+[ -z "$LESSON_ID" ] && fail "Lesson create failed: $RESPONSE"
+log "5. POST /lessons OK (lessonId=$LESSON_ID)"
+
+# ─── 6. 수강생 추가 (attendee API) ───────────────────────────
+http -o /dev/null -X POST "$APP_URL/lessons/$LESSON_ID/attendees" \
+  -H "Content-Type: application/json" \
+  -d "{\"studentId\":$STUDENT_ID,\"scope\":\"SINGLE\"}"
+log "6. POST /lessons/$LESSON_ID/attendees OK"
+
+# ─── 7. 레슨 목록 조회 ───────────────────────────────────────
+http -o /dev/null "$APP_URL/lessons?weekStart=$WEEK_START"
+log "7. GET /lessons OK"
+
+# ─── 8. 레슨 상세 조회 (feedbackId 추출) ─────────────────────
+RESPONSE=$(http "$APP_URL/lessons/$LESSON_ID/detail")
+FEEDBACK_ID=$(echo "$RESPONSE" | grep -o '"feedback":{"id":[0-9]*' | grep -o '[0-9]*$')
+[ -z "$FEEDBACK_ID" ] && fail "Lesson detail failed or feedbackId not found: $RESPONSE"
+log "8. GET /lessons/$LESSON_ID/detail OK (feedbackId=$FEEDBACK_ID)"
+
+# ─── 9. 키워드 3개 추가 ──────────────────────────────────────
+RESPONSE=$(http -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/keywords" \
+  -H "Content-Type: application/json" \
+  -d '{"keyword":"워밍업키워드1"}')
+KEYWORD_ID=$(echo "$RESPONSE" | grep -o '"keywords":\[{"id":[0-9]*' | grep -o '[0-9]*$')
+log "9-1. POST /feedbacks/$FEEDBACK_ID/keywords OK (keywordId=$KEYWORD_ID)"
+
+http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/keywords" \
+  -H "Content-Type: application/json" \
+  -d '{"keyword":"워밍업키워드2"}'
+log "9-2. POST /feedbacks/$FEEDBACK_ID/keywords OK"
+
+http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/keywords" \
+  -H "Content-Type: application/json" \
+  -d '{"keyword":"워밍업키워드3"}'
+log "9-3. POST /feedbacks/$FEEDBACK_ID/keywords OK"
+
+# ─── 10. 키워드 수정 ─────────────────────────────────────────
+[ -n "$KEYWORD_ID" ] && \
+  http -o /dev/null -X PUT "$APP_URL/feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID" \
+    -H "Content-Type: application/json" \
+    -d '{"keyword":"워밍업키워드1(수정)"}'
+log "10. PUT /feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID OK"
+
+# ─── 11. AI 피드백 생성 ──────────────────────────────────────
+http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/generate"
+log "11. POST /feedbacks/$FEEDBACK_ID/generate OK"
+
+# ─── 12. AI 피드백 수정 ──────────────────────────────────────
+http -o /dev/null -X PATCH "$APP_URL/feedbacks/$FEEDBACK_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"aiContent":"워밍업 AI 내용"}'
+log "12. PATCH /feedbacks/$FEEDBACK_ID OK"
+
+# ─── 13. 레슨 삭제 (ALL) ─────────────────────────────────────
+http -o /dev/null -X DELETE "$APP_URL/lessons/$LESSON_ID?scope=ALL"
+log "13. DELETE /lessons/$LESSON_ID?scope=ALL OK"
+
+# ─── 14. 학생 삭제 ───────────────────────────────────────────
+http -o /dev/null -X DELETE "$APP_URL/students/$STUDENT_ID"
+log "14. DELETE /students/$STUDENT_ID OK"
+
+log "Warmup complete."

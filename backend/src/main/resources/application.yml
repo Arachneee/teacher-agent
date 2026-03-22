@@ -42,3 +42,6 @@ app:
     password: ${INITIAL_TEACHER_PASSWORD:123}
     name: ${INITIAL_TEACHER_NAME:관리자}
     subject: ${INITIAL_TEACHER_SUBJECT:}
+  warmup-teacher:
+    user-id: ${WARMUP_TEACHER_USER_ID:warmup}
+    password: ${WARMUP_TEACHER_PASSWORD:warmup-password}

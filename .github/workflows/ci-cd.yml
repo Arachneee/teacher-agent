@@ -112,6 +112,10 @@ jobs:
             backend/scripts/deploy.sh \
             ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/app/deploy.sh
 
+          scp -i ~/.ssh/deploy_key \
+            backend/scripts/warmup.sh \
+            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/app/warmup.sh
+
           ssh -i ~/.ssh/deploy_key \
             ec2-user@${{ secrets.EC2_HOST }} \
-            'chmod +x /home/ec2-user/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=${{ secrets.INITIAL_TEACHER_PASSWORD }} OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }} SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }} SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }} /home/ec2-user/app/deploy.sh'
+            'chmod +x /home/ec2-user/app/deploy.sh && SPRING_PROFILES_ACTIVE=prod INITIAL_TEACHER_PASSWORD=${{ secrets.INITIAL_TEACHER_PASSWORD }} OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }} SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }} SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }} WARMUP_TEACHER_PASSWORD=${{ secrets.WARMUP_TEACHER_PASSWORD }} /home/ec2-user/app/deploy.sh'

@@ -29,13 +29,24 @@ public class DataInitializer implements CommandLineRunner {
   @Value("${app.initial-teacher.subject:}")
   private String initialSubject;
 
+  @Value("${app.warmup-teacher.user-id}")
+  private String warmupUserId;
+
+  @Value("${app.warmup-teacher.password}")
+  private String warmupPassword;
+
   @Override
   @Transactional
   public void run(String... args) {
-    String encodedPassword = passwordEncoder.encode(initialPassword);
+    upsertTeacher(initialUserId, initialPassword, initialName, initialSubject);
+    upsertTeacher(warmupUserId, warmupPassword, "워밍업 계정", "");
+  }
 
-    teacherRepository.findByUserId(new UserId(initialUserId))
-        .ifPresentOrElse(teacher -> teacher.updatePassword(encodedPassword), () -> teacherRepository
-            .save(Teacher.create(initialUserId, encodedPassword, initialName, initialSubject)));
+  private void upsertTeacher(String userId, String password, String name, String subject) {
+    String encodedPassword = passwordEncoder.encode(password);
+    teacherRepository.findByUserId(new UserId(userId))
+        .ifPresentOrElse(
+            teacher -> teacher.updatePassword(encodedPassword),
+            () -> teacherRepository.save(Teacher.create(userId, encodedPassword, name, subject)));
   }
 }

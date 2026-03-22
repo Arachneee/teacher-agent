@@ -86,3 +86,9 @@ else
     echo "Failed to start application. Check logs at $LOG_FILE"
     exit 1
 fi
+
+echo "Starting warmup in background..."
+chmod +x $APP_DIR/warmup.sh
+WARMUP_TEACHER_USER_ID="$WARMUP_TEACHER_USER_ID" \
+WARMUP_TEACHER_PASSWORD="$WARMUP_TEACHER_PASSWORD" \
+  nohup bash $APP_DIR/warmup.sh >> $APP_DIR/warmup.log 2>&1 &
