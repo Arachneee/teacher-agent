@@ -217,3 +217,20 @@ resource "aws_instance" "this" {
     Name = "${var.project_name}-server"
   }
 }
+
+# ========================================
+# Elastic IP (고정 퍼블릭 IP)
+# ========================================
+
+resource "aws_eip" "this" {
+  domain = "vpc"
+
+  tags = {
+    Name = "${var.project_name}-eip"
+  }
+}
+
+resource "aws_eip_association" "this" {
+  instance_id   = aws_instance.this.id
+  allocation_id = aws_eip.this.id
+}
