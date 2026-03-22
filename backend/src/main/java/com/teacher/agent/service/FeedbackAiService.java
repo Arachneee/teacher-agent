@@ -7,12 +7,14 @@ import com.teacher.agent.domain.FeedbackKeyword;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class FeedbackAiService {
 
   private final ChatClient.Builder chatClientBuilder;
@@ -37,6 +39,11 @@ public class FeedbackAiService {
 
     String prompt = feedbackMessagePrompt.formatted(studentName, keywordText);
 
-    return chatClientBuilder.build().prompt(prompt).call().content();
+    log.info("OpenAI 요청 시작: studentName={}, keywords={}", studentName, keywordText);
+    long start = System.currentTimeMillis();
+    String content = chatClientBuilder.build().prompt(prompt).call().content();
+    log.info("OpenAI 응답 완료: {}ms", System.currentTimeMillis() - start);
+
+    return content;
   }
 }
