@@ -11,9 +11,10 @@ interface Props {
   student: Student;
   onUpdate: () => void;
   onDelete: (id: number) => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-export default function StudentManagementCard({ student, onUpdate, onDelete }: Props) {
+export default function StudentManagementCard({ student, onUpdate, onDelete, dragHandleProps }: Props) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(student.name);
   const [memo, setMemo] = useState(student.memo || '');
@@ -61,6 +62,23 @@ export default function StudentManagementCard({ student, onUpdate, onDelete }: P
 
   return (
     <div className="bg-white rounded-3xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-3">
+      {/* Drag handle */}
+      {dragHandleProps && !editing && (
+        <div
+          {...dragHandleProps}
+          className="flex justify-center cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 transition-colors -mt-1 -mb-1"
+          aria-label="드래그하여 순서 변경"
+        >
+          <svg width="20" height="10" viewBox="0 0 20 10" fill="currentColor">
+            <circle cx="4" cy="2" r="1.5" />
+            <circle cx="10" cy="2" r="1.5" />
+            <circle cx="16" cy="2" r="1.5" />
+            <circle cx="4" cy="8" r="1.5" />
+            <circle cx="10" cy="8" r="1.5" />
+            <circle cx="16" cy="8" r="1.5" />
+          </svg>
+        </div>
+      )}
       {/* Avatar + Name */}
       <div className="flex items-center gap-3">
         <div
