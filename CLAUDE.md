@@ -24,6 +24,7 @@ AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프
 커밋 전 반드시 `doc/COMMIT.md`를 읽는다. Conventional Commits 방식 사용.
 
 - 형식: `<type>(<scope>): <subject>`
+- **커밋 메시지는 반드시 영어로 작성한다. 대화가 한국어로 진행 중이더라도 예외 없이 영어로 작성한다.**
 - `Co-Authored-By: Claude` 줄을 커밋 메시지에 추가하지 않는다.
 
 ---
