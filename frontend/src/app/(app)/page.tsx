@@ -52,6 +52,7 @@ export default function Home() {
   });
 
   const weekStart = useMemo(() => getWeekStart(currentDay), [currentDay]);
+  const weekStartString = useMemo(() => toISODateString(weekStart), [weekStart]);
 
   const mobileSelectedDayIndex = useMemo(() => {
     const diffMs = currentDay.getTime() - weekStart.getTime();
@@ -60,11 +61,11 @@ export default function Home() {
 
   const fetchLessons = useCallback(() => {
     setLoading(true);
-    getLessons(toISODateString(weekStart))
+    getLessons(weekStartString)
       .then(setLessons)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [weekStart]);
+  }, [weekStartString]);
 
   useEffect(() => {
     fetchLessons();
