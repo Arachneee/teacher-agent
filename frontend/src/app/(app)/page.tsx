@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Lesson, getLessons } from '../lib/api';
 import { padTwoDigits } from '../lib/dateTimeUtils';
 import { useAuth } from '../context/AuthContext';
-import { useIsMobile } from '../hooks/useIsMobile';
 import WeeklyCalendarView from '../components/WeeklyCalendarView';
 import AddLessonModal from '../components/AddLessonModal';
 import DatePicker from '../components/DatePicker';
@@ -39,7 +38,6 @@ function formatMobileDateLabel(date: Date): string {
 
 export default function Home() {
   const { user, logout } = useAuth();
-  const isMobile = useIsMobile();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -54,6 +52,11 @@ export default function Home() {
   });
 
   const weekStart = useMemo(() => getWeekStart(currentDay), [currentDay]);
+
+  const mobileSelectedDayIndex = useMemo(() => {
+    const diffMs = currentDay.getTime() - weekStart.getTime();
+    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+  }, [currentDay, weekStart]);
 
   const fetchLessons = useCallback(() => {
     setLoading(true);
@@ -211,8 +214,7 @@ export default function Home() {
           onEdit={handleEditClick}
           onDelete={handleDelete}
           onCellClick={handleCellClick}
-          mode={isMobile ? 'day' : 'week'}
-          currentDay={currentDay}
+          mobileSelectedDayIndex={mobileSelectedDayIndex}
         />
       )}
 

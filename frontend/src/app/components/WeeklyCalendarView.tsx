@@ -45,11 +45,10 @@ interface Props {
   onEdit: (lesson: Lesson) => void;
   onDelete: (id: number, didDeleteMultiple: boolean) => void;
   onCellClick: (startTime: string, endTime: string) => void;
-  mode?: 'week' | 'day';
-  currentDay?: Date;
+  mobileSelectedDayIndex: number;
 }
 
-export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelete, onCellClick, mode = 'week', currentDay }: Props) {
+export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelete, onCellClick, mobileSelectedDayIndex }: Props) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -57,12 +56,10 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
   const [scopeModalLesson, setScopeModalLesson] = useState<Lesson | null>(null);
   const [deleteConfirmLesson, setDeleteConfirmLesson] = useState<Lesson | null>(null);
 
-  const weekDays = useMemo(() => {
-    if (mode === 'day' && currentDay) {
-      return [currentDay];
-    }
-    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  }, [mode, currentDay, weekStart]);
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart]
+  );
 
   const hours = useMemo(
     () => Array.from({ length: TOTAL_HOURS }, (_, i) => FIRST_HOUR + i),
@@ -71,7 +68,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
 
   const lessonsByDay = useMemo(() => {
     const map = new Map<number, Lesson[]>();
-    for (let i = 0; i < weekDays.length; i++) map.set(i, []);
+    for (let i = 0; i < 7; i++) map.set(i, []);
     lessons.forEach(lesson => {
       const lessonDate = new Date(lesson.startTime);
       weekDays.forEach((day, index) => {
@@ -168,7 +165,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
           return (
             <div
               key={i}
-              className={`flex-1 py-3 text-center border-l border-gray-100 ${isWeekend ? 'bg-slate-50/80' : ''}`}
+              className={`py-3 text-center border-l border-gray-100 ${isWeekend ? 'bg-slate-50/80' : ''} ${i === mobileSelectedDayIndex ? 'flex-1' : 'hidden md:block md:flex-1'}`}
             >
               <div
                 className={`text-xs font-medium mb-1.5 ${
@@ -222,7 +219,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
             return (
               <div
                 key={dayIndex}
-                className={`flex-1 relative border-l border-gray-100 min-w-0 ${isWeekend ? 'bg-slate-50/40' : ''}`}
+                className={`relative border-l border-gray-100 min-w-0 ${isWeekend ? 'bg-slate-50/40' : ''} ${dayIndex === mobileSelectedDayIndex ? 'flex-1' : 'hidden md:block md:flex-1'}`}
                 style={{ height: `${TOTAL_HOURS * CELL_HEIGHT}px` }}
               >
                 {/* Hour slot click targets */}
