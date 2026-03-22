@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { Student, deleteStudent, updateStudent } from '../lib/api';
 import { getAvatarColor } from '../lib/constants';
@@ -151,6 +152,16 @@ export default function StudentManagementCard({ student, onUpdate, onDelete }: P
             취소
           </button>
         </div>
+      )}
+
+      {/* 기록 보기 링크 */}
+      {!editing && (
+        <Link
+          href={`/students/${student.id}`}
+          className="w-full text-center text-sm text-purple-400 hover:text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-2xl py-2 transition-colors duration-150"
+        >
+          피드백 기록 보기
+        </Link>
       )}
 
       {showDeleteConfirm && (

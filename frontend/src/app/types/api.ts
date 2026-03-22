@@ -15,6 +15,9 @@ export interface FeedbackKeyword {
 export interface Feedback {
   id: number;
   studentId: number;
+  lessonId: number;
+  lessonTitle: string | null;
+  lessonStartTime: string | null;
   aiContent: string | null;
   keywords: FeedbackKeyword[];
   liked: boolean;

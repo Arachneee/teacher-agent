@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
-  @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.keywords WHERE f.studentId = :studentId")
+  @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.keywords WHERE f.studentId = :studentId ORDER BY f.createdAt DESC")
   List<Feedback> findAllByStudentId(@Param("studentId") Long studentId);
 
   Optional<Feedback> findByStudentIdAndLessonId(Long studentId, Long lessonId);

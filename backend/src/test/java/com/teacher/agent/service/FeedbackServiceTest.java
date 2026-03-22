@@ -154,6 +154,38 @@ class FeedbackServiceTest {
 
     assertThat(feedbacks).hasSize(1);
     assertThat(feedbacks.get(0).studentId()).isEqualTo(studentId);
+    assertThat(feedbacks.get(0).lessonTitle()).isEqualTo("수학");
+    assertThat(feedbacks.get(0).lessonStartTime()).isEqualTo(START);
+  }
+
+  @Test
+  void 수업이_삭제된_피드백은_목록에_포함되지_않는다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackCommandService.update(userId, created.id(), "AI 내용");
+    lessonRepository.deleteById(lessonId);
+
+    var feedbacks = feedbackQueryService.getAll(userId, studentId);
+
+    assertThat(feedbacks).isEmpty();
+  }
+
+  @Test
+  void 피드백_목록은_최신순으로_정렬된다() {
+    LocalDateTime olderStart = LocalDateTime.of(2026, 3, 10, 9, 0);
+    LocalDateTime olderEnd = LocalDateTime.of(2026, 3, 10, 10, 0);
+    Lesson olderLesson = lessonRepository.save(
+        Lesson.create(userId, "이전 수업", olderStart, olderEnd));
+    olderLesson.addAttendee(studentId);
+    lessonRepository.save(olderLesson);
+
+    feedbackCommandService.create(userId, studentId, olderLesson.getId());
+    feedbackCommandService.create(userId, studentId, lessonId);
+
+    var feedbacks = feedbackQueryService.getAll(userId, studentId);
+
+    assertThat(feedbacks).hasSize(2);
+    assertThat(feedbacks.get(0).lessonTitle()).isEqualTo("수학");
+    assertThat(feedbacks.get(1).lessonTitle()).isEqualTo("이전 수업");
   }
 
   @Test

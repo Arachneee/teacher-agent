@@ -75,6 +75,12 @@ export async function getMe(): Promise<AuthResponse> {
 
 // Students
 
+export async function getStudent(id: number): Promise<Student> {
+  const res = await fetchWithAuth(`${BASE_URL}/students/${id}`);
+  if (!res.ok) throw new Error('학생 정보를 불러오지 못했어요');
+  return res.json();
+}
+
 export async function getStudents(): Promise<Student[]> {
   const res = await fetchWithAuth(`${BASE_URL}/students`);
   if (!res.ok) throw new Error('학생 목록을 불러오지 못했어요');

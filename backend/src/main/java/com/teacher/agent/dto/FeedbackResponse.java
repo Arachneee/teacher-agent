@@ -9,6 +9,8 @@ public record FeedbackResponse(
     Long id,
     Long studentId,
     Long lessonId,
+    String lessonTitle,
+    LocalDateTime lessonStartTime,
     String aiContent,
     List<KeywordItem> keywords,
     boolean liked,
@@ -19,6 +21,17 @@ public record FeedbackResponse(
     List<KeywordItem> keywordItems =
         feedback.getKeywords().stream().map(KeywordItem::from).toList();
     return new FeedbackResponse(feedback.getId(), feedback.getStudentId(), feedback.getLessonId(),
+        null, null,
+        feedback.getAiContent(), keywordItems, liked, feedback.getCreatedAt(),
+        feedback.getUpdatedAt());
+  }
+
+  public static FeedbackResponse withLesson(Feedback feedback, boolean liked,
+      String lessonTitle, LocalDateTime lessonStartTime) {
+    List<KeywordItem> keywordItems =
+        feedback.getKeywords().stream().map(KeywordItem::from).toList();
+    return new FeedbackResponse(feedback.getId(), feedback.getStudentId(), feedback.getLessonId(),
+        lessonTitle, lessonStartTime,
         feedback.getAiContent(), keywordItems, liked, feedback.getCreatedAt(),
         feedback.getUpdatedAt());
   }

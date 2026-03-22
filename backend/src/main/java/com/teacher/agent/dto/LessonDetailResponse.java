@@ -50,8 +50,9 @@ public record LessonDetailResponse(
           .values().stream().toList();
 
       FeedbackResponse feedback = new FeedbackResponse(first.feedbackId(),
-          first.feedbackStudentId(), first.feedbackLessonId(), first.aiContent(), keywords,
-          first.liked(), first.feedbackCreatedAt(), first.feedbackUpdatedAt());
+          first.feedbackStudentId(), first.feedbackLessonId(), null, null,
+          first.aiContent(), keywords, first.liked(),
+          first.feedbackCreatedAt(), first.feedbackUpdatedAt());
 
       return new AttendeeDetailItem(attendeeId, student, feedback);
     }

@@ -9,6 +9,9 @@ function toAttendee({ attendeeId, student, feedback }: LessonDetailAttendee, les
     feedback: feedback ? {
       id: feedback.id,
       studentId: feedback.studentId,
+      lessonId: feedback.lessonId,
+      lessonTitle: null,
+      lessonStartTime: null,
       aiContent: feedback.aiContent,
       keywords: feedback.keywords,
       liked: feedback.liked,
