@@ -3,6 +3,7 @@ package com.teacher.agent.exception;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -71,6 +72,16 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .badRequest()
         .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, exception.getMessage()));
+  }
+
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<ErrorResponse> handleBadCredentialsException(
+      BadCredentialsException exception) {
+    log.warn("인증 실패: {}", exception.getMessage());
+
+    return ResponseEntity
+        .status(ErrorCode.UNAUTHORIZED.getStatus())
+        .body(ErrorResponse.of(ErrorCode.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."));
   }
 
   @ExceptionHandler(Exception.class)
