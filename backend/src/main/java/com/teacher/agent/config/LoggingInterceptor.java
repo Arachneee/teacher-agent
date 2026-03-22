@@ -53,6 +53,11 @@ public class LoggingInterceptor implements HandlerInterceptor {
     if (content.length == 0) {
       return "(empty)";
     }
-    return new String(content, StandardCharsets.UTF_8);
+    String body = new String(content, StandardCharsets.UTF_8);
+    return maskSensitiveFields(body);
+  }
+
+  private String maskSensitiveFields(String body) {
+    return body.replaceAll("(\"password\"\\s*:\\s*\")([^\"]*)(\")", "$1***$3");
   }
 }
