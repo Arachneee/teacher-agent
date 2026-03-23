@@ -116,84 +116,83 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col flex-1 px-4 md:px-6 py-5 md:py-8">
-      <header className="relative mb-4 md:mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl md:text-3xl font-bold text-purple-500">내 수업</h1>
+      <header className="mb-4 md:mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold text-purple-500">내 수업</h1>
 
-          <div className="hidden md:flex items-center gap-1">
-            <button
-              onClick={goToPrevWeek}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
-              aria-label="이전 주"
-            >
-              ‹
-            </button>
-            <button
-              onClick={goToToday}
-              className="text-sm px-3 py-1 rounded-full border border-gray-200 hover:border-purple-300 hover:text-purple-500 text-gray-500 transition-colors"
-            >
-              오늘
-            </button>
-            <button
-              onClick={goToNextWeek}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
-              aria-label="다음 주"
-            >
-              ›
-            </button>
-            <div className="relative ml-1">
-              <DatePicker
-                value={toISODateString(currentDay)}
-                onChange={value => {
-                  if (value) {
-                    const selected = new Date(value);
-                    selected.setHours(0, 0, 0, 0);
-                    setCurrentDay(selected);
-                  }
-                }}
-                showWeekRange
-              />
+            <div className="hidden md:flex items-center gap-1">
+              <button
+                onClick={goToPrevWeek}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
+                aria-label="이전 주"
+              >
+                ‹
+              </button>
+              <button
+                onClick={goToToday}
+                className="text-sm px-3 py-1 rounded-full border border-gray-200 hover:border-purple-300 hover:text-purple-500 text-gray-500 transition-colors"
+              >
+                오늘
+              </button>
+              <button
+                onClick={goToNextWeek}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
+                aria-label="다음 주"
+              >
+                ›
+              </button>
+              <div className="relative ml-1">
+                <DatePicker
+                  value={toISODateString(currentDay)}
+                  onChange={value => {
+                    if (value) {
+                      const selected = new Date(value);
+                      selected.setHours(0, 0, 0, 0);
+                      setCurrentDay(selected);
+                    }
+                  }}
+                  showWeekRange
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex md:hidden items-center gap-1">
+          <div className="flex items-center gap-2 md:gap-3">
+            <span className="hidden md:inline text-sm text-gray-400">{user?.userId}</span>
             <button
-              onClick={goToPrevDay}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
-              aria-label="이전 날"
+              onClick={logout}
+              className="text-xs md:text-sm text-gray-400 hover:text-purple-500 transition-colors"
             >
-              ‹
-            </button>
-            <button
-              onClick={goToToday}
-              className="text-xs px-2.5 py-1 rounded-full border border-gray-200 hover:border-purple-300 hover:text-purple-500 text-gray-500 transition-colors"
-            >
-              오늘
-            </button>
-            <button
-              onClick={goToNextDay}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
-              aria-label="다음 날"
-            >
-              ›
+              로그아웃
             </button>
           </div>
         </div>
 
-        <div className="flex md:hidden absolute left-1/2 -translate-x-1/2 top-[1.25rem] pointer-events-none">
-          <span className="text-sm font-medium text-gray-600">
+        <div className="flex md:hidden items-center gap-1 mt-2">
+          <button
+            onClick={goToPrevDay}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
+            aria-label="이전 날"
+          >
+            ‹
+          </button>
+          <button
+            onClick={goToToday}
+            className="text-xs px-2.5 py-1 rounded-full border border-gray-200 hover:border-purple-300 hover:text-purple-500 text-gray-500 transition-colors"
+          >
+            오늘
+          </button>
+          <button
+            onClick={goToNextDay}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
+            aria-label="다음 날"
+          >
+            ›
+          </button>
+          <span className="text-xs font-medium text-gray-600">
             {formatMobileDateLabel(currentDay)}
           </span>
-        </div>
-
-        <div className="flex items-center gap-2 md:gap-3">
-          <span className="hidden md:inline text-sm text-gray-400">{user?.userId}</span>
-          <button
-            onClick={logout}
-            className="text-xs md:text-sm text-gray-400 hover:text-purple-500 transition-colors"
-          >
-            로그아웃
-          </button>
         </div>
       </header>
 
