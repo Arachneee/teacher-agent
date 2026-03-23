@@ -176,7 +176,7 @@ log "15-3. POST /feedbacks/$FEEDBACK_ID/keywords OK"
 [ -n "$KEYWORD_ID" ] && \
   http -o /dev/null -X PUT "$APP_URL/feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID" \
     -H "Content-Type: application/json" \
-    -d '{"keyword":"워밍업키워드1(수정)"}'
+    -d '{"keyword":"워밍업키워드1(수정)","required":false}'
 log "16. PUT /feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID OK"
 
 # ─── 17. 키워드 삭제 ─────────────────────────────────────────
