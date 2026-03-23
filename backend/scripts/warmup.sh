@@ -158,9 +158,9 @@ log "14. GET /feedbacks/$FEEDBACK_ID OK"
 # ─── 15. 키워드 3개 추가 ──────────────────────────────────────
 RESPONSE=$(http -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/keywords" \
   -H "Content-Type: application/json" \
-  -d '{"keyword":"워밍업키워드1"}')
+  -d '{"keyword":"워밍업키워드1","required":true}')
 KEYWORD_ID=$(echo "$RESPONSE" | grep -o '"keywords":\[{"id":[0-9]*' | grep -o '[0-9]*$')
-log "15-1. POST /feedbacks/$FEEDBACK_ID/keywords OK (keywordId=$KEYWORD_ID)"
+log "15-1. POST /feedbacks/$FEEDBACK_ID/keywords OK (keywordId=$KEYWORD_ID, required=true)"
 
 http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/keywords" \
   -H "Content-Type: application/json" \
@@ -194,24 +194,28 @@ http -o /dev/null -X PATCH "$APP_URL/feedbacks/$FEEDBACK_ID" \
   -d '{"aiContent":"워밍업 AI 내용"}'
 log "19. PATCH /feedbacks/$FEEDBACK_ID OK"
 
-# ─── 20. 학생 피드백 목록 조회 ───────────────────────────────
+# ─── 20. 따봉 ────────────────────────────────────────────────
+http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/like"
+log "20. POST /feedbacks/$FEEDBACK_ID/like OK"
+
+# ─── 21. 학생 피드백 목록 조회 ───────────────────────────────
 http -o /dev/null "$APP_URL/feedbacks?studentId=$STUDENT_ID"
-log "20. GET /feedbacks?studentId=$STUDENT_ID OK"
+log "21. GET /feedbacks?studentId=$STUDENT_ID OK"
 
-# ─── 21. 수강생 삭제 ─────────────────────────────────────────
+# ─── 22. 수강생 삭제 ─────────────────────────────────────────
 http -o /dev/null -X DELETE "$APP_URL/lessons/$LESSON_ID/attendees/$ATTENDEE_ID"
-log "21. DELETE /lessons/$LESSON_ID/attendees/$ATTENDEE_ID OK"
+log "22. DELETE /lessons/$LESSON_ID/attendees/$ATTENDEE_ID OK"
 
-# ─── 22. 레슨 삭제 (ALL) ─────────────────────────────────────
+# ─── 23. 레슨 삭제 (ALL) ─────────────────────────────────────
 http -o /dev/null -X DELETE "$APP_URL/lessons/$LESSON_ID?scope=ALL"
-log "22. DELETE /lessons/$LESSON_ID?scope=ALL OK"
+log "23. DELETE /lessons/$LESSON_ID?scope=ALL OK"
 
-# ─── 23. 학생 삭제 ───────────────────────────────────────────
+# ─── 24. 학생 삭제 ───────────────────────────────────────────
 http -o /dev/null -X DELETE "$APP_URL/students/$STUDENT_ID"
-log "23. DELETE /students/$STUDENT_ID OK"
+log "24. DELETE /students/$STUDENT_ID OK"
 
-# ─── 24. 로그아웃 ────────────────────────────────────────────
+# ─── 25. 로그아웃 ────────────────────────────────────────────
 http -o /dev/null -X POST "$APP_URL/auth/logout"
-log "24. POST /auth/logout OK"
+log "25. POST /auth/logout OK"
 
 log "Warmup complete."
