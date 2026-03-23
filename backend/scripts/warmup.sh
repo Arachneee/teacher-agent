@@ -184,9 +184,10 @@ log "16. PUT /feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID OK"
   http -o /dev/null -X DELETE "$APP_URL/feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID"
 log "17. DELETE /feedbacks/$FEEDBACK_ID/keywords/$KEYWORD_ID OK"
 
-# ─── 18. AI 피드백 생성 ──────────────────────────────────────
-http -o /dev/null -X POST "$APP_URL/feedbacks/$FEEDBACK_ID/generate"
-log "18. POST /feedbacks/$FEEDBACK_ID/generate OK"
+# ─── 18. AI 피드백 스트리밍 생성 ────────────────────────────
+curl -s --no-buffer -b "$COOKIE_FILE" -c "$COOKIE_FILE" \
+  -o /dev/null "$APP_URL/feedbacks/$FEEDBACK_ID/generate/stream"
+log "18. GET /feedbacks/$FEEDBACK_ID/generate/stream OK"
 
 # ─── 19. AI 피드백 수정 ──────────────────────────────────────
 http -o /dev/null -X PATCH "$APP_URL/feedbacks/$FEEDBACK_ID" \
