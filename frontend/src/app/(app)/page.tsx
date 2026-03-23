@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { highlightKeywords } from '../lib/highlightKeywords';
 
-const DEMO_KEYWORDS = ['집중력 향상', '수학 개념 이해', '발표 자신감↑'];
+const DEMO_KEYWORDS: { text: string; required: boolean }[] = [
+  { text: '집중력 향상', required: false },
+  { text: '수학 개념 이해', required: false },
+  { text: '100점 맞았어요', required: true },
+];
 const DEMO_MESSAGE =
-  '안녕하세요, 어머님! 오늘 수업에서 민준이가 집중력이 높아졌고 수학 개념을 잘 이해하는 모습을 보였어요. 발표에도 자신감 있게 참여해 정말 기특했습니다 😊 앞으로도 함께 열심히 하겠습니다!';
+  '안녕하세요, 어머님! 오늘 수업에서 민준이가 집중력이 한층 높아졌고 수학 개념을 잘 이해하는 모습을 보였어요. 특히 시험에서 100점 맞았어요! 정말 기특했습니다 😊 앞으로도 함께 열심히 하겠습니다!';
 
 type PhaseId = 'empty' | 'kw1' | 'kw2' | 'kw3' | 'generating' | 'done';
 
@@ -38,9 +43,9 @@ function AiDemoCard() {
     phase === 'empty'
       ? []
       : phase === 'kw1'
-        ? [DEMO_KEYWORDS[0]]
+        ? DEMO_KEYWORDS.slice(0, 1)
         : phase === 'kw2'
-          ? [DEMO_KEYWORDS[0], DEMO_KEYWORDS[1]]
+          ? DEMO_KEYWORDS.slice(0, 2)
           : DEMO_KEYWORDS;
 
   const isGenerating = phase === 'generating';
@@ -91,27 +96,43 @@ function AiDemoCard() {
         {visibleKeywords.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {visibleKeywords.map((keyword, i) => (
-              <span key={i} className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-pink-50 text-pink-500">
-                {keyword}
+              <span
+                key={i}
+                className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
+                  keyword.required
+                    ? 'bg-purple-100 text-purple-600 ring-1 ring-purple-300'
+                    : 'bg-pink-50 text-pink-500'
+                }`}
+              >
+                {keyword.required ? `「${keyword.text}」` : keyword.text}
                 <span className="text-sm leading-none opacity-60">×</span>
               </span>
             ))}
           </div>
         )}
-        <div className="flex items-center rounded-2xl bg-pink-50">
-          <span className="flex-1 text-xs text-gray-300 px-3 py-2">키워드 입력</span>
-          <div className="w-8 h-8 mr-1 flex items-center justify-center rounded-xl bg-pink-100">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 10 4 15 9 20" />
-              <path d="M20 4v7a4 4 0 0 1-4 4H4" />
-            </svg>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center rounded-2xl bg-pink-50">
+            <div className="flex items-center ml-1.5 mr-0.5 shrink-0 gap-0.5">
+              <span className="text-xs px-2 py-0.5 rounded-lg font-medium bg-pink-100 text-pink-500">자연스럽게</span>
+              <span className="text-xs px-2 py-0.5 rounded-lg font-medium text-gray-300">그대로</span>
+            </div>
+            <span className="flex-1 text-xs text-gray-300 px-3 py-2">키워드 입력</span>
+            <div className="w-8 h-8 mr-1 flex items-center justify-center rounded-xl bg-pink-100">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 10 4 15 9 20" />
+                <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+              </svg>
+            </div>
           </div>
+          <p className="text-[11px] text-gray-500 ml-2">AI가 자연스럽게 문장에 녹여요</p>
         </div>
       </div>
 
       {showMessage && (
         <div className="relative bg-indigo-50 rounded-2xl p-3 mb-2">
-          <p className="text-xs text-gray-700 leading-relaxed pr-8">{DEMO_MESSAGE}</p>
+          <p className="text-xs text-gray-700 leading-relaxed pr-8">
+            {highlightKeywords(DEMO_MESSAGE, DEMO_KEYWORDS.map(keyword => keyword.text))}
+          </p>
           <div className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-xl bg-white">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -216,7 +237,7 @@ function StudentsMockup() {
 
 const HOW_IT_WORKS_STEPS = [
   { number: '1', title: '수업에 학생을 등록해요', description: '캘린더에서 수업을 만들고 수강생을 추가해요' },
-  { number: '2', title: '수업 키워드를 입력해요', description: '수업 중 관찰한 내용을 짧은 키워드로 남겨요' },
+  { number: '2', title: '수업 키워드를 입력해요', description: 'AI가 자연스럽게 녹이거나 그대로 포함할 수 있어요' },
   { number: '3', title: 'AI가 학부모 문자를 작성해요', description: '버튼 한 번으로 개인화된 문자가 완성돼요' },
 ];
 
@@ -294,11 +315,15 @@ export default function IntroPage() {
               </p>
               <div className="flex flex-col gap-2.5">
                 <div className="flex flex-wrap gap-1.5">
-                  {['집중력 향상', '수학 이해', '발표 자신감'].map(keyword => (
-                    <span key={keyword} className="text-xs bg-pink-50 text-pink-500 border border-pink-100 px-2.5 py-1 rounded-full font-medium">
-                      {keyword}
-                    </span>
-                  ))}
+                  <span className="text-xs bg-pink-50 text-pink-500 border border-pink-100 px-2.5 py-1 rounded-full font-medium">
+                    집중력 향상
+                  </span>
+                  <span className="text-xs bg-pink-50 text-pink-500 border border-pink-100 px-2.5 py-1 rounded-full font-medium">
+                    수학 이해
+                  </span>
+                  <span className="text-xs bg-purple-100 text-purple-600 border border-purple-200 px-2.5 py-1 rounded-full font-medium">
+                    「100점 맞았어요」
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-indigo-400 text-xs font-medium">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -308,7 +333,7 @@ export default function IntroPage() {
                 </div>
                 <div className="bg-white rounded-2xl p-2.5 shadow-sm">
                   <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
-                    안녕하세요! 오늘 수업에서 민준이가 집중력이 높아졌고 수학 개념을 잘 이해하는 모습을 보였어요...
+                    안녕하세요! 오늘 수업에서 민준이가 <mark className="bg-yellow-200/70 rounded-sm px-px">집중력</mark>이 높아졌고 <mark className="bg-yellow-200/70 rounded-sm px-px">수학</mark> 개념을 잘 이해하는 모습을 보였어요. 특히 <mark className="bg-yellow-200/70 rounded-sm px-px">100점 맞았어요</mark>!...
                   </p>
                 </div>
               </div>
@@ -345,14 +370,15 @@ export default function IntroPage() {
                 </div>
               ))}
               <div className="mt-2 bg-indigo-50 rounded-2xl p-3 border border-indigo-100/60">
-                <p className="text-xs text-indigo-600 font-medium mb-1">💡 이런 키워드 어때요?</p>
+                <p className="text-xs text-indigo-600 font-medium mb-1.5">💡 이런 키워드 어때요?</p>
                 <div className="flex flex-wrap gap-1">
-                  {['발음 교정 필요', '숙제 완료', '적극적 참여', '개념 복습 필요'].map(example => (
-                    <span key={example} className="text-xs text-indigo-400 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
-                      {example}
-                    </span>
-                  ))}
+                  <span className="text-xs text-pink-500 bg-pink-50 border border-pink-100 rounded-full px-2 py-0.5">발음 교정 필요</span>
+                  <span className="text-xs text-pink-500 bg-pink-50 border border-pink-100 rounded-full px-2 py-0.5">적극적 참여</span>
+                  <span className="text-xs text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">「숙제 완료」</span>
                 </div>
+                <p className="text-[10px] text-indigo-400 mt-1.5 leading-relaxed">
+                  <span className="text-pink-400">자연스럽게</span> — AI가 문장에 녹여요 · <span className="text-purple-500">「그대로」</span> — 원문 그대로 포함
+                </p>
               </div>
             </div>
 
