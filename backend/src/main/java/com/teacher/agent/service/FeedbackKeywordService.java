@@ -19,10 +19,11 @@ public class FeedbackKeywordService {
   private final FeedbackRepository feedbackRepository;
 
   @Transactional
-  public FeedbackResponse addKeyword(UserId userId, Long feedbackId, String keyword) {
+  public FeedbackResponse addKeyword(UserId userId, Long feedbackId, String keyword,
+      boolean required) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
 
-    feedback.addKeyword(keyword);
+    feedback.addKeyword(keyword, required);
     feedbackRepository.flush();
 
     return feedbackQueryService.toResponse(feedback);
@@ -42,11 +43,11 @@ public class FeedbackKeywordService {
 
   @Transactional
   public FeedbackResponse updateKeyword(UserId userId, Long feedbackId, Long keywordId,
-      String keyword) {
+      String keyword, boolean required) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
 
     try {
-      feedback.updateKeyword(keywordId, keyword);
+      feedback.updateKeyword(keywordId, keyword, required);
     } catch (IllegalArgumentException e) {
       log.warn("키워드 수정 실패 - 존재하지 않음: feedbackId={}, keywordId={}", feedbackId, keywordId);
       throw ResourceNotFoundException.feedbackKeyword(keywordId);

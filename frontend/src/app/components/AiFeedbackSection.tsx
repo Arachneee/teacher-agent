@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Feedback } from '../lib/api';
+import { highlightKeywords } from '../lib/highlightKeywords';
 
 interface Props {
   feedback: Feedback | null;
@@ -14,14 +15,18 @@ interface Props {
 
 export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiContent, onGenerate, onUpdateAiContent, onLike }: Props) {
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (textareaRef.current) {
+    if (editing && textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.focus();
+      const length = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(length, length);
     }
-  }, [feedback?.aiContent]);
+  }, [editing, feedback?.aiContent]);
 
   const handleCopy = async () => {
     if (!feedback?.aiContent) return;
@@ -30,16 +35,28 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const keywordTexts = feedback?.keywords.map(keyword => keyword.keyword) ?? [];
+
   return (
     <div className="flex flex-col gap-2">
       {feedback?.aiContent !== undefined && feedback?.aiContent !== null && (
         <div className="relative bg-indigo-50 rounded-2xl p-3">
-          <textarea
-            ref={textareaRef}
-            value={feedback.aiContent}
-            onChange={event => onUpdateAiContent(event.target.value)}
-            className="w-full text-sm text-gray-700 leading-relaxed bg-transparent outline-none resize-none pr-8 pb-8 overflow-hidden"
-          />
+          {editing ? (
+            <textarea
+              ref={textareaRef}
+              value={feedback.aiContent}
+              onChange={event => onUpdateAiContent(event.target.value)}
+              onBlur={() => setEditing(false)}
+              className="w-full text-sm text-gray-700 leading-relaxed bg-transparent outline-none resize-none pr-8 pb-8 overflow-hidden"
+            />
+          ) : (
+            <div
+              onClick={() => setEditing(true)}
+              className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words pr-8 pb-8 cursor-text"
+            >
+              {highlightKeywords(feedback.aiContent, keywordTexts)}
+            </div>
+          )}
           <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
             <span className="text-xs text-indigo-300 select-none">
               {feedback.aiContent.length}자

@@ -233,20 +233,20 @@ export async function createFeedback(studentId: number): Promise<Feedback> {
   return res.json();
 }
 
-export async function addKeyword(feedbackId: number, keyword: string): Promise<void> {
+export async function addKeyword(feedbackId: number, keyword: string, required = false): Promise<void> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/keywords`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ keyword }),
+    body: JSON.stringify({ keyword, required }),
   });
   if (!res.ok) throw new Error('키워드를 추가하지 못했어요');
 }
 
-export async function updateKeyword(feedbackId: number, keywordId: number, keyword: string): Promise<void> {
+export async function updateKeyword(feedbackId: number, keywordId: number, keyword: string, required: boolean): Promise<void> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/keywords/${keywordId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ keyword }),
+    body: JSON.stringify({ keyword, required }),
   });
   if (!res.ok) throw new Error('키워드를 수정하지 못했어요');
 }

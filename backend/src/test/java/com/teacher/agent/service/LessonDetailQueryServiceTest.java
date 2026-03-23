@@ -122,8 +122,8 @@ class LessonDetailQueryServiceTest {
     Long feedbackId = feedbackRepository.findByStudentIdAndLessonId(student.getId(), lesson.getId())
         .orElseThrow().getId();
     Feedback feedback = feedbackRepository.findById(feedbackId).orElseThrow();
-    feedback.addKeyword("집중력");
-    feedback.addKeyword("수학");
+    feedback.addKeyword("집중력", false);
+    feedback.addKeyword("수학", false);
     feedbackRepository.save(feedback);
 
     LessonDetailResponse response = lessonDetailQueryService.getDetail(userId, lesson.getId());

@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import type { SchoolGrade } from '../lib/api';
+import type { FeedbackKeyword, SchoolGrade } from '../lib/api';
 import { Student, deleteStudent, updateStudent } from '../lib/api';
 import { SCHOOL_GRADE_LABELS, getAvatarColor } from '../lib/constants';
 import GradeSelect from './GradeSelect';
@@ -39,9 +39,10 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   const [saving, setSaving] = useState(false);
   const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');
+  const [newKeywordRequired, setNewKeywordRequired] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   const [editingKeywordId, setEditingKeywordId] = useState<number | null>(null);
+  const [editingKeywordRequired, setEditingKeywordRequired] = useState(false);
 
   const {
     feedback,
@@ -95,8 +96,9 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
     }
   };
 
-  const handleStartEditKeyword = (keyword: { id: number; keyword: string }) => {
+  const handleStartEditKeyword = (keyword: FeedbackKeyword) => {
     setEditingKeywordId(keyword.id);
+    setEditingKeywordRequired(keyword.required);
     setKeywordInput(keyword.keyword);
     keywordInputRef.current?.focus();
   };
@@ -109,7 +111,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
   const handleSubmitKeyword = async () => {
     if (editingKeywordId !== null) {
       const trimmed = keywordInput.trim();
-      const success = await handleUpdateKeyword(editingKeywordId, trimmed);
+      const success = await handleUpdateKeyword(editingKeywordId, trimmed, editingKeywordRequired);
       if (success) {
         setEditingKeywordId(null);
         setKeywordInput('');
@@ -118,7 +120,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
       const trimmed = keywordInput.trim();
       if (!trimmed) return;
       setKeywordInput('');
-      const success = await handleAddKeyword(trimmed);
+      const success = await handleAddKeyword(trimmed, newKeywordRequired);
       if (!success) {
         setKeywordInput(trimmed);
       }
@@ -235,8 +237,12 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
         <KeywordsSection
           keywords={feedback?.keywords ?? []}
           keywordInput={keywordInput}
+          newKeywordRequired={newKeywordRequired}
           editingKeywordId={editingKeywordId}
+          editingKeywordRequired={editingKeywordRequired}
           onKeywordInputChange={setKeywordInput}
+          onNewKeywordRequiredChange={setNewKeywordRequired}
+          onEditingKeywordRequiredChange={setEditingKeywordRequired}
           onSubmitKeyword={handleSubmitKeyword}
           onStartEditKeyword={handleStartEditKeyword}
           onCancelEditKeyword={handleCancelEditKeyword}

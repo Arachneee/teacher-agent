@@ -59,8 +59,8 @@ public class Feedback extends BaseEntity {
         .toList();
   }
 
-  public void addKeyword(String keyword) {
-    keywords.add(FeedbackKeyword.create(this, keyword));
+  public void addKeyword(String keyword, boolean required) {
+    keywords.add(FeedbackKeyword.create(this, keyword, required));
   }
 
   public void removeKeyword(Long keywordId) {
@@ -71,14 +71,14 @@ public class Feedback extends BaseEntity {
     }
   }
 
-  public void updateKeyword(Long keywordId, String newKeyword) {
+  public void updateKeyword(Long keywordId, String newKeyword, boolean required) {
     FeedbackKeyword feedbackKeyword = keywords.stream()
         .filter(keyword -> keyword.getId().equals(keywordId))
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException(
             ErrorMessages.FEEDBACK_KEYWORD_NOT_FOUND + keywordId));
 
-    feedbackKeyword.update(newKeyword);
+    feedbackKeyword.update(newKeyword, required);
   }
 
   public void updateAiContent(String aiContent) {

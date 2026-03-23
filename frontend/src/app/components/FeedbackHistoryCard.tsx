@@ -1,6 +1,7 @@
 'use client';
 
 import type { Feedback } from '../types/api';
+import { highlightKeywords } from '../lib/highlightKeywords';
 
 interface Props {
   feedback: Feedback;
@@ -47,9 +48,13 @@ export default function FeedbackHistoryCard({ feedback }: Props) {
           {feedback.keywords.map(keyword => (
             <span
               key={keyword.id}
-              className="text-xs bg-purple-50 text-purple-500 rounded-full px-2.5 py-1"
+              className={`inline-flex items-center text-xs rounded-full px-2 py-1 ${
+                keyword.required
+                  ? 'bg-purple-100 text-purple-600 ring-1 ring-purple-300'
+                  : 'bg-purple-50 text-purple-500'
+              }`}
             >
-              {keyword.keyword}
+              {keyword.required ? `「${keyword.keyword}」` : keyword.keyword}
             </span>
           ))}
         </div>
@@ -59,7 +64,9 @@ export default function FeedbackHistoryCard({ feedback }: Props) {
       <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
         hasAiContent ? 'bg-pink-50 text-gray-700' : 'bg-gray-50 text-gray-300 italic'
       }`}>
-        {hasAiContent ? feedback.aiContent : 'AI 문자 없음'}
+        {hasAiContent
+          ? highlightKeywords(feedback.aiContent!, feedback.keywords.map(keyword => keyword.keyword))
+          : 'AI 문자 없음'}
       </div>
     </div>
   );

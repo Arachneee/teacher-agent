@@ -68,15 +68,17 @@ public class FeedbackController {
   @PostMapping("/{id}/keywords")
   public ResponseEntity<FeedbackResponse> addKeyword(UserId userId, @PathVariable @Positive Long id,
       @RequestBody @Valid FeedbackKeywordCreateRequest request) {
-    return ResponseEntity.ok(feedbackKeywordService.addKeyword(userId, id, request.keyword()));
+    return ResponseEntity.ok(
+        feedbackKeywordService.addKeyword(userId, id, request.keyword(), request.required()));
   }
 
   @PutMapping("/{id}/keywords/{keywordId}")
   public ResponseEntity<FeedbackResponse> updateKeyword(UserId userId,
       @PathVariable @Positive Long id, @PathVariable @Positive Long keywordId,
       @RequestBody @Valid FeedbackKeywordUpdateRequest request) {
-    return ResponseEntity
-        .ok(feedbackKeywordService.updateKeyword(userId, id, keywordId, request.keyword()));
+    return ResponseEntity.ok(
+        feedbackKeywordService.updateKeyword(userId, id, keywordId, request.keyword(),
+            request.required()));
   }
 
   @DeleteMapping("/{id}/keywords/{keywordId}")

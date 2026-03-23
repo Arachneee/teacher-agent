@@ -41,7 +41,7 @@ class FeedbackTest {
     Feedback feedback = Feedback.create(1L, 1L);
 
     // when
-    feedback.addKeyword("성실함");
+    feedback.addKeyword("성실함", false);
 
     // then
     assertThat(feedback.getKeywords()).hasSize(1);
@@ -54,9 +54,9 @@ class FeedbackTest {
     Feedback feedback = Feedback.create(1L, 1L);
 
     // when
-    feedback.addKeyword("성실함");
-    feedback.addKeyword("리더십");
-    feedback.addKeyword("협동심");
+    feedback.addKeyword("성실함", false);
+    feedback.addKeyword("리더십", false);
+    feedback.addKeyword("협동심", false);
 
     // then
     assertThat(feedback.getKeywords()).hasSize(3);

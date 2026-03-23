@@ -296,7 +296,7 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, studentId, lessonId);
 
     FeedbackResponse updated = feedbackKeywordService.addKeyword(userId, created.id(),
-        "성실함");
+        "성실함", false);
 
     assertThat(updated.keywords()).hasSize(1);
     assertThat(updated.keywords().get(0).keyword()).isEqualTo("성실함");
@@ -308,7 +308,7 @@ class FeedbackServiceTest {
     FeedbackResponse created =
         feedbackCommandService.create(userId, studentId, lessonId);
     FeedbackResponse withKeyword = feedbackKeywordService.addKeyword(userId, created.id(),
-        "성실함");
+        "성실함", false);
     Long keywordId = withKeyword.keywords().get(0).id();
 
     feedbackKeywordService.removeKeyword(userId, created.id(), keywordId);
@@ -331,11 +331,11 @@ class FeedbackServiceTest {
     FeedbackResponse created =
         feedbackCommandService.create(userId, studentId, lessonId);
     FeedbackResponse withKeyword = feedbackKeywordService.addKeyword(userId, created.id(),
-        "성실함");
+        "성실함", false);
     Long keywordId = withKeyword.keywords().get(0).id();
 
     FeedbackResponse updated = feedbackKeywordService.updateKeyword(userId, created.id(), keywordId,
-        "꼼꼼함");
+        "꼼꼼함", false);
 
     assertThat(updated.keywords()).hasSize(1);
     assertThat(updated.keywords().get(0).keyword()).isEqualTo("꼼꼼함");
@@ -348,7 +348,7 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, studentId, lessonId);
 
     assertThatThrownBy(() -> feedbackKeywordService.updateKeyword(userId, created.id(), 999L,
-        "꼼꼼함"))
+        "꼼꼼함", false))
         .isInstanceOf(BusinessException.class);
   }
 
@@ -357,11 +357,11 @@ class FeedbackServiceTest {
     FeedbackResponse created =
         feedbackCommandService.create(userId, studentId, lessonId);
     FeedbackResponse withKeyword = feedbackKeywordService.addKeyword(userId, created.id(),
-        "성실함");
+        "성실함", false);
     Long keywordId = withKeyword.keywords().get(0).id();
 
     assertThatThrownBy(() -> feedbackKeywordService.updateKeyword(otherUserId, created.id(),
-        keywordId, "꼼꼼함"))
+        keywordId, "꼼꼼함", false))
         .isInstanceOf(BusinessException.class);
   }
 
@@ -370,7 +370,7 @@ class FeedbackServiceTest {
     FeedbackResponse created =
         feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
-        "성실함");
+        "성실함", false);
     given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동"))).willReturn("AI가 생성한 피드백");
 
     feedbackCommandService.generateAiContent(userId, created.id());
@@ -438,7 +438,7 @@ class FeedbackServiceTest {
     FeedbackResponse created =
         feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
-        "성실함");
+        "성실함", false);
     feedbackCommandService.update(userId, created.id(), "AI가 생성한 피드백");
     feedbackLikeService.like(userId, created.id());
 
@@ -472,7 +472,7 @@ class FeedbackServiceTest {
     FeedbackResponse created =
         feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
-        "성실함");
+        "성실함", false);
     feedbackCommandService.update(userId, created.id(), "AI 피드백 내용");
     feedbackLikeService.like(userId, created.id());
 

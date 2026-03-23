@@ -36,11 +36,11 @@ public record FeedbackResponse(
         feedback.getCreatedAt(), feedback.getUpdatedAt());
   }
 
-  public record KeywordItem(Long id, String keyword, LocalDateTime createdAt) {
+  public record KeywordItem(Long id, String keyword, boolean required, LocalDateTime createdAt) {
 
     public static KeywordItem from(FeedbackKeyword feedbackKeyword) {
       return new KeywordItem(feedbackKeyword.getId(), feedbackKeyword.getKeyword(),
-          feedbackKeyword.getCreatedAt());
+          feedbackKeyword.isRequired(), feedbackKeyword.getCreatedAt());
     }
   }
 }

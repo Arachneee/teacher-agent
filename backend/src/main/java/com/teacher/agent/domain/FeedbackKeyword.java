@@ -26,15 +26,20 @@ public class FeedbackKeyword extends BaseEntity {
   @Column(nullable = false)
   private String keyword;
 
-  public static FeedbackKeyword create(Feedback feedback, String keyword) {
+  @Column(nullable = false)
+  private boolean required;
+
+  public static FeedbackKeyword create(Feedback feedback, String keyword, boolean required) {
     FeedbackKeyword feedbackKeyword = new FeedbackKeyword();
     feedbackKeyword.feedback = checkNotNull(feedback, "feedback");
     feedbackKeyword.keyword = checkNotBlank(checkMaxLength(keyword, 100, KEYWORD), KEYWORD);
+    feedbackKeyword.required = required;
 
     return feedbackKeyword;
   }
 
-  public void update(String newKeyword) {
+  public void update(String newKeyword, boolean required) {
     this.keyword = checkNotBlank(checkMaxLength(newKeyword, 100, KEYWORD), KEYWORD);
+    this.required = required;
   }
 }

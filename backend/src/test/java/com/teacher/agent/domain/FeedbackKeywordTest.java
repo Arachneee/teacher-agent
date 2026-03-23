@@ -13,7 +13,7 @@ class FeedbackKeywordTest {
     Feedback feedback = Feedback.create(1L, 1L);
 
     // when
-    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함");
+    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함", false);
 
     // then
     assertThat(feedbackKeyword.getFeedback()).isSameAs(feedback);
@@ -23,7 +23,7 @@ class FeedbackKeywordTest {
   @Test
   void 피드백이_null이면_생성에_실패한다() {
     // when & then
-    assertThatThrownBy(() -> FeedbackKeyword.create(null, "성실함"))
+    assertThatThrownBy(() -> FeedbackKeyword.create(null, "성실함", false))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -33,7 +33,7 @@ class FeedbackKeywordTest {
     Feedback feedback = Feedback.create(1L, 1L);
 
     // when & then
-    assertThatThrownBy(() -> FeedbackKeyword.create(feedback, null))
+    assertThatThrownBy(() -> FeedbackKeyword.create(feedback, null, false))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -43,7 +43,7 @@ class FeedbackKeywordTest {
     Feedback feedback = Feedback.create(1L, 1L);
 
     // when & then
-    assertThatThrownBy(() -> FeedbackKeyword.create(feedback, ""))
+    assertThatThrownBy(() -> FeedbackKeyword.create(feedback, "", false))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -53,7 +53,7 @@ class FeedbackKeywordTest {
     Feedback feedback = Feedback.create(1L, 1L);
 
     // when & then
-    assertThatThrownBy(() -> FeedbackKeyword.create(feedback, "   "))
+    assertThatThrownBy(() -> FeedbackKeyword.create(feedback, "   ", false))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -64,7 +64,7 @@ class FeedbackKeywordTest {
     String longKeyword = "가".repeat(101);
 
     // when & then
-    assertThatThrownBy(() -> FeedbackKeyword.create(feedback, longKeyword))
+    assertThatThrownBy(() -> FeedbackKeyword.create(feedback, longKeyword, false))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -75,7 +75,7 @@ class FeedbackKeywordTest {
     String maxKeyword = "가".repeat(100);
 
     // when
-    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, maxKeyword);
+    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, maxKeyword, false);
 
     // then
     assertThat(feedbackKeyword.getKeyword()).hasSize(100);
@@ -85,10 +85,10 @@ class FeedbackKeywordTest {
   void 키워드를_수정한다() {
     // given
     Feedback feedback = Feedback.create(1L, 1L);
-    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함");
+    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함", false);
 
     // when
-    feedbackKeyword.update("꼼꼼함");
+    feedbackKeyword.update("꼼꼼함", false);
 
     // then
     assertThat(feedbackKeyword.getKeyword()).isEqualTo("꼼꼼함");
@@ -98,10 +98,10 @@ class FeedbackKeywordTest {
   void 빈_문자열로_수정하면_실패한다() {
     // given
     Feedback feedback = Feedback.create(1L, 1L);
-    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함");
+    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함", false);
 
     // when & then
-    assertThatThrownBy(() -> feedbackKeyword.update(""))
+    assertThatThrownBy(() -> feedbackKeyword.update("", false))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -109,11 +109,11 @@ class FeedbackKeywordTest {
   void 최대_길이를_초과하는_값으로_수정하면_실패한다() {
     // given
     Feedback feedback = Feedback.create(1L, 1L);
-    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함");
+    FeedbackKeyword feedbackKeyword = FeedbackKeyword.create(feedback, "성실함", false);
     String longKeyword = "가".repeat(101);
 
     // when & then
-    assertThatThrownBy(() -> feedbackKeyword.update(longKeyword))
+    assertThatThrownBy(() -> feedbackKeyword.update(longKeyword, false))
         .isInstanceOf(IllegalArgumentException.class);
   }
 }

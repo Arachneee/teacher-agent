@@ -16,6 +16,7 @@ export interface Student {
 export interface FeedbackKeyword {
   id: number;
   keyword: string;
+  required: boolean;
   createdAt: string;
 }
 

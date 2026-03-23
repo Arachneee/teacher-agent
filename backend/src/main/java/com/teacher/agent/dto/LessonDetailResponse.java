@@ -46,7 +46,7 @@ public record LessonDetailResponse(
           .filter(row -> row.keywordId() != null)
           .collect(toMap(LessonDetailRow::keywordId,
               row -> new FeedbackResponse.KeywordItem(row.keywordId(), row.keyword(),
-                  row.keywordCreatedAt()),
+                  Boolean.TRUE.equals(row.keywordRequired()), row.keywordCreatedAt()),
               (existing, duplicate) -> existing, LinkedHashMap::new))
           .values().stream().toList();
 

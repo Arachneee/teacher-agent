@@ -2,7 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Attendee, updateStudent } from '../lib/api';
+import { type Attendee, type FeedbackKeyword, updateStudent } from '../lib/api';
 import { SCHOOL_GRADE_LABELS, getAvatarColor } from '../lib/constants';
 import { formatDateKorean } from '../lib/dateTimeUtils';
 import { useFeedback } from '../hooks/useFeedback';
@@ -37,7 +37,9 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
   const [savingMemo, setSavingMemo] = useState(false);
   const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState('');
+  const [newKeywordRequired, setNewKeywordRequired] = useState(false);
   const [editingKeywordId, setEditingKeywordId] = useState<number | null>(null);
+  const [editingKeywordRequired, setEditingKeywordRequired] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const memoTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -106,8 +108,9 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
     onRemove(attendee.id);
   };
 
-  const handleStartEditKeyword = (keyword: { id: number; keyword: string }) => {
+  const handleStartEditKeyword = (keyword: FeedbackKeyword) => {
     setEditingKeywordId(keyword.id);
+    setEditingKeywordRequired(keyword.required);
     setKeywordInput(keyword.keyword);
     keywordInputRef.current?.focus();
   };
@@ -120,7 +123,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
   const handleSubmitKeyword = async () => {
     if (editingKeywordId !== null) {
       const trimmed = keywordInput.trim();
-      const success = await handleUpdateKeyword(editingKeywordId, trimmed);
+      const success = await handleUpdateKeyword(editingKeywordId, trimmed, editingKeywordRequired);
       if (success) {
         setEditingKeywordId(null);
         setKeywordInput('');
@@ -129,7 +132,7 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
       const trimmed = keywordInput.trim();
       if (!trimmed) return;
       setKeywordInput('');
-      const success = await handleAddKeyword(trimmed);
+      const success = await handleAddKeyword(trimmed, newKeywordRequired);
       if (!success) {
         setKeywordInput(trimmed);
       }
@@ -259,8 +262,12 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
       <KeywordsSection
         keywords={feedback?.keywords ?? []}
         keywordInput={keywordInput}
+        newKeywordRequired={newKeywordRequired}
         editingKeywordId={editingKeywordId}
+        editingKeywordRequired={editingKeywordRequired}
         onKeywordInputChange={setKeywordInput}
+        onNewKeywordRequiredChange={setNewKeywordRequired}
+        onEditingKeywordRequiredChange={setEditingKeywordRequired}
         onSubmitKeyword={handleSubmitKeyword}
         onStartEditKeyword={handleStartEditKeyword}
         onCancelEditKeyword={handleCancelEditKeyword}

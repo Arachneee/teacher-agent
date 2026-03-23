@@ -55,6 +55,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
           f.updatedAt,
           fk.id,
           fk.keyword,
+          fk.required,
           fk.createdAt
       )
       FROM Lesson l

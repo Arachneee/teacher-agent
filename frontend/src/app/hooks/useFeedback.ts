@@ -103,7 +103,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     }, 1000);
   };
 
-  const handleAddKeyword = async (keyword: string): Promise<boolean> => {
+  const handleAddKeyword = async (keyword: string, required = false): Promise<boolean> => {
     if (!keyword || keywordSubmittingRef.current) return false;
     keywordSubmittingRef.current = true;
     setErrorMessage(null);
@@ -113,7 +113,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
         const created = await createFeedback(studentId);
         feedbackId = created.id;
       }
-      await addKeyword(feedbackId, keyword);
+      await addKeyword(feedbackId, keyword, required);
       const loaded = await reloadFeedback(feedbackId);
       const mergedFeedback = debounceTimerRef.current !== null
         ? { ...loaded, aiContent: feedback?.aiContent ?? loaded.aiContent }
@@ -129,7 +129,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     }
   };
 
-  const handleUpdateKeyword = async (keywordId: number, newKeyword: string): Promise<boolean> => {
+  const handleUpdateKeyword = async (keywordId: number, newKeyword: string, required: boolean): Promise<boolean> => {
     if (!feedback) return false;
     if (!newKeyword.trim()) {
       await handleRemoveKeyword(keywordId);
@@ -140,13 +140,13 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
       prev ? {
         ...prev,
         keywords: prev.keywords.map(keyword =>
-          keyword.id === keywordId ? { ...keyword, keyword: newKeyword } : keyword
+          keyword.id === keywordId ? { ...keyword, keyword: newKeyword, required } : keyword
         ),
       } : null
     );
     setErrorMessage(null);
     try {
-      await updateKeyword(feedback.id, keywordId, newKeyword);
+      await updateKeyword(feedback.id, keywordId, newKeyword, required);
       const loaded = await reloadFeedback(feedback.id);
       setFeedback(loaded);
       feedbackIdRef.current = loaded.id;
@@ -155,6 +155,29 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
       setErrorMessage('키워드를 수정하지 못했어요');
       setFeedback(previousFeedback);
       return false;
+    }
+  };
+
+  const handleToggleKeywordRequired = async (keywordId: number) => {
+    if (!feedback) return;
+    const target = feedback.keywords.find(keyword => keyword.id === keywordId);
+    if (!target) return;
+    const newRequired = !target.required;
+    const previousFeedback = feedback;
+    setFeedback(prev =>
+      prev ? {
+        ...prev,
+        keywords: prev.keywords.map(keyword =>
+          keyword.id === keywordId ? { ...keyword, required: newRequired } : keyword
+        ),
+      } : null
+    );
+    try {
+      await updateKeyword(feedback.id, keywordId, target.keyword, newRequired);
+      setFeedback(await reloadFeedback(feedback.id));
+    } catch {
+      setErrorMessage('키워드 고정을 변경하지 못했어요');
+      setFeedback(previousFeedback);
     }
   };
 
@@ -203,5 +226,5 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     }
   };
 
-  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleUpdateKeyword, handleRemoveKeyword, handleGenerate, handleUpdateAiContent, handleLike };
+  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleUpdateKeyword, handleRemoveKeyword, handleToggleKeywordRequired, handleGenerate, handleUpdateAiContent, handleLike };
 }

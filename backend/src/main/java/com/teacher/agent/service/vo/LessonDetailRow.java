@@ -20,5 +20,6 @@ public record LessonDetailRow(
     LocalDateTime feedbackUpdatedAt,
     Long keywordId,
     String keyword,
+    Boolean keywordRequired,
     LocalDateTime keywordCreatedAt) {
 }
