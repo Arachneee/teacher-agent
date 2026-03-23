@@ -14,7 +14,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -67,7 +66,7 @@ public class FeedbackController {
     return ResponseEntity.ok(feedbackCommandService.generateAiContent(userId, id));
   }
 
-  @GetMapping(value = "/{id}/generate/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  @GetMapping(value = "/{id}/generate/stream", produces = "text/plain;charset=UTF-8")
   public Flux<String> streamAiContent(UserId userId, @PathVariable @Positive Long id) {
     return feedbackCommandService.streamAiContent(userId, id);
   }
