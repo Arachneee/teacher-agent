@@ -5,11 +5,11 @@ import {
   Feedback,
   addKeyword,
   createFeedback,
-  generateAiContent,
   getFeedback,
   getFeedbacks,
   likeFeedback,
   removeKeyword,
+  streamAiContent,
   updateFeedback,
   updateKeyword,
 } from '../lib/api';
@@ -199,11 +199,15 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
 
   const handleGenerate = async () => {
     if (!feedback || feedback.keywords.length === 0 || aiGenerating) return;
+    const feedbackId = feedback.id;
     setAiGenerating(true);
     setErrorMessage(null);
+    setFeedback(prev => prev ? { ...prev, aiContent: null, liked: false } : null);
     try {
-      await generateAiContent(feedback.id);
-      setFeedback(await reloadFeedback(feedback.id));
+      await streamAiContent(feedbackId, (chunk) => {
+        setFeedback(prev => prev ? { ...prev, aiContent: (prev.aiContent ?? '') + chunk } : null);
+      });
+      setFeedback(await reloadFeedback(feedbackId));
     } catch {
       setErrorMessage('AI 문자를 생성하지 못했어요');
     } finally {

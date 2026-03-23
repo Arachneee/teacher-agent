@@ -274,6 +274,20 @@ export async function generateAiContent(feedbackId: number): Promise<Feedback> {
   return res.json();
 }
 
+export async function streamAiContent(feedbackId: number, onChunk: (chunk: string) => void): Promise<void> {
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/generate/stream`);
+  if (!res.ok) throw new Error('AI 문자를 생성하지 못했어요');
+
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    onChunk(decoder.decode(value));
+  }
+}
+
 export async function likeFeedback(feedbackId: number): Promise<Feedback> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/like`, {
     method: 'POST',
