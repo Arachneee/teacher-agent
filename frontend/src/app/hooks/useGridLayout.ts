@@ -5,12 +5,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export const MIN_COLUMNS = 1;
 export const MAX_COLUMNS = 6;
 
-export function useGridLayout(storageSuffix = '') {
+export function useGridLayout(storageSuffix = '', defaultColumns = 4) {
   const columnStorageKey = `gridColumns_${storageSuffix}`;
   const gridOrderStorageKey = `gridOrder_${storageSuffix}`;
 
   const [gridSlots, setGridSlots] = useState<(number | null)[]>([]);
-  const [columnCount, setColumnCount] = useState(4);
+  const [columnCount, setColumnCount] = useState(defaultColumns);
   const [isInitialized, setIsInitialized] = useState(false);
   const isInitializedRef = useRef(false);
 

@@ -15,7 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace('/');
+      router.replace('/calendar');
     }
   }, [loading, user, router]);
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
     try {
       const authResponse = await login(userId, password);
       setUser(authResponse);
-      router.push('/');
+      router.push('/calendar');
     } catch {
       setError('아이디 또는 비밀번호가 올바르지 않아요');
     } finally {

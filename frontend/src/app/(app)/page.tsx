@@ -1,241 +1,388 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Lesson, getLessons } from '../lib/api';
-import { padTwoDigits } from '../lib/dateTimeUtils';
-import { useAuth } from '../context/AuthContext';
-import WeeklyCalendarView from '../components/WeeklyCalendarView';
-import AddLessonModal from '../components/AddLessonModal';
-import DatePicker from '../components/DatePicker';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-function getWeekStart(date: Date): Date {
-  const result = new Date(date);
-  const dayOfWeek = result.getDay();
-  const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  result.setDate(result.getDate() + daysToMonday);
-  result.setHours(0, 0, 0, 0);
-  return result;
-}
+const DEMO_KEYWORDS = ['집중력 향상', '수학 개념 이해', '발표 자신감↑'];
+const DEMO_MESSAGE =
+  '안녕하세요, 어머님! 오늘 수업에서 민준이가 집중력이 높아졌고 수학 개념을 잘 이해하는 모습을 보였어요. 발표에도 자신감 있게 참여해 정말 기특했습니다 😊 앞으로도 함께 열심히 하겠습니다!';
 
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
+type PhaseId = 'empty' | 'kw1' | 'kw2' | 'kw3' | 'generating' | 'done';
 
-function toISODateString(date: Date): string {
-  return `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`;
-}
+const PHASES: { id: PhaseId; duration: number }[] = [
+  { id: 'empty', duration: 1000 },
+  { id: 'kw1', duration: 900 },
+  { id: 'kw2', duration: 900 },
+  { id: 'kw3', duration: 1100 },
+  { id: 'generating', duration: 1500 },
+  { id: 'done', duration: 3000 },
+];
 
-const DAY_NAMES_FULL = ['일', '월', '화', '수', '목', '금', '토'];
-
-function formatMobileDateLabel(date: Date): string {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const dayName = DAY_NAMES_FULL[date.getDay()];
-  return `${month}월 ${day}일 (${dayName})`;
-}
-
-export default function Home() {
-  const { user, logout } = useAuth();
-  const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingLesson, setEditingLesson] = useState<Lesson | undefined>(undefined);
-  const [pendingTime, setPendingTime] = useState<{ startTime: string; endTime: string } | null>(null);
-
-  // currentDay drives both mobile (day nav) and desktop (week nav)
-  const [currentDay, setCurrentDay] = useState<Date>(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
-  });
-
-  const weekStart = useMemo(() => getWeekStart(currentDay), [currentDay]);
-  const weekStartString = useMemo(() => toISODateString(weekStart), [weekStart]);
-
-  const mobileSelectedDayIndex = useMemo(() => {
-    const diffMs = currentDay.getTime() - weekStart.getTime();
-    return Math.round(diffMs / (1000 * 60 * 60 * 24));
-  }, [currentDay, weekStart]);
-
-  const fetchLessons = useCallback(() => {
-    setLoading(true);
-    getLessons(weekStartString)
-      .then(setLessons)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [weekStartString]);
+function useAnimationPhase(): PhaseId {
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    fetchLessons();
-  }, [fetchLessons]);
+    const timer = setTimeout(() => {
+      setIndex(prev => (prev + 1) % PHASES.length);
+    }, PHASES[index].duration);
+    return () => clearTimeout(timer);
+  }, [index]);
 
-  const handleSave = () => {
-    setShowModal(false);
-    setEditingLesson(undefined);
-    setPendingTime(null);
-    fetchLessons();
-  };
+  return PHASES[index].id;
+}
 
-  const handleEditClick = (lesson: Lesson) => {
-    setEditingLesson(lesson);
-    setPendingTime(null);
-    setShowModal(true);
-  };
+function AiDemoCard() {
+  const phase = useAnimationPhase();
 
-  const handleCellClick = (startTime: string, endTime: string) => {
-    setEditingLesson(undefined);
-    setPendingTime({ startTime, endTime });
-    setShowModal(true);
-  };
+  const visibleKeywords =
+    phase === 'empty'
+      ? []
+      : phase === 'kw1'
+        ? [DEMO_KEYWORDS[0]]
+        : phase === 'kw2'
+          ? [DEMO_KEYWORDS[0], DEMO_KEYWORDS[1]]
+          : DEMO_KEYWORDS;
 
-  const handleDelete = (id: number, didDeleteMultiple: boolean) => {
-    if (didDeleteMultiple) {
-      fetchLessons();
-    } else {
-      setLessons(prev => prev.filter(lesson => lesson.id !== id));
-    }
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    setEditingLesson(undefined);
-    setPendingTime(null);
-  };
-
-  // Desktop: navigate by week
-  const goToPrevWeek = () => setCurrentDay(prev => addDays(prev, -7));
-  const goToNextWeek = () => setCurrentDay(prev => addDays(prev, 7));
-
-  // Mobile: navigate by day
-  const goToPrevDay = () => setCurrentDay(prev => addDays(prev, -1));
-  const goToNextDay = () => setCurrentDay(prev => addDays(prev, 1));
-
-  const goToToday = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    setCurrentDay(today);
-  };
+  const isGenerating = phase === 'generating';
+  const showMessage = phase === 'done';
+  const isButtonHighlighted = phase === 'kw3';
 
   return (
-    <div className="flex flex-col flex-1 px-4 md:px-6 py-5 md:py-8">
-      <header className="relative mb-4 md:mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl md:text-3xl font-bold text-purple-500">내 수업</h1>
+    <div className="bg-white rounded-3xl shadow-md p-5 w-full max-w-sm mx-auto select-none pointer-events-none">
+      <div className="flex justify-center mb-3">
+        <svg width="24" height="10" viewBox="0 0 24 10" fill="none">
+          {([4, 12, 20] as number[]).flatMap(x =>
+            ([2, 8] as number[]).map(y => (
+              <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" fill="#d1d5db" />
+            ))
+          )}
+        </svg>
+      </div>
 
-          {/* Desktop week navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            <button
-              onClick={goToPrevWeek}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
-              aria-label="이전 주"
-            >
-              ‹
-            </button>
-            <button
-              onClick={goToToday}
-              className="text-sm px-3 py-1 rounded-full border border-gray-200 hover:border-purple-300 hover:text-purple-500 text-gray-500 transition-colors"
-            >
-              오늘
-            </button>
-            <button
-              onClick={goToNextWeek}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
-              aria-label="다음 주"
-            >
-              ›
-            </button>
-            <div className="relative ml-1">
-              <DatePicker
-                value={toISODateString(currentDay)}
-                onChange={value => {
-                  if (value) {
-                    const selected = new Date(value);
-                    selected.setHours(0, 0, 0, 0);
-                    setCurrentDay(selected);
-                  }
-                }}
-              />
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl font-bold shrink-0">
+          민
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-gray-800">김민준</span>
+            <span className="text-xs bg-purple-100 text-purple-600 rounded-lg px-2 py-0.5 font-medium">
+              초등 3학년
+            </span>
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">2026.01.15 등록</p>
+        </div>
+        <div className="w-7 h-7 bg-purple-50 rounded-xl flex items-center justify-center shrink-0">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+        </div>
+      </div>
+
+      <div className="mb-4 px-3 py-2 rounded-2xl">
+        <p className="text-sm text-gray-300 italic">메모를 추가하려면 클릭하세요</p>
+      </div>
+
+      <div className="flex flex-col gap-2 mb-3">
+        <p className="text-xs font-semibold text-gray-400 tracking-wide">수업 키워드</p>
+        {visibleKeywords.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {visibleKeywords.map((keyword, i) => (
+              <span key={i} className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-pink-50 text-pink-500">
+                {keyword}
+                <span className="text-sm leading-none opacity-60">×</span>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center rounded-2xl bg-pink-50">
+          <span className="flex-1 text-xs text-gray-300 px-3 py-2">키워드 입력</span>
+          <div className="w-8 h-8 mr-1 flex items-center justify-center rounded-xl bg-pink-100">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 10 4 15 9 20" />
+              <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {showMessage && (
+        <div className="relative bg-indigo-50 rounded-2xl p-3 mb-2">
+          <p className="text-xs text-gray-700 leading-relaxed pr-8">{DEMO_MESSAGE}</p>
+          <div className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-xl bg-white">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </div>
+          <div className="flex items-center justify-end gap-1.5 mt-1.5">
+            <span className="text-xs text-indigo-300">{DEMO_MESSAGE.length}자</span>
+            <div className="w-7 h-7 flex items-center justify-center rounded-xl bg-indigo-100">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+                <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+              </svg>
             </div>
           </div>
-
-          {/* Mobile day navigation */}
-          <div className="flex md:hidden items-center gap-1">
-            <button
-              onClick={goToPrevDay}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
-              aria-label="이전 날"
-            >
-              ‹
-            </button>
-            <button
-              onClick={goToToday}
-              className="text-xs px-2.5 py-1 rounded-full border border-gray-200 hover:border-purple-300 hover:text-purple-500 text-gray-500 transition-colors"
-            >
-              오늘
-            </button>
-            <button
-              onClick={goToNextDay}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-gray-500 hover:text-purple-500 transition-colors text-lg"
-              aria-label="다음 날"
-            >
-              ›
-            </button>
-          </div>
         </div>
-
-        {/* Mobile: date label center */}
-        <div className="flex md:hidden absolute left-1/2 -translate-x-1/2 top-[1.25rem] pointer-events-none">
-          <span className="text-sm font-medium text-gray-600">
-            {formatMobileDateLabel(currentDay)}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 md:gap-3">
-          <span className="hidden md:inline text-sm text-gray-400">{user?.userId}</span>
-          <button
-            onClick={logout}
-            className="text-xs md:text-sm text-gray-400 hover:text-purple-500 transition-colors"
-          >
-            로그아웃
-          </button>
-        </div>
-      </header>
-
-      {loading ? (
-        <div className="flex flex-col items-center justify-center h-96 gap-3 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-400 rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">불러오는 중...</p>
-        </div>
-      ) : (
-        <WeeklyCalendarView
-          lessons={lessons}
-          weekStart={weekStart}
-          onEdit={handleEditClick}
-          onDelete={handleDelete}
-          onCellClick={handleCellClick}
-          mobileSelectedDayIndex={mobileSelectedDayIndex}
-        />
       )}
 
       <button
-        onClick={() => setShowModal(true)}
-        className="fixed bottom-20 right-5 md:bottom-8 md:right-8 w-14 h-14 md:w-16 md:h-16 bg-pink-400 hover:bg-pink-500 active:scale-95 text-white text-3xl rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
-        aria-label="수업 추가"
+        className={`w-full text-sm font-medium py-2.5 rounded-2xl flex items-center justify-center gap-2 transition-all ${
+          isGenerating
+            ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-indigo-500'
+            : 'bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-500'
+        } ${isButtonHighlighted ? 'ring-2 ring-indigo-300 shadow-md' : ''}`}
       >
-        +
+        {isGenerating ? (
+          <>
+            <div className="w-3.5 h-3.5 border-2 border-indigo-300 border-t-indigo-500 rounded-full animate-spin" />
+            생성 중...
+          </>
+        ) : (
+          <>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              <path d="M9 9h.01M12 9h.01M15 9h.01" strokeWidth="2.5" />
+            </svg>
+            {showMessage ? '다시 생성' : 'AI 학부모 문자 생성'}
+          </>
+        )}
       </button>
+    </div>
+  );
+}
 
-      {showModal && (
-        <AddLessonModal
-          lesson={editingLesson}
-          initialStartTime={pendingTime?.startTime}
-          initialEndTime={pendingTime?.endTime}
-          onSave={handleSave}
-          onClose={handleModalClose}
-        />
-      )}
+function CalendarMockup() {
+  const grid = [
+    [null, null, { label: '영어', color: 'bg-pink-100 text-pink-500' }, null, null],
+    [{ label: '수학', color: 'bg-purple-100 text-purple-600' }, null, null, null, { label: '과학', color: 'bg-blue-100 text-blue-500' }],
+    [null, { label: '국어', color: 'bg-amber-100 text-amber-600' }, null, null, null],
+    [null, null, null, { label: '수학', color: 'bg-purple-100 text-purple-600' }, null],
+  ] as ({ label: string; color: string } | null)[][];
+
+  return (
+    <div className="bg-white/80 rounded-2xl p-3 shadow-sm select-none">
+      <div className="grid grid-cols-5 gap-1 mb-2">
+        {['월', '화', '수', '목', '금'].map(day => (
+          <div key={day} className="text-center text-xs font-medium text-gray-300">{day}</div>
+        ))}
+      </div>
+      <div className="flex flex-col gap-1">
+        {grid.map((row, rowIndex) => (
+          <div key={rowIndex} className="grid grid-cols-5 gap-1">
+            {row.map((cell, colIndex) => (
+              <div
+                key={colIndex}
+                className={`h-7 rounded-lg flex items-center justify-center text-xs font-medium ${cell ? cell.color : 'bg-gray-50'}`}
+              >
+                {cell?.label}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StudentsMockup() {
+  const cards = [
+    { name: '김민준', grade: '초3', initial: '민', color: 'bg-purple-100 text-purple-600' },
+    { name: '이서연', grade: '초4', initial: '서', color: 'bg-pink-100 text-pink-600' },
+    { name: '박준호', grade: '중1', initial: '준', color: 'bg-amber-100 text-amber-600' },
+    { name: '최예린', grade: '초3', initial: '예', color: 'bg-teal-100 text-teal-600' },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2 select-none">
+      {cards.map(card => (
+        <div key={card.name} className="bg-white rounded-2xl p-3 shadow-sm flex flex-col gap-2">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-base font-bold ${card.color}`}>
+            {card.initial}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-700">{card.name}</p>
+            <span className="text-xs text-purple-500 bg-purple-50 rounded-full px-1.5 py-0.5">{card.grade}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const HOW_IT_WORKS_STEPS = [
+  { number: '1', title: '수업에 학생을 등록해요', description: '캘린더에서 수업을 만들고 수강생을 추가해요' },
+  { number: '2', title: '수업 키워드를 입력해요', description: '수업 중 관찰한 내용을 짧은 키워드로 남겨요' },
+  { number: '3', title: 'AI가 학부모 문자를 작성해요', description: '버튼 한 번으로 개인화된 문자가 완성돼요' },
+];
+
+export default function IntroPage() {
+  const router = useRouter();
+
+  return (
+    <div className="overflow-y-auto">
+      <div className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-14 md:gap-20">
+
+        {/* HERO */}
+        <section className="text-center pt-2 md:pt-6">
+          <div className="text-5xl md:text-7xl mb-5 leading-none">🍎</div>
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4 leading-snug">
+            선생님을 위한<br />
+            스마트 수업 관리
+          </h1>
+          <p className="text-gray-500 text-base md:text-lg mb-8 leading-relaxed">
+            수업 일정 관리부터 AI 학부모 문자까지<br />
+            선생님의 소중한 시간을 아껴드려요
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <button
+              onClick={() => router.push('/login')}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-500 text-white font-semibold rounded-2xl hover:bg-purple-600 active:scale-95 transition-all shadow-md hover:shadow-lg"
+            >
+              시작하기
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+            <button
+              onClick={() => router.push('/calendar')}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-purple-500 font-semibold rounded-2xl hover:bg-purple-50 active:scale-95 transition-all shadow-sm border border-purple-100"
+            >
+              캘린더 보기
+            </button>
+          </div>
+        </section>
+
+        {/* FEATURES */}
+        <section>
+          <h2 className="text-lg font-bold text-gray-700 mb-6 text-center">주요 기능</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-5 shadow-sm border border-white/80">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">📅</span>
+                <span className="font-semibold text-gray-700">수업 캘린더</span>
+              </div>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                주간 수업 일정을 한눈에 파악하고 반복 수업도 쉽게 관리해요
+              </p>
+              <CalendarMockup />
+            </div>
+
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-5 shadow-sm border border-white/80">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">👨‍🎓</span>
+                <span className="font-semibold text-gray-700">학생 관리</span>
+              </div>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                학년별로 학생을 정리하고 메모와 피드백 기록을 남겨요
+              </p>
+              <StudentsMockup />
+            </div>
+
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-5 shadow-sm border border-indigo-100/60">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">✨</span>
+                <span className="font-semibold text-gray-700">AI 학부모 문자</span>
+                <span className="text-xs bg-indigo-500 text-white rounded-full px-2 py-0.5 font-medium">핵심</span>
+              </div>
+              <p className="text-sm text-gray-500 mb-5 leading-relaxed">
+                수업 키워드만 입력하면 AI가 개인화된 학부모 문자를 자동으로 작성해드려요
+              </p>
+              <div className="flex flex-col gap-2.5">
+                <div className="flex flex-wrap gap-1.5">
+                  {['집중력 향상', '수학 이해', '발표 자신감'].map(keyword => (
+                    <span key={keyword} className="text-xs bg-pink-50 text-pink-500 border border-pink-100 px-2.5 py-1 rounded-full font-medium">
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1.5 text-indigo-400 text-xs font-medium">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                  AI가 자동 생성
+                </div>
+                <div className="bg-white rounded-2xl p-2.5 shadow-sm">
+                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
+                    안녕하세요! 오늘 수업에서 민준이가 집중력이 높아졌고 수학 개념을 잘 이해하는 모습을 보였어요...
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI SHOWCASE */}
+        <section>
+          <div className="text-center mb-10">
+            <span className="text-sm font-semibold text-indigo-500 bg-indigo-50 rounded-full px-4 py-1.5 inline-block mb-4">
+              ✨ 이렇게 작동해요
+            </span>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-3">
+              키워드 입력 → AI 문자 완성
+            </h2>
+            <p className="text-gray-500 text-sm md:text-base leading-relaxed">
+              수업에서 관찰한 내용을 짧은 키워드로 남기면<br />
+              AI가 각 학생에게 맞는 학부모 문자를 만들어드려요
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-start gap-8 md:gap-12">
+            <div className="flex flex-col gap-6 md:w-52 shrink-0 w-full">
+              {HOW_IT_WORKS_STEPS.map(step => (
+                <div key={step.number} className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-purple-500 text-white text-sm font-bold flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                    {step.number}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-700 text-sm">{step.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="mt-2 bg-indigo-50 rounded-2xl p-3 border border-indigo-100/60">
+                <p className="text-xs text-indigo-600 font-medium mb-1">💡 이런 키워드 어때요?</p>
+                <div className="flex flex-wrap gap-1">
+                  {['발음 교정 필요', '숙제 완료', '적극적 참여', '개념 복습 필요'].map(example => (
+                    <span key={example} className="text-xs text-indigo-400 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
+                      {example}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full">
+              <AiDemoCard />
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="pb-4">
+          <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-8 text-white text-center shadow-lg">
+            <div className="text-4xl mb-4">🍎</div>
+            <h3 className="text-xl md:text-2xl font-bold mb-2">지금 바로 시작해보세요!</h3>
+            <p className="text-purple-100 text-sm md:text-base mb-6 leading-relaxed">
+              학생 관리부터 AI 학부모 문자까지<br />
+              선생님의 시간을 아껴드릴게요
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <button
+                onClick={() => router.push('/login')}
+                className="bg-white text-purple-600 font-semibold px-6 py-2.5 rounded-2xl hover:bg-purple-50 active:scale-95 transition-all shadow-sm"
+              >
+                로그인하고 시작하기 →
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
     </div>
   );
 }

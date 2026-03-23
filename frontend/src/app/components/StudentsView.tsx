@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -12,13 +12,25 @@ import {
 import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Student, getStudents } from '../lib/api';
-import { MAX_COLUMNS, MIN_COLUMNS, useGridLayout } from '../hooks/useGridLayout';
-import { SCHOOL_GRADE_ORDER } from '../lib/constants';
+import { MAX_COLUMNS, MIN_COLUMNS } from '../hooks/useGridLayout';
+import { SCHOOL_GRADE_GROUPS, SCHOOL_GRADE_LABELS, SCHOOL_GRADE_ORDER } from '../lib/constants';
+import type { SchoolGrade } from '../types/api';
 import { useIsMobile } from '../hooks/useIsMobile';
 import StudentManagementCard from './StudentManagementCard';
 import AddStudentModal from './AddStudentModal';
 
 const EMPTY_SLOT_PREFIX = 'empty-slot-';
+const GRADE_GRID_STORAGE_KEY = 'gradeGridOrder_students';
+const COLUMN_COUNT_STORAGE_KEY = 'gridColumns_students_grade';
+
+function sortStudents(data: Student[]): Student[] {
+  return [...data].sort((a, b) => {
+    const gradeA = a.grade != null ? SCHOOL_GRADE_ORDER[a.grade] : -1;
+    const gradeB = b.grade != null ? SCHOOL_GRADE_ORDER[b.grade] : -1;
+    if (gradeA !== gradeB) return gradeA - gradeB;
+    return a.name.localeCompare(b.name, 'ko');
+  });
+}
 
 function SortableEmptySlot({ id, isDragActive }: { id: string; isDragActive: boolean }) {
   const { setNodeRef, isOver, transform, transition } = useSortable({
@@ -72,36 +84,151 @@ function SortableStudentCard({ student, onUpdate, onDelete }: SortableStudentCar
   );
 }
 
+interface GradeSectionProps {
+  label: string;
+  slots: (number | null)[];
+  setSlots: (updater: (prev: (number | null)[]) => (number | null)[]) => void;
+  studentMap: Map<number, Student>;
+  columnCount: number;
+  sensors: ReturnType<typeof useSensors>;
+  onUpdate: () => void;
+  onDelete: (id: number) => void;
+}
+
+function GradeSection({
+  label,
+  slots,
+  setSlots,
+  studentMap,
+  columnCount,
+  sensors,
+  onUpdate,
+  onDelete,
+}: GradeSectionProps) {
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  const displaySlots = useMemo(() => {
+    const filledCount = slots.filter(id => id !== null).length;
+    const nextRowStart = Math.ceil(filledCount / columnCount) * columnCount;
+    const padTo = Math.max(nextRowStart, slots.length) + (isDragActive ? columnCount : 0);
+    const padded = [...slots];
+    while (padded.length < padTo) padded.push(null);
+    return padded;
+  }, [slots, columnCount, isDragActive]);
+
+  const studentCount = slots.filter(id => id !== null).length;
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setIsDragActive(false);
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = active.id as number;
+
+    if (String(over.id).startsWith(EMPTY_SLOT_PREFIX)) {
+      const targetIndex = parseInt(String(over.id).replace(EMPTY_SLOT_PREFIX, ''), 10);
+      setSlots(prev => {
+        const result = [...prev];
+        const oldIndex = result.indexOf(activeId);
+        if (oldIndex !== -1) result[oldIndex] = null;
+        while (result.length <= targetIndex) result.push(null);
+        result[targetIndex] = activeId;
+        while (result.length > 0 && result[result.length - 1] === null) result.pop();
+        return result;
+      });
+      return;
+    }
+
+    const overId = over.id as number;
+    setSlots(prev => {
+      const result = [...prev];
+      const activeIndex = result.indexOf(activeId);
+      const overIndex = result.indexOf(overId);
+      if (activeIndex !== -1 && overIndex !== -1) {
+        [result[activeIndex], result[overIndex]] = [result[overIndex], result[activeIndex]];
+      }
+      return result;
+    });
+  };
+
+  return (
+    <div className="flex-1 min-w-0">
+      <div className="mb-2 flex items-center gap-1.5">
+        <span className="text-xs font-semibold text-gray-500">{label}</span>
+        <span className="text-xs text-gray-300">{studentCount}</span>
+      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={() => setIsDragActive(true)}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setIsDragActive(false)}
+        autoScroll={{ threshold: { x: 0.2, y: 0.2 }, interval: 5 }}
+      >
+        <SortableContext
+          items={displaySlots.map((slotId, index) =>
+            slotId !== null ? slotId : `${EMPTY_SLOT_PREFIX}${index}`
+          )}
+          strategy={rectSortingStrategy}
+        >
+          <div
+            className="grid gap-4"
+            style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}
+          >
+            {displaySlots.map((slotId, slotIndex) => {
+              if (slotId === null) {
+                return (
+                  <SortableEmptySlot
+                    key={`${EMPTY_SLOT_PREFIX}${slotIndex}`}
+                    id={`${EMPTY_SLOT_PREFIX}${slotIndex}`}
+                    isDragActive={isDragActive}
+                  />
+                );
+              }
+              const student = studentMap.get(slotId);
+              if (!student) return null;
+              return (
+                <SortableStudentCard
+                  key={student.id}
+                  student={student}
+                  onUpdate={onUpdate}
+                  onDelete={onDelete}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
 export default function StudentsView() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDragActive, setIsDragActive] = useState(false);
-
-  const {
-    gridSlots,
-    setGridSlots,
-    columnCount,
-    handleColumnCountChange,
-    initializeGridSlots,
-    removeFromGrid,
-  } = useGridLayout('students');
+  const [gradeSlots, setGradeSlots] = useState<Record<string, (number | null)[]>>({});
+  const [columnCount, setColumnCount] = useState(2);
+  const isGradeSlotsInitialized = useRef(false);
 
   const isMobile = useIsMobile();
   const effectiveColumnCount = isMobile ? 1 : columnCount;
 
+  useEffect(() => {
+    const saved = localStorage.getItem(COLUMN_COUNT_STORAGE_KEY);
+    if (saved) setColumnCount(Number(saved));
+  }, []);
+
+  const handleColumnCountChange = (next: number) => {
+    const clamped = Math.min(MAX_COLUMNS, Math.max(MIN_COLUMNS, next));
+    setColumnCount(clamped);
+    localStorage.setItem(COLUMN_COUNT_STORAGE_KEY, String(clamped));
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
-
-  const sortStudents = (data: Student[]) =>
-    [...data].sort((a, b) => {
-      const gradeA = a.grade != null ? SCHOOL_GRADE_ORDER[a.grade] : -1;
-      const gradeB = b.grade != null ? SCHOOL_GRADE_ORDER[b.grade] : -1;
-      if (gradeA !== gradeB) return gradeA - gradeB;
-      return a.name.localeCompare(b.name, 'ko');
-    });
 
   const fetchStudents = useCallback(() => {
     setLoading(true);
@@ -109,15 +236,52 @@ export default function StudentsView() {
       .then(data => {
         const sorted = sortStudents(data);
         setStudents(sorted);
-        initializeGridSlots(sorted.map(student => student.id));
+
+        // Group by individual grade
+        const grouped: Partial<Record<SchoolGrade, number[]>> = {};
+        sorted.forEach(student => {
+          if (!student.grade) return;
+          if (!grouped[student.grade]) grouped[student.grade] = [];
+          grouped[student.grade]!.push(student.id);
+        });
+
+        // Merge with saved order from localStorage
+        let savedMap: Record<string, (number | null)[]> = {};
+        const savedOrder = localStorage.getItem(GRADE_GRID_STORAGE_KEY);
+        if (savedOrder) {
+          try { savedMap = JSON.parse(savedOrder); } catch { /* ignore */ }
+        }
+
+        const newSlotsMap: Record<string, (number | null)[]> = {};
+        (Object.entries(grouped) as [SchoolGrade, number[]][]).forEach(([grade, ids]) => {
+          const savedSlots = savedMap[grade] ?? [];
+          const idSet = new Set(ids);
+          const filtered = savedSlots.filter(id => id === null || idSet.has(id as number));
+          const existingIds = new Set(filtered.filter((id): id is number => id !== null));
+          const newIds = ids.filter(id => !existingIds.has(id));
+          const merged = [...filtered, ...newIds];
+          while (merged.length > 0 && merged[merged.length - 1] === null) merged.pop();
+          newSlotsMap[grade] = merged;
+        });
+
+        isGradeSlotsInitialized.current = true;
+        setGradeSlots(newSlotsMap);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [initializeGridSlots]);
+  }, []);
 
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+
+  // Persist grade slots to localStorage (skip before first load)
+  useEffect(() => {
+    if (!isGradeSlotsInitialized.current) return;
+    if (Object.keys(gradeSlots).length > 0) {
+      localStorage.setItem(GRADE_GRID_STORAGE_KEY, JSON.stringify(gradeSlots));
+    }
+  }, [gradeSlots]);
 
   const handleAdd = () => {
     setShowAddModal(false);
@@ -125,8 +289,16 @@ export default function StudentsView() {
   };
 
   const handleDelete = (id: number) => {
-    setStudents(prev => prev.filter(student => student.id !== id));
-    removeFromGrid(id);
+    const student = students.find(s => s.id === id);
+    setStudents(prev => prev.filter(s => s.id !== id));
+    if (student?.grade) {
+      setGradeSlots(prev => {
+        const slots = prev[student.grade!] ?? [];
+        const updated = slots.map(slotId => (slotId === id ? null : slotId));
+        while (updated.length > 0 && updated[updated.length - 1] === null) updated.pop();
+        return { ...prev, [student.grade!]: updated };
+      });
+    }
   };
 
   const filteredStudents = useMemo(() => {
@@ -143,47 +315,18 @@ export default function StudentsView() {
     return map;
   }, [students]);
 
-  const displaySlots = useMemo(() => {
-    const filledCount = gridSlots.filter(id => id !== null).length;
-    const nextRowStart = Math.ceil(filledCount / effectiveColumnCount) * effectiveColumnCount;
-    const padTo = Math.max(nextRowStart, gridSlots.length) + (isDragActive ? effectiveColumnCount : 0);
-    const padded = [...gridSlots];
-    while (padded.length < padTo) padded.push(null);
-    return padded;
-  }, [gridSlots, effectiveColumnCount, isDragActive]);
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    setIsDragActive(false);
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const activeId = active.id as number;
-
-    if (String(over.id).startsWith(EMPTY_SLOT_PREFIX)) {
-      const targetSlotIndex = parseInt(String(over.id).replace(EMPTY_SLOT_PREFIX, ''), 10);
-      setGridSlots(prev => {
-        const result = [...prev];
-        const oldIndex = result.indexOf(activeId);
-        if (oldIndex !== -1) result[oldIndex] = null;
-        while (result.length <= targetSlotIndex) result.push(null);
-        result[targetSlotIndex] = activeId;
-        while (result.length > 0 && result[result.length - 1] === null) result.pop();
-        return result;
-      });
-      return;
-    }
-
-    const overId = over.id as number;
-    setGridSlots(prev => {
-      const result = [...prev];
-      const activeIndex = result.indexOf(activeId);
-      const overIndex = result.indexOf(overId);
-      if (activeIndex !== -1 && overIndex !== -1) {
-        [result[activeIndex], result[overIndex]] = [result[overIndex], result[activeIndex]];
-      }
-      return result;
-    });
-  };
+  // Only school levels that have at least one grade with students
+  const activeSchoolLevels = useMemo(() =>
+    SCHOOL_GRADE_GROUPS
+      .map(group => ({
+        ...group,
+        activeGrades: group.grades.filter(grade =>
+          (gradeSlots[grade]?.filter(id => id !== null).length ?? 0) > 0
+        ),
+      }))
+      .filter(group => group.activeGrades.length > 0),
+    [gradeSlots]
+  );
 
   if (loading) {
     return (
@@ -294,48 +437,43 @@ export default function StudentsView() {
           ))}
         </div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={() => setIsDragActive(true)}
-          onDragEnd={handleDragEnd}
-          onDragCancel={() => setIsDragActive(false)}
-          autoScroll={{ threshold: { x: 0.2, y: 0.2 }, interval: 5 }}
-        >
-          <SortableContext
-            items={displaySlots.map((slotId, index) =>
-              slotId !== null ? slotId : `${EMPTY_SLOT_PREFIX}${index}`
-            )}
-            strategy={rectSortingStrategy}
-          >
-            <div
-              className="grid gap-4"
-              style={{ gridTemplateColumns: `repeat(${effectiveColumnCount}, minmax(0, 1fr))` }}
-            >
-              {displaySlots.map((slotId, slotIndex) => {
-                if (slotId === null) {
-                  return (
-                    <SortableEmptySlot
-                      key={`${EMPTY_SLOT_PREFIX}${slotIndex}`}
-                      id={`${EMPTY_SLOT_PREFIX}${slotIndex}`}
-                      isDragActive={isDragActive}
+        <div className="flex flex-col gap-8">
+          {activeSchoolLevels.map((level, levelIndex) => (
+            <div key={level.label}>
+              {levelIndex > 0 && <div className="h-px bg-gray-200 -mt-2 mb-6" />}
+              <div className="mb-3">
+                <span className="text-xs font-medium text-gray-400 tracking-wide">{level.label}</span>
+              </div>
+              <div className="flex flex-col md:flex-row">
+                {level.activeGrades.map((grade, gradeIndex) => (
+                  <Fragment key={grade}>
+                    {gradeIndex > 0 && (
+                      <>
+                        <div className="hidden md:block w-px bg-gray-100 mx-4 shrink-0" />
+                        <div className="md:hidden h-px bg-gray-100 my-4" />
+                      </>
+                    )}
+                    <GradeSection
+                      label={SCHOOL_GRADE_LABELS[grade]}
+                      slots={gradeSlots[grade] ?? []}
+                      setSlots={updater =>
+                        setGradeSlots(prev => ({
+                          ...prev,
+                          [grade]: updater(prev[grade] ?? []),
+                        }))
+                      }
+                      studentMap={studentMap}
+                      columnCount={effectiveColumnCount}
+                      sensors={sensors}
+                      onUpdate={fetchStudents}
+                      onDelete={handleDelete}
                     />
-                  );
-                }
-                const student = studentMap.get(slotId);
-                if (!student) return null;
-                return (
-                  <SortableStudentCard
-                    key={student.id}
-                    student={student}
-                    onUpdate={fetchStudents}
-                    onDelete={handleDelete}
-                  />
-                );
-              })}
+                  </Fragment>
+                ))}
+              </div>
             </div>
-          </SortableContext>
-        </DndContext>
+          ))}
+        </div>
       )}
 
       {/* FAB */}

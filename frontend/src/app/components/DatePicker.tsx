@@ -8,12 +8,22 @@ interface DatePickerProps {
   onChange: (date: string) => void;
   required?: boolean;
   className?: string;
+  showWeekRange?: boolean;
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const CALENDAR_HEIGHT = 380;
 
-export default function DatePicker({ value, onChange, required, className = '' }: DatePickerProps) {
+function getWeekStartMonday(date: Date): Date {
+  const result = new Date(date);
+  const dayOfWeek = result.getDay();
+  const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  result.setDate(result.getDate() + daysToMonday);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+export default function DatePicker({ value, onChange, required, className = '', showWeekRange = false }: DatePickerProps) {
   const { isOpen, setIsOpen, triggerRef, dropdownRef, dropdownPos } = useDropdown({
     dropdownHeight: CALENDAR_HEIGHT,
     includeOpenUp: true,
@@ -35,6 +45,17 @@ export default function DatePicker({ value, onChange, required, className = '' }
 
   const formatDisplayDate = (date: Date | null) => {
     if (!date) return '날짜 선택';
+    if (showWeekRange) {
+      const weekStart = getWeekStartMonday(date);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      const startMonth = weekStart.getMonth() + 1;
+      const endMonth = weekEnd.getMonth() + 1;
+      if (startMonth === endMonth) {
+        return `${startMonth}월 ${weekStart.getDate()}일 ~ ${weekEnd.getDate()}일`;
+      }
+      return `${startMonth}월 ${weekStart.getDate()}일 ~ ${endMonth}월 ${weekEnd.getDate()}일`;
+    }
     const weekday = WEEKDAYS[date.getDay()];
     return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 (${weekday})`;
   };
