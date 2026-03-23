@@ -17,8 +17,6 @@ const KOREAN_PARTICLES = [
   '도', '만', '의', '나', '께',
 ];
 
-const PARTICLE_GROUP = `(?:${KOREAN_PARTICLES.join('|')})`;
-
 function escapeRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

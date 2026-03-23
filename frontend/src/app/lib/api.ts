@@ -1,12 +1,10 @@
 import type {
   Attendee,
   AuthResponse,
-  DayOfWeek,
   Feedback,
   Lesson,
   LessonDetail,
   RecurrenceCreateRequest,
-  RecurrenceType,
   SchoolGrade,
   Student,
   UpdateScope,
