@@ -131,7 +131,7 @@ function AiDemoCard() {
       {showMessage && (
         <div className="relative bg-indigo-50 rounded-2xl p-3 mb-2">
           <p className="text-xs text-gray-700 leading-relaxed pr-8">
-            {highlightKeywords(DEMO_MESSAGE, DEMO_KEYWORDS.map(keyword => keyword.text))}
+            {highlightKeywords(DEMO_MESSAGE, DEMO_KEYWORDS)}
           </p>
           <div className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-xl bg-white">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

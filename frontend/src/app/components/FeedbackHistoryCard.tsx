@@ -65,7 +65,10 @@ export default function FeedbackHistoryCard({ feedback }: Props) {
         hasAiContent ? 'bg-pink-50 text-gray-700' : 'bg-gray-50 text-gray-300 italic'
       }`}>
         {hasAiContent
-          ? highlightKeywords(feedback.aiContent!, feedback.keywords.map(keyword => keyword.keyword))
+          ? highlightKeywords(
+              feedback.aiContent!,
+              feedback.keywords.map(keyword => ({ text: keyword.keyword, required: keyword.required }))
+            )
           : 'AI 문자 없음'}
       </div>
     </div>

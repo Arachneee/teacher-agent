@@ -35,7 +35,10 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const keywordTexts = feedback?.keywords.map(keyword => keyword.keyword) ?? [];
+  const highlightItems = feedback?.keywords.map(keyword => ({
+    text: keyword.keyword,
+    required: keyword.required,
+  })) ?? [];
 
   return (
     <div className="flex flex-col gap-2">
@@ -54,7 +57,7 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
               onClick={() => setEditing(true)}
               className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words pr-8 pb-8 cursor-text"
             >
-              {highlightKeywords(feedback.aiContent, keywordTexts)}
+              {highlightKeywords(feedback.aiContent, highlightItems)}
             </div>
           )}
           <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
