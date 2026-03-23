@@ -12,6 +12,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 @Service
 public class FeedbackAiService {
@@ -33,6 +34,14 @@ public class FeedbackAiService {
   }
 
   public String generateFeedbackContent(Feedback feedback, String studentName, String grade) {
+    return chatClient.prompt(buildPrompt(feedback, studentName, grade)).call().content();
+  }
+
+  public Flux<String> streamFeedbackContent(Feedback feedback, String studentName, String grade) {
+    return chatClient.prompt(buildPrompt(feedback, studentName, grade)).stream().content();
+  }
+
+  private String buildPrompt(Feedback feedback, String studentName, String grade) {
     List<FeedbackKeyword> keywords = feedback.getKeywords();
 
     String normalKeywordText = keywords.stream()
@@ -51,9 +60,7 @@ public class FeedbackAiService {
             .map(keyword -> "- " + keyword)
             .collect(Collectors.joining("\n"));
 
-    String prompt =
-        feedbackMessagePrompt.formatted(studentName, grade, normalKeywordText, requiredKeywordText);
-
-    return chatClient.prompt(prompt).call().content();
+    return feedbackMessagePrompt.formatted(studentName, grade, normalKeywordText,
+        requiredKeywordText);
   }
 }

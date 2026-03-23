@@ -32,6 +32,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -386,6 +388,37 @@ class FeedbackServiceTest {
 
     assertThatThrownBy(() -> feedbackCommandService.generateAiContent(userId, created.id()))
         .isInstanceOf(BadRequestException.class);
+  }
+
+  @Test
+  void AI_콘텐츠를_스트리밍으로_생성하고_DB에_저장한다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
+    given(feedbackAiService.streamFeedbackContent(any(), eq("홍길동"), eq("초1")))
+        .willReturn(Flux.just("AI가 ", "생성한 ", "피드백"));
+
+    StepVerifier.create(feedbackCommandService.streamAiContent(userId, created.id()))
+        .expectNext("AI가 ", "생성한 ", "피드백")
+        .verifyComplete();
+
+    FeedbackResponse saved = feedbackQueryService.getOne(userId, created.id());
+    assertThat(saved.aiContent()).isEqualTo("AI가 생성한 피드백");
+  }
+
+  @Test
+  void 키워드_없이_AI_콘텐츠_스트리밍_생성_시_예외가_발생한다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+
+    assertThatThrownBy(() -> feedbackCommandService.streamAiContent(userId, created.id()))
+        .isInstanceOf(BadRequestException.class);
+  }
+
+  @Test
+  void 다른_선생님_피드백의_AI_콘텐츠_스트리밍_시_예외가_발생한다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+
+    assertThatThrownBy(() -> feedbackCommandService.streamAiContent(otherUserId, created.id()))
+        .isInstanceOf(BusinessException.class);
   }
 
   @Test

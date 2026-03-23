@@ -12,6 +12,7 @@ import com.teacher.agent.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 
 @Service
 @RequiredArgsConstructor
@@ -72,6 +73,27 @@ public class FeedbackCommandService {
 
     return feedbackQueryService.toResponse(
         feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId));
+  }
+
+  public Flux<String> streamAiContent(UserId userId, Long feedbackId) {
+    Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+
+    if (feedback.getKeywords().isEmpty()) {
+      throw BadRequestException.keywordRequired();
+    }
+
+    Student student = studentRepository.findById(feedback.getStudentId())
+        .orElseThrow(() -> ResourceNotFoundException.student(feedback.getStudentId()));
+
+    StringBuilder fullContent = new StringBuilder();
+
+    return feedbackAiService
+        .streamFeedbackContent(feedback, student.getName(), student.getGrade().displayName())
+        .doOnNext(fullContent::append)
+        .doOnComplete(() -> {
+          feedback.updateAiContent(fullContent.toString());
+          feedbackRepository.save(feedback);
+        });
   }
 
   private void verifyStudentEnrolled(Lesson lesson, Long studentId) {
