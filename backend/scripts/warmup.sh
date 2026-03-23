@@ -81,7 +81,7 @@ log "3. PUT /teachers/me OK"
 # ─── 4. 학생 추가 ─────────────────────────────────────────────
 RESPONSE=$(http -X POST "$APP_URL/students" \
   -H "Content-Type: application/json" \
-  -d '{"name":"워밍업학생","memo":"워밍업용"}')
+  -d '{"name":"워밍업학생","memo":"워밍업용","grade":"MIDDLE_1"}')
 STUDENT_ID=$(extract "$RESPONSE" "id")
 [ -z "$STUDENT_ID" ] && fail "Student create failed: $RESPONSE"
 log "4. POST /students OK (studentId=$STUDENT_ID)"
@@ -97,7 +97,7 @@ log "6. GET /students/$STUDENT_ID OK"
 # ─── 7. 학생 수정 ─────────────────────────────────────────────
 http -o /dev/null -X PUT "$APP_URL/students/$STUDENT_ID" \
   -H "Content-Type: application/json" \
-  -d '{"name":"워밍업학생(수정)","memo":"워밍업용"}'
+  -d '{"name":"워밍업학생(수정)","memo":"워밍업용","grade":"MIDDLE_1"}'
 log "7. PUT /students/$STUDENT_ID OK"
 
 # ─── 8. 반복 레슨 추가 ────────────────────────────────────────
