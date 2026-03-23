@@ -213,6 +213,10 @@ const AttendeeCard = forwardRef<AttendeeCardHandle, Props>((
 
       {/* Memo — inline editable */}
       <div>
+        <p className="text-xs font-semibold text-gray-400 tracking-wide mb-1">
+          메모
+          <span className="ml-1.5 font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded text-[10px]">AI 생성에 영향 없음</span>
+        </p>
         {editingMemo ? (
           <div className="flex flex-col gap-2">
             <textarea

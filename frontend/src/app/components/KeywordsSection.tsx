@@ -49,7 +49,7 @@ export default function KeywordsSection({
 
   return (
     <div className="flex-1 flex flex-col gap-2">
-      <p className="text-xs font-semibold text-gray-400 tracking-wide">수업 키워드</p>
+      <p className="text-xs font-semibold text-gray-400 tracking-wide">수업 키워드 / 문장</p>
       {keywords.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {keywords.map(keyword => {
@@ -156,7 +156,7 @@ export default function KeywordsSection({
             className={`flex-1 min-w-0 text-sm bg-transparent px-3 py-2 outline-none placeholder:text-gray-300 ${
               isEditing ? 'text-amber-700' : 'text-gray-700'
             }`}
-            placeholder={isEditing ? '키워드 수정' : '키워드 입력'}
+            placeholder={isEditing ? '키워드 / 문장 수정' : '키워드 / 문장 입력'}
             maxLength={100}
           />
           <button
