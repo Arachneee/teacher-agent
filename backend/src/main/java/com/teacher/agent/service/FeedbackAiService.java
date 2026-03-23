@@ -32,7 +32,7 @@ public class FeedbackAiService {
     }
   }
 
-  public String generateFeedbackContent(Feedback feedback, String studentName) {
+  public String generateFeedbackContent(Feedback feedback, String studentName, String grade) {
     List<FeedbackKeyword> keywords = feedback.getKeywords();
 
     String normalKeywordText = keywords.stream()
@@ -45,19 +45,15 @@ public class FeedbackAiService {
         .map(FeedbackKeyword::getKeyword)
         .toList();
 
-    String prompt = feedbackMessagePrompt.formatted(studentName, normalKeywordText);
+    String requiredKeywordText = requiredKeywords.isEmpty()
+        ? "없음"
+        : requiredKeywords.stream()
+            .map(keyword -> "- " + keyword)
+            .collect(Collectors.joining("\n"));
 
-    if (!requiredKeywords.isEmpty()) {
-      prompt += buildRequiredKeywordsSection(requiredKeywords);
-    }
+    String prompt =
+        feedbackMessagePrompt.formatted(studentName, grade, normalKeywordText, requiredKeywordText);
 
     return chatClient.prompt(prompt).call().content();
-  }
-
-  private String buildRequiredKeywordsSection(List<String> requiredKeywords) {
-    String items = requiredKeywords.stream()
-        .map(keyword -> "- " + keyword)
-        .collect(Collectors.joining("\n"));
-    return "\n\n## 반드시 원문 그대로 포함할 문장 (한 글자도 변경 금지)\n\n" + items;
   }
 }

@@ -371,11 +371,12 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
         "성실함", false);
-    given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동"))).willReturn("AI가 생성한 피드백");
+    given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동"), eq("초1")))
+        .willReturn("AI가 생성한 피드백");
 
     feedbackCommandService.generateAiContent(userId, created.id());
 
-    verify(feedbackAiService).generateFeedbackContent(any(), eq("홍길동"));
+    verify(feedbackAiService).generateFeedbackContent(any(), eq("홍길동"), eq("초1"));
   }
 
   @Test

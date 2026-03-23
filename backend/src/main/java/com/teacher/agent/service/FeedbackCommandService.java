@@ -64,7 +64,8 @@ public class FeedbackCommandService {
     Student student = studentRepository.findById(feedback.getStudentId())
         .orElseThrow(() -> ResourceNotFoundException.student(feedback.getStudentId()));
 
-    String aiContent = feedbackAiService.generateFeedbackContent(feedback, student.getName());
+    String aiContent = feedbackAiService.generateFeedbackContent(feedback, student.getName(),
+        student.getGrade().displayName());
 
     feedback.updateAiContent(aiContent);
     feedbackRepository.save(feedback);
