@@ -33,6 +33,11 @@ spring:
           model: gpt-4o-mini
 
 
+server:
+  servlet:
+    session:
+      timeout: 8h
+
 cors:
   allowed-origin-patterns: http://localhost:3000
 
