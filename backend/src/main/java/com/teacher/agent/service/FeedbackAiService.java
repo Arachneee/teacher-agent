@@ -49,6 +49,10 @@ public class FeedbackAiService {
         .map(FeedbackKeyword::getKeyword)
         .collect(Collectors.joining(", "));
 
+    if (normalKeywordText.isBlank()) {
+      normalKeywordText = "없음";
+    }
+
     List<String> requiredKeywords = keywords.stream()
         .filter(FeedbackKeyword::isRequired)
         .map(FeedbackKeyword::getKeyword)
@@ -60,7 +64,10 @@ public class FeedbackAiService {
             .map(keyword -> "- " + keyword)
             .collect(Collectors.joining("\n"));
 
-    return feedbackMessagePrompt.formatted(studentName, grade, normalKeywordText,
-        requiredKeywordText);
+    return feedbackMessagePrompt
+        .replace("{student_name}", studentName)
+        .replace("{grade}", grade)
+        .replace("{keywords}", normalKeywordText)
+        .replace("{required_keywords}", requiredKeywordText);
   }
 }
