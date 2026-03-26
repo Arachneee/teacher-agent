@@ -1,16 +1,14 @@
 package com.teacher.agent.service;
 
-import static com.teacher.agent.util.ErrorMessages.PROMPT_FILE_READ_ERROR;
+import static com.teacher.agent.util.UsageTokenExtractor.extractCompletionTokens;
+import static com.teacher.agent.util.UsageTokenExtractor.extractPromptTokens;
 
 import com.teacher.agent.domain.Feedback;
-import com.teacher.agent.domain.FeedbackKeyword;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.teacher.agent.domain.Student;
+import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -18,56 +16,63 @@ import reactor.core.publisher.Flux;
 public class FeedbackAiService {
 
   private final ChatClient chatClient;
-  private final String feedbackMessagePrompt;
+  private final FeedbackPromptBuilder feedbackPromptBuilder;
+  private final AiGenerationLogCommandService aiGenerationLogCommandService;
 
-  public FeedbackAiService(ChatClient chatClient,
-      @Value("classpath:prompts/feedback_message.md") Resource feedbackMessagePromptResource) {
+  public FeedbackAiService(ChatClient chatClient, FeedbackPromptBuilder feedbackPromptBuilder,
+      AiGenerationLogCommandService aiGenerationLogCommandService) {
     this.chatClient = chatClient;
-
-    try {
-      this.feedbackMessagePrompt =
-          feedbackMessagePromptResource.getContentAsString(StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new IllegalStateException(
-          PROMPT_FILE_READ_ERROR + feedbackMessagePromptResource.getFilename(), e);
-    }
+    this.feedbackPromptBuilder = feedbackPromptBuilder;
+    this.aiGenerationLogCommandService = aiGenerationLogCommandService;
   }
 
-  public String generateFeedbackContent(Feedback feedback, String studentName, String grade) {
-    return chatClient.prompt(buildPrompt(feedback, studentName, grade)).call().content();
+  public String generateFeedbackContent(Feedback feedback, Student student) {
+    String promptContent = feedbackPromptBuilder.build(feedback, student);
+    long startTime = System.currentTimeMillis();
+
+    ChatResponse chatResponse = chatClient.prompt(promptContent).call().chatResponse();
+    long durationMs = System.currentTimeMillis() - startTime;
+
+    String completionContent = chatResponse.getResult().getOutput().getText();
+    Usage usage = chatResponse.getMetadata().getUsage();
+
+    aiGenerationLogCommandService.save(feedback.getId(), promptContent, completionContent,
+        durationMs, false, extractPromptTokens(usage), extractCompletionTokens(usage));
+
+    return completionContent;
   }
 
-  public Flux<String> streamFeedbackContent(Feedback feedback, String studentName, String grade) {
-    return chatClient.prompt(buildPrompt(feedback, studentName, grade)).stream().content();
-  }
+  public Flux<String> streamFeedbackContent(Feedback feedback, Student student) {
+    String promptContent = feedbackPromptBuilder.build(feedback, student);
+    long startTime = System.currentTimeMillis();
+    StringBuilder accumulatedContent = new StringBuilder(512);
+    AtomicReference<Integer> capturedPromptTokens = new AtomicReference<>(null);
+    AtomicReference<Integer> capturedCompletionTokens = new AtomicReference<>(null);
 
-  private String buildPrompt(Feedback feedback, String studentName, String grade) {
-    List<FeedbackKeyword> keywords = feedback.getKeywords();
+    return chatClient.prompt(promptContent).stream().chatResponse()
+        .map(chatResponse -> {
+          if (chatResponse.getResult() == null) {
+            return "";
+          }
+          String chunk = chatResponse.getResult().getOutput().getText();
+          if (chunk == null) {
+            return "";
+          }
+          accumulatedContent.append(chunk);
 
-    String normalKeywordText = keywords.stream()
-        .filter(keyword -> !keyword.isRequired())
-        .map(FeedbackKeyword::getKeyword)
-        .collect(Collectors.joining(", "));
+          Usage usage = chatResponse.getMetadata().getUsage();
+          if (usage != null && usage.getTotalTokens() != null && usage.getTotalTokens() > 0) {
+            capturedPromptTokens.set(extractPromptTokens(usage));
+            capturedCompletionTokens.set(extractCompletionTokens(usage));
+          }
 
-    if (normalKeywordText.isBlank()) {
-      normalKeywordText = "없음";
-    }
-
-    List<String> requiredKeywords = keywords.stream()
-        .filter(FeedbackKeyword::isRequired)
-        .map(FeedbackKeyword::getKeyword)
-        .toList();
-
-    String requiredKeywordText = requiredKeywords.isEmpty()
-        ? "없음"
-        : requiredKeywords.stream()
-            .map(keyword -> "- " + keyword)
-            .collect(Collectors.joining("\n"));
-
-    return feedbackMessagePrompt
-        .replace("{student_name}", studentName)
-        .replace("{grade}", grade)
-        .replace("{keywords}", normalKeywordText)
-        .replace("{required_keywords}", requiredKeywordText);
+          return chunk;
+        })
+        .doOnComplete(() -> {
+          long durationMs = System.currentTimeMillis() - startTime;
+          aiGenerationLogCommandService.save(feedback.getId(), promptContent,
+              accumulatedContent.toString(), durationMs, true,
+              capturedPromptTokens.get(), capturedCompletionTokens.get());
+        });
   }
 }

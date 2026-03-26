@@ -3,7 +3,6 @@ package com.teacher.agent.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -373,12 +372,12 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
         "성실함", false);
-    given(feedbackAiService.generateFeedbackContent(any(), eq("홍길동"), eq("초1")))
+    given(feedbackAiService.generateFeedbackContent(any(), any()))
         .willReturn("AI가 생성한 피드백");
 
     feedbackCommandService.generateAiContent(userId, created.id());
 
-    verify(feedbackAiService).generateFeedbackContent(any(), eq("홍길동"), eq("초1"));
+    verify(feedbackAiService).generateFeedbackContent(any(), any());
   }
 
   @Test
@@ -394,7 +393,7 @@ class FeedbackServiceTest {
   void AI_콘텐츠를_스트리밍으로_생성하고_DB에_저장한다() {
     FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
-    given(feedbackAiService.streamFeedbackContent(any(), eq("홍길동"), eq("초1")))
+    given(feedbackAiService.streamFeedbackContent(any(), any()))
         .willReturn(Flux.just("AI가 ", "생성한 ", "피드백"));
 
     StepVerifier.create(feedbackCommandService.streamAiContent(userId, created.id()))

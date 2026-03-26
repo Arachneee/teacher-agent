@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { highlightKeywords } from '../lib/highlightKeywords';
+import { useAuth } from '../context/AuthContext';
 
 const DEMO_KEYWORDS: { text: string; required: boolean }[] = [
   { text: '집중력 향상', required: false },
@@ -243,6 +244,8 @@ const HOW_IT_WORKS_STEPS = [
 
 export default function IntroPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
+  const isLoggedIn = !loading && !!user;
 
   return (
     <div className="overflow-y-auto">
@@ -259,23 +262,25 @@ export default function IntroPage() {
             수업 일정 관리부터 AI 학부모 문자까지<br />
             선생님의 소중한 시간을 아껴드려요
           </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <button
-              onClick={() => router.push('/login')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-500 text-white font-semibold rounded-2xl hover:bg-purple-600 active:scale-95 transition-all shadow-md hover:shadow-lg"
-            >
-              시작하기
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-            <button
-              onClick={() => router.push('/calendar')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-purple-500 font-semibold rounded-2xl hover:bg-purple-50 active:scale-95 transition-all shadow-sm border border-purple-100"
-            >
-              캘린더 보기
-            </button>
-          </div>
+          {!isLoggedIn && (
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <button
+                onClick={() => router.push('/login')}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-500 text-white font-semibold rounded-2xl hover:bg-purple-600 active:scale-95 transition-all shadow-md hover:shadow-lg"
+              >
+                시작하기
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+              <button
+                onClick={() => router.push('/calendar')}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-purple-500 font-semibold rounded-2xl hover:bg-purple-50 active:scale-95 transition-all shadow-sm border border-purple-100"
+              >
+                캘린더 보기
+              </button>
+            </div>
+          )}
         </section>
 
         {/* FEATURES */}
@@ -397,14 +402,16 @@ export default function IntroPage() {
               학생 관리부터 AI 학부모 문자까지<br />
               선생님의 시간을 아껴드릴게요
             </p>
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              <button
-                onClick={() => router.push('/login')}
-                className="bg-white text-purple-600 font-semibold px-6 py-2.5 rounded-2xl hover:bg-purple-50 active:scale-95 transition-all shadow-sm"
-              >
-                로그인하고 시작하기 →
-              </button>
-            </div>
+            {!isLoggedIn && (
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <button
+                  onClick={() => router.push('/login')}
+                  className="bg-white text-purple-600 font-semibold px-6 py-2.5 rounded-2xl hover:bg-purple-50 active:scale-95 transition-all shadow-sm"
+                >
+                  로그인하고 시작하기 →
+                </button>
+              </div>
+            )}
           </div>
         </section>
 

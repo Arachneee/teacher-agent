@@ -24,4 +24,7 @@ public class Parameter {
   public static final String START_TIME = "startTime";
   public static final String END_TIME = "endTime";
   public static final String LESSON_ID = "lessonId";
+  public static final String PROMPT_CONTENT = "promptContent";
+  public static final String COMPLETION_CONTENT = "completionContent";
+  public static final String DURATION_MS = "durationMs";
 }

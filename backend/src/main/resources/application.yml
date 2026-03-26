@@ -31,13 +31,14 @@ spring:
       chat:
         options:
           model: gpt-4o-mini
-          temperature: 0.6
+          temperature: 0.9
+          stream-usage: true
 
 
 server:
   servlet:
     session:
-      timeout: 8h
+      timeout: 12h
 
 cors:
   allowed-origin-patterns: http://localhost:3000
