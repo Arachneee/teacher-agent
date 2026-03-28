@@ -27,4 +27,5 @@ public class Parameter {
   public static final String PROMPT_CONTENT = "promptContent";
   public static final String COMPLETION_CONTENT = "completionContent";
   public static final String DURATION_MS = "durationMs";
+  public static final String EVENT_TYPE = "eventType";
 }

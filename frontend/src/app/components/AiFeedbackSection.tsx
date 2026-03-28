@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Feedback } from '../lib/api';
 import { highlightKeywords } from '../lib/highlightKeywords';
+import { trackEvent } from '../lib/tracking';
 
 interface Props {
   feedback: Feedback | null;
@@ -31,6 +32,7 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
   const handleCopy = async () => {
     if (!feedback?.aiContent) return;
     await navigator.clipboard.writeText(feedback.aiContent);
+    trackEvent('feedback_copy', { feedbackId: feedback.id });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -54,7 +56,10 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
             />
           ) : (
             <div
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                setEditing(true);
+                trackEvent('feedback_edit', { feedbackId: feedback.id });
+              }}
               className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words pr-8 pb-8 cursor-text"
             >
               {highlightKeywords(feedback.aiContent, highlightItems)}
@@ -99,7 +104,12 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
         </div>
       )}
       <button
-        onClick={onGenerate}
+        onClick={() => {
+          if (feedback?.aiContent) {
+            trackEvent('feedback_regenerate', { feedbackId: feedback.id });
+          }
+          onGenerate();
+        }}
         disabled={aiGenerating || isEditingAiContent || !feedback || feedback.keywords.length === 0}
         className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 disabled:opacity-50 text-indigo-500 text-sm font-medium py-2.5 rounded-2xl transition-colors duration-150 flex items-center justify-center gap-2"
       >
