@@ -3,6 +3,7 @@ package com.teacher.agent.domain.repository;
 import com.teacher.agent.domain.Feedback;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +19,10 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
   Optional<Feedback> findById(@Param("id") Long id);
 
   void deleteAllByLessonIdInAndAiContentIsNull(List<Long> lessonIds);
+
+  long countByAiContentIsNotNull();
+
+  @Query("SELECT fk.keyword, COUNT(fk) FROM Feedback f JOIN f.keywords fk "
+      + "GROUP BY fk.keyword ORDER BY COUNT(fk) DESC")
+  List<Object[]> findTopKeywords(Pageable pageable);
 }
