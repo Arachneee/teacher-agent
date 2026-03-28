@@ -203,20 +203,56 @@ log "20. POST /feedbacks/$FEEDBACK_ID/like OK"
 http -o /dev/null "$APP_URL/feedbacks?studentId=$STUDENT_ID"
 log "21. GET /feedbacks?studentId=$STUDENT_ID OK"
 
-# ─── 22. 수강생 삭제 ─────────────────────────────────────────
+# ─── 22. 이벤트 추적 ─────────────────────────────────────────
+http -o /dev/null -X POST "$APP_URL/events" \
+  -H "Content-Type: application/json" \
+  -d "{\"eventType\":\"feedback_generate\",\"metadata\":\"{\\\"feedbackId\\\":$FEEDBACK_ID}\"}"
+log "22-1. POST /events (feedback_generate) OK"
+
+http -o /dev/null -X POST "$APP_URL/events" \
+  -H "Content-Type: application/json" \
+  -d "{\"eventType\":\"feedback_copy\",\"metadata\":\"{\\\"feedbackId\\\":$FEEDBACK_ID}\"}"
+log "22-2. POST /events (feedback_copy) OK"
+
+http -o /dev/null -X POST "$APP_URL/events" \
+  -H "Content-Type: application/json" \
+  -d "{\"eventType\":\"feedback_like\",\"metadata\":\"{\\\"feedbackId\\\":$FEEDBACK_ID}\"}"
+log "22-3. POST /events (feedback_like) OK"
+
+http -o /dev/null -X POST "$APP_URL/events" \
+  -H "Content-Type: application/json" \
+  -d "{\"eventType\":\"lesson_view\",\"metadata\":\"{\\\"lessonId\\\":$LESSON_ID}\"}"
+log "22-4. POST /events (lesson_view) OK"
+
+http -o /dev/null -X POST "$APP_URL/events" \
+  -H "Content-Type: application/json" \
+  -d '{"eventType":"keyword_add","metadata":"{\"keyword\":\"워밍업키워드\",\"required\":false}"}'
+log "22-5. POST /events (keyword_add) OK"
+
+# ─── 23. 사용 통계 API ───────────────────────────────────────
+http -o /dev/null "$APP_URL/usage/summary"
+log "23-1. GET /usage/summary OK"
+
+http -o /dev/null "$APP_URL/usage/daily?days=7"
+log "23-2. GET /usage/daily?days=7 OK"
+
+http -o /dev/null "$APP_URL/usage/keywords/top?limit=10"
+log "23-3. GET /usage/keywords/top?limit=10 OK"
+
+# ─── 24. 수강생 삭제 ─────────────────────────────────────────
 http -o /dev/null -X DELETE "$APP_URL/lessons/$LESSON_ID/attendees/$ATTENDEE_ID"
-log "22. DELETE /lessons/$LESSON_ID/attendees/$ATTENDEE_ID OK"
+log "24. DELETE /lessons/$LESSON_ID/attendees/$ATTENDEE_ID OK"
 
-# ─── 23. 레슨 삭제 (ALL) ─────────────────────────────────────
+# ─── 25. 레슨 삭제 (ALL) ─────────────────────────────────────
 http -o /dev/null -X DELETE "$APP_URL/lessons/$LESSON_ID?scope=ALL"
-log "23. DELETE /lessons/$LESSON_ID?scope=ALL OK"
+log "25. DELETE /lessons/$LESSON_ID?scope=ALL OK"
 
-# ─── 24. 학생 삭제 ───────────────────────────────────────────
+# ─── 26. 학생 삭제 ───────────────────────────────────────────
 http -o /dev/null -X DELETE "$APP_URL/students/$STUDENT_ID"
-log "24. DELETE /students/$STUDENT_ID OK"
+log "26. DELETE /students/$STUDENT_ID OK"
 
-# ─── 25. 로그아웃 ────────────────────────────────────────────
+# ─── 27. 로그아웃 ────────────────────────────────────────────
 http -o /dev/null -X POST "$APP_URL/auth/logout"
-log "25. POST /auth/logout OK"
+log "27. POST /auth/logout OK"
 
 log "Warmup complete."
