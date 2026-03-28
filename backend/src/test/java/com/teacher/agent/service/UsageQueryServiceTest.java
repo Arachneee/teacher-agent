@@ -89,6 +89,8 @@ class UsageQueryServiceTest {
 
     userEventRepository.save(UserEvent.create("admin", "feedback_copy", null));
     userEventRepository.save(UserEvent.create("admin", "feedback_regenerate", null));
+    userEventRepository.save(UserEvent.create("admin", "feedback_generate", null));
+    userEventRepository.save(UserEvent.create("admin", "feedback_generate", null));
 
     UsageSummaryResponse response = usageQueryService.getUsageSummary();
 
@@ -96,7 +98,7 @@ class UsageQueryServiceTest {
     assertThat(response.totalLikes()).isEqualTo(1);
     assertThat(response.likeRate()).isEqualTo(1.0);
     assertThat(response.totalCopyClicks()).isEqualTo(1);
-    assertThat(response.copyRate()).isEqualTo(0.5);
+    assertThat(response.copyRate()).isEqualTo(1.0);
     assertThat(response.totalRegenerations()).isEqualTo(1);
     assertThat(response.regenerationRate()).isEqualTo(0.5);
     assertThat(response.avgGenerationDurationMs()).isEqualTo(1500.0);
@@ -123,7 +125,7 @@ class UsageQueryServiceTest {
 
   @Test
   void 일별_사용량_조회시_기간에_맞는_데이터를_반환한다() {
-    userEventRepository.save(UserEvent.create("admin", "ai_generate", null));
+    userEventRepository.save(UserEvent.create("admin", "feedback_generate", null));
     userEventRepository.save(UserEvent.create("admin", "feedback_copy", null));
 
     List<DailyUsageResponse> response = usageQueryService.getDailyUsage(7);

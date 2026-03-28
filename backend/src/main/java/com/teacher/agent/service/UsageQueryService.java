@@ -27,7 +27,7 @@ public class UsageQueryService {
 
   private static final String EVENT_FEEDBACK_COPY = "feedback_copy";
   private static final String EVENT_FEEDBACK_REGENERATE = "feedback_regenerate";
-  private static final String EVENT_AI_GENERATE = "ai_generate";
+  private static final String EVENT_FEEDBACK_GENERATE = "feedback_generate";
   private static final String EVENT_FEEDBACK_LIKE = "feedback_like";
 
   private final AiGenerationLogRepository aiGenerationLogRepository;
@@ -41,6 +41,7 @@ public class UsageQueryService {
     long aiGeneratedFeedbackCount = feedbackRepository.countByAiContentIsNotNull();
     long totalCopyClicks = userEventRepository.countByEventType(EVENT_FEEDBACK_COPY);
     long totalRegenerations = userEventRepository.countByEventType(EVENT_FEEDBACK_REGENERATE);
+    long totalGenerateClicks = userEventRepository.countByEventType(EVENT_FEEDBACK_GENERATE);
     double avgGenerationDurationMs = aiGenerationLogRepository.averageDurationMs();
 
     LocalDateTime now = LocalDateTime.now();
@@ -51,8 +52,8 @@ public class UsageQueryService {
     int activeDaysLast30 = userEventRepository.countDistinctActiveDays(thirtyDaysAgo, now);
 
     double likeRate = calculateRate(totalLikes, aiGeneratedFeedbackCount);
-    double copyRate = calculateRate(totalCopyClicks, totalAiGenerations);
-    double regenerationRate = calculateRate(totalRegenerations, totalAiGenerations);
+    double copyRate = calculateRate(totalCopyClicks, aiGeneratedFeedbackCount);
+    double regenerationRate = calculateRate(totalRegenerations, totalGenerateClicks);
 
     return new UsageSummaryResponse(
         totalAiGenerations,
@@ -86,7 +87,7 @@ public class UsageQueryService {
     while (!currentDate.isAfter(endDate)) {
       Map<String, Long> events = dailyEventMap.getOrDefault(currentDate, Map.of());
 
-      long generations = events.getOrDefault(EVENT_AI_GENERATE, 0L);
+      long generations = events.getOrDefault(EVENT_FEEDBACK_GENERATE, 0L);
       long copies = events.getOrDefault(EVENT_FEEDBACK_COPY, 0L);
       long likes = events.getOrDefault(EVENT_FEEDBACK_LIKE, 0L);
       long regenerations = events.getOrDefault(EVENT_FEEDBACK_REGENERATE, 0L);
