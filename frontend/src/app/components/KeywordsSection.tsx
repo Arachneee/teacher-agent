@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type RefObject } from 'react';
 import { FeedbackKeyword } from '../lib/api';
+import { trackEvent } from '../lib/tracking';
 
 interface Props {
   keywords: FeedbackKeyword[];
@@ -136,6 +137,9 @@ export default function KeywordsSection({
             }}
             onKeyDown={event => {
               if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                if (!isEditing && keywordInput.trim()) {
+                  trackEvent('keyword_add', { keyword: keywordInput.trim(), required: newKeywordRequired });
+                }
                 onSubmitKeyword();
               } else if (event.key === 'Escape') {
                 onCancelEditKeyword();
@@ -170,6 +174,9 @@ export default function KeywordsSection({
               if (blurTimeoutRef.current) {
                 clearTimeout(blurTimeoutRef.current);
                 blurTimeoutRef.current = null;
+              }
+              if (!isEditing && keywordInput.trim()) {
+                trackEvent('keyword_add', { keyword: keywordInput.trim(), required: newKeywordRequired });
               }
               onSubmitKeyword();
             }}

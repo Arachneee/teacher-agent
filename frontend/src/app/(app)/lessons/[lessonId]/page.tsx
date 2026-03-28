@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   DndContext,
@@ -14,6 +14,7 @@ import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sort
 import { CSS } from '@dnd-kit/utilities';
 import { Attendee, UpdateScope, removeAttendee } from '../../../lib/api';
 import { padTwoDigits } from '../../../lib/dateTimeUtils';
+import { trackEvent } from '../../../lib/tracking';
 import { useAuth } from '../../../context/AuthContext';
 import AttendeeCard from '../../../components/AttendeeCard';
 import AddAttendeeModal from '../../../components/AddAttendeeModal';
@@ -122,6 +123,10 @@ export default function LessonDetailPage() {
 
   const isMobile = useIsMobile();
   const effectiveColumnCount = isMobile ? 1 : columnCount;
+
+  useEffect(() => {
+    trackEvent('lesson_view', { lessonId });
+  }, [lessonId]);
 
   const { isEditing, editForm, setEditForm, isSaving, saveError, openEdit, closeEdit, handleSave } = useLessonEdit(
     lesson,

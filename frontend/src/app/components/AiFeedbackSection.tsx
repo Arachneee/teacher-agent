@@ -70,7 +70,10 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
               {feedback.aiContent.length}자
             </span>
             <button
-              onClick={onLike}
+              onClick={() => {
+                trackEvent('feedback_like', { feedbackId: feedback.id });
+                onLike();
+              }}
               disabled={feedback.liked}
               className={`w-7 h-7 flex items-center justify-center rounded-xl transition-colors duration-150 ${
                 feedback.liked
@@ -107,6 +110,8 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
         onClick={() => {
           if (feedback?.aiContent) {
             trackEvent('feedback_regenerate', { feedbackId: feedback.id });
+          } else if (feedback) {
+            trackEvent('feedback_generate', { feedbackId: feedback.id });
           }
           onGenerate();
         }}
