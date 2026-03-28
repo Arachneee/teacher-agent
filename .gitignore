@@ -31,7 +31,7 @@ Thumbs.db
 npm-debug.log*
 
 # Claude
-.claude/
+# .claude/
 
 # OMC tool files
 .omc/
