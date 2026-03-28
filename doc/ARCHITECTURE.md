@@ -227,8 +227,9 @@ teacher-agent/
 │       │   ├── StudentCard, StudentManagementCard, AttendeeCard
 │       │   ├── KeywordsSection, AiFeedbackSection, FeedbackHistoryCard
 │       │   ├── DatePicker, TimePicker, CustomSelect, GradeSelect
+│       │   ├── KpiCard, DailyUsageChart, TopKeywordsChart
 │       │   └── icons/NavIcons
-│       ├── hooks/ (useFeedback, useLessonDetail, useLessonEdit, useGridLayout, useDropdown, useIsMobile)
+│       ├── hooks/ (useFeedback, useLessonDetail, useLessonEdit, useGridLayout, useDropdown, useIsMobile, useUsageSummary, useDailyUsage, useTopKeywords)
 │       ├── context/AuthContext.tsx
 │       ├── lib/ (api.ts, constants.ts, dateTimeUtils.ts, highlightKeywords.tsx)
 │       └── types/api.ts
@@ -452,6 +453,7 @@ AiGenerationLog (어그리거트 루트)
 | `FeedbackCommandService` | 피드백 CRUD, AI 콘텐츠 생성 요청, 스트리밍 생성 (`streamAiContent()` → `Flux<String>`) |
 | `FeedbackAiService` | ChatClient로 OpenAI 호출, 동기/스트리밍 두 방식, 토큰 사용량 추적, AiGenerationLog 저장 |
 | `FeedbackPromptBuilder` | 프롬프트 빌드 로직 분리: required/normal 키워드 파티셔닝, previous_content 지원 |
+| `UsageQueryService` | 사용 통계 집계: KPI 요약, 일별 추이, 인기 키워드 Top N |
 | `FeedbackKeywordService` | 키워드 추가/수정/삭제 (required 플래그 지원) |
 | `FeedbackLikeService` | 좋아요 처리 + FeedbackLike 스냅샷 저장 |
 | `AiGenerationLogCommandService` | AI 생성 로그 저장 (프롬프트, 응답, 토큰, 소요시간) |
@@ -528,6 +530,13 @@ AiGenerationLog (어그리거트 루트)
 | PUT | `/feedbacks/{id}/keywords/{keywordId}` | Yes | 키워드 수정 (keyword, required) |
 | DELETE | `/feedbacks/{id}/keywords/{keywordId}` | Yes | 키워드 삭제 |
 | POST | `/feedbacks/{id}/like` | Yes | 좋아요 (스냅샷 저장) |
+
+#### 사용 통계 (`/usage`)
+| Method | Path | Auth | 설명 |
+|--------|------|------|------|
+| GET | `/usage/summary` | Yes | 전체 사용 통계 요약 (KPI) |
+| GET | `/usage/daily?days=30` | Yes | 일별 사용 추이 (기본 30일, 최대 90일) |
+| GET | `/usage/keywords/top?limit=20` | Yes | 인기 키워드 Top N (기본 20, 최대 50) |
 
 ### 5.6 인증/보안 구성
 

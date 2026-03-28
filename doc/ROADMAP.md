@@ -56,7 +56,7 @@
 
 ---
 
-### 1-1. 프론트엔드 이벤트 추적 (최우선)
+### 1-1. 프론트엔드 이벤트 추적 ✅ 완료
 
 사용자의 핵심 행동을 추적한다. 외부 분석 도구 없이, 백엔드 API로 이벤트를 전송하고 MySQL에 저장한다.
 
@@ -112,7 +112,7 @@ export function trackEvent(eventType: string, metadata?: Record<string, any>) {
 - `KeywordsSection.tsx` — 키워드 추가 시 `trackEvent('keyword_add')` 추가
 - `(app)/lessons/[lessonId]/page.tsx` — 마운트 시 `trackEvent('lesson_view')` 추가
 
-### 1-2. 기존 데이터 집계 쿼리 추가
+### 1-2. 기존 데이터 집계 쿼리 추가 ✅ 완료
 
 `AiGenerationLog`와 `FeedbackLike`에 이미 쌓이고 있는 데이터를 활용한다.
 
@@ -127,7 +127,7 @@ export function trackEvent(eventType: string, metadata?: Record<string, any>) {
 **FeedbackRepository에 추가할 쿼리:**
 - `countByAiContentIsNotNull()` — AI 생성된 피드백 수 (좋아요율 분모)
 
-### 1-3. 사용 통계 리포팅 API
+### 1-3. 사용 통계 리포팅 API ✅ 완료
 
 간단한 통계 엔드포인트. 복잡한 대시보드 UI는 불필요 — 1명 사용자이므로 API 응답을 직접 확인하면 충분.
 
