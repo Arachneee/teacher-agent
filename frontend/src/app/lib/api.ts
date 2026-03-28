@@ -1,19 +1,23 @@
 import type {
   Attendee,
   AuthResponse,
+  DailyUsageResponse,
   Feedback,
   Lesson,
   LessonDetail,
   RecurrenceCreateRequest,
   SchoolGrade,
   Student,
+  TopKeywordResponse,
   UpdateScope,
+  UsageSummaryResponse,
 } from '../types/api';
 
 export type {
   Attendee,
   AttendeeStudent,
   AuthResponse,
+  DailyUsageResponse,
   DayOfWeek,
   Feedback,
   FeedbackKeyword,
@@ -25,7 +29,9 @@ export type {
   RecurrenceType,
   SchoolGrade,
   Student,
+  TopKeywordResponse,
   UpdateScope,
+  UsageSummaryResponse,
 } from '../types/api';
 
 const BASE_URL = '/api';
@@ -293,5 +299,27 @@ export async function likeFeedback(feedbackId: number): Promise<Feedback> {
     method: 'POST',
   });
   if (!res.ok) throw new Error('좋아요 처리에 실패했어요');
+  return res.json();
+}
+
+// Usage Statistics
+
+export async function getUsageSummary(): Promise<UsageSummaryResponse> {
+  const res = await fetchWithAuth(`${BASE_URL}/usage/summary`);
+  if (!res.ok) throw new Error('통계 요약을 불러오지 못했어요');
+  return res.json();
+}
+
+export async function getDailyUsage(days?: number): Promise<DailyUsageResponse[]> {
+  const url = days ? `${BASE_URL}/usage/daily?days=${days}` : `${BASE_URL}/usage/daily`;
+  const res = await fetchWithAuth(url);
+  if (!res.ok) throw new Error('일별 사용 통계를 불러오지 못했어요');
+  return res.json();
+}
+
+export async function getTopKeywords(limit?: number): Promise<TopKeywordResponse[]> {
+  const url = limit ? `${BASE_URL}/usage/keywords/top?limit=${limit}` : `${BASE_URL}/usage/keywords/top`;
+  const res = await fetchWithAuth(url);
+  if (!res.ok) throw new Error('인기 키워드를 불러오지 못했어요');
   return res.json();
 }

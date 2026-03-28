@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { CalendarIcon, StudentsIcon, IntroIcon } from './icons/NavIcons';
+import { CalendarIcon, StudentsIcon, IntroIcon, StatsIcon } from './icons/NavIcons';
 
-type Tab = 'calendar' | 'students' | 'intro';
+type Tab = 'calendar' | 'students' | 'admin' | 'intro';
 
 const TABS: { id: Tab; label: string; href: string; Icon: typeof CalendarIcon }[] = [
   { id: 'calendar', label: '캘린더', href: '/calendar', Icon: CalendarIcon },
   { id: 'students', label: '학생 관리', href: '/students', Icon: StudentsIcon },
+  { id: 'admin', label: '통계', href: '/admin', Icon: StatsIcon },
   { id: 'intro', label: '소개', href: '/', Icon: IntroIcon },
 ];
 
@@ -18,9 +19,11 @@ export default function BottomNav() {
 
   const activeTab: Tab = pathname.startsWith('/students')
     ? 'students'
-    : pathname === '/'
-      ? 'intro'
-      : 'calendar';
+    : pathname.startsWith('/admin')
+      ? 'admin'
+      : pathname === '/'
+        ? 'intro'
+        : 'calendar';
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-30 flex md:hidden bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-1px_0_0_rgba(0,0,0,0.04)]">

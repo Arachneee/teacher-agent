@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { CalendarIcon, StudentsIcon } from './icons/NavIcons';
+import { CalendarIcon, StudentsIcon, StatsIcon } from './icons/NavIcons';
 
-type Tab = 'calendar' | 'students' | 'intro';
+type Tab = 'calendar' | 'students' | 'admin' | 'intro';
 
 const TABS: { id: Tab; label: string; href: string; Icon: typeof CalendarIcon }[] = [
   { id: 'calendar', label: '캘린더', href: '/calendar', Icon: CalendarIcon },
   { id: 'students', label: '학생 관리', href: '/students', Icon: StudentsIcon },
+  { id: 'admin', label: '통계', href: '/admin', Icon: StatsIcon },
 ];
 
 export default function Sidebar() {
@@ -19,7 +20,9 @@ export default function Sidebar() {
     ? 'students'
     : pathname.startsWith('/calendar') || pathname.startsWith('/lessons')
       ? 'calendar'
-      : null;
+      : pathname.startsWith('/admin')
+        ? 'admin'
+        : null;
   const isIntroActive = pathname === '/';
 
   return (

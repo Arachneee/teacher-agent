@@ -100,3 +100,29 @@ export interface RecurrenceCreateRequest {
   daysOfWeek?: DayOfWeek[];
   endDate: string;
 }
+
+export interface UsageSummaryResponse {
+  totalAiGenerations: number;
+  totalLikes: number;
+  likeRate: number;
+  totalCopyClicks: number;
+  copyRate: number;
+  totalRegenerations: number;
+  regenerationRate: number;
+  avgGenerationDurationMs: number;
+  activeDaysLast7: number;
+  activeDaysLast30: number;
+}
+
+export interface DailyUsageResponse {
+  date: string;
+  generations: number;
+  copies: number;
+  likes: number;
+  regenerations: number;
+}
+
+export interface TopKeywordResponse {
+  keyword: string;
+  count: number;
+}
