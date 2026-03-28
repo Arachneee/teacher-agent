@@ -7,6 +7,8 @@ import com.teacher.agent.domain.repository.UserEventRepository;
 import com.teacher.agent.dto.DailyUsageResponse;
 import com.teacher.agent.dto.TopKeywordResponse;
 import com.teacher.agent.dto.UsageSummaryResponse;
+import com.teacher.agent.service.vo.DailyEventCountRow;
+import com.teacher.agent.service.vo.KeywordCountRow;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -69,15 +71,12 @@ public class UsageQueryService {
     LocalDateTime end = LocalDateTime.now();
     LocalDateTime start = end.minusDays(days);
 
-    List<Object[]> eventCounts = userEventRepository.findDailyEventCounts(start, end);
+    List<DailyEventCountRow> eventCounts = userEventRepository.findDailyEventCounts(start, end);
 
     Map<LocalDate, Map<String, Long>> dailyEventMap = new HashMap<>();
-    for (Object[] row : eventCounts) {
-      LocalDate date = convertToLocalDate(row[0]);
-      String eventType = (String) row[1];
-      Long count = (Long) row[2];
-
-      dailyEventMap.computeIfAbsent(date, k -> new HashMap<>()).put(eventType, count);
+    for (DailyEventCountRow row : eventCounts) {
+      LocalDate date = convertToLocalDate(row.date());
+      dailyEventMap.computeIfAbsent(date, k -> new HashMap<>()).put(row.eventType(), row.count());
     }
 
     List<DailyUsageResponse> result = new ArrayList<>();
@@ -100,10 +99,10 @@ public class UsageQueryService {
   }
 
   public List<TopKeywordResponse> getTopKeywords(int limit) {
-    List<Object[]> keywords = feedbackRepository.findTopKeywords(PageRequest.of(0, limit));
+    List<KeywordCountRow> keywords = feedbackRepository.findTopKeywords(PageRequest.of(0, limit));
 
     return keywords.stream()
-        .map(row -> new TopKeywordResponse((String) row[0], (Long) row[1]))
+        .map(row -> new TopKeywordResponse(row.keyword(), row.count()))
         .toList();
   }
 

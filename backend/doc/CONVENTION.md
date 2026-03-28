@@ -168,3 +168,19 @@ checkNotBlank(keywords, "키워드는 비어 있을 수 없습니다.");
 ## 예외 처리
 
 - 리소스를 찾지 못한 경우 `ResponseStatusException(HttpStatus.NOT_FOUND, ...)` 사용.
+
+## Repository 쿼리 반환 타입
+
+- `@Query` 메서드에서 `Object[]`를 반환하지 않는다. 반드시 엔티티 또는 DTO projection record를 사용한다.
+- 집계 쿼리(GROUP BY, COUNT, SUM 등)는 `service/vo/` 패키지에 projection record를 생성하고 JPQL `new` 생성자 방식으로 반환한다.
+
+```java
+// Good — DTO projection record 사용
+@Query("SELECT new com.teacher.agent.service.vo.KeywordCountRow(fk.keyword, COUNT(fk)) "
+    + "FROM Feedback f JOIN f.keywords fk GROUP BY fk.keyword ORDER BY COUNT(fk) DESC")
+List<KeywordCountRow> findTopKeywords(Pageable pageable);
+
+// Bad — Object[] 반환 후 캐스팅
+@Query("SELECT fk.keyword, COUNT(fk) FROM Feedback f JOIN f.keywords fk GROUP BY fk.keyword")
+List<Object[]> findTopKeywords(Pageable pageable);
+```

@@ -1,6 +1,7 @@
 package com.teacher.agent.domain.repository;
 
 import com.teacher.agent.domain.UserEvent;
+import com.teacher.agent.service.vo.DailyEventCountRow;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,10 +19,11 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
       + "WHERE e.createdAt BETWEEN :start AND :end")
   int countDistinctActiveDays(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-  @Query("SELECT CAST(e.createdAt AS DATE), e.eventType, COUNT(e) FROM UserEvent e "
+  @Query("SELECT new com.teacher.agent.service.vo.DailyEventCountRow("
+      + "CAST(e.createdAt AS DATE), e.eventType, COUNT(e)) FROM UserEvent e "
       + "WHERE e.createdAt BETWEEN :start AND :end "
       + "GROUP BY CAST(e.createdAt AS DATE), e.eventType "
       + "ORDER BY CAST(e.createdAt AS DATE)")
-  List<Object[]> findDailyEventCounts(
+  List<DailyEventCountRow> findDailyEventCounts(
       @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
