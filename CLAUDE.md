@@ -16,6 +16,7 @@ AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프
 ## 일반 규칙
 - `doc/` 내 파일은 해당 작업에 직접 필요할 때만 읽는다.
 - 코드 수정 사항은 관련 context(CLAUDE.md 등)에도 반영한다.
+- 코드를 수정할 때마다 `doc/ARCHITECTURE.md`를 확인하고, 변경 사항이 아키텍처 문서에 기술된 내용(디렉토리 구조, 도메인 모델, API 엔드포인트, 서비스 목록, 설정, 컨벤션 등)에 영향을 주면 해당 섹션을 함께 업데이트한다.
 
 ## 코딩 컨벤션
 - 변수명에 약어를 사용하지 않는다. 예: `fk` → `feedbackKeyword`, `req` → `request`
@@ -24,7 +25,6 @@ AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프
 커밋 전 반드시 `doc/COMMIT.md`를 읽는다. Conventional Commits 방식 사용.
 
 - 형식: `<type>(<scope>): <subject>`
-- **커밋 메시지는 반드시 영어로 작성한다. 대화가 한국어로 진행 중이더라도 예외 없이 영어로 작성한다.**
 - `Co-Authored-By: Claude` 줄을 커밋 메시지에 추가하지 않는다.
 
 ---
@@ -34,6 +34,7 @@ AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프
 이 섹션은 리포지토리 내의 다른 중요한 Markdown 문서들에 대한 개요와 링크를 제공합니다.
 
 ### 최상위 레벨 문서
+-   **`GEMINI.md`**: (CLAUDE.md에 대한 심볼릭 링크) - Gemini CLI를 위한 중앙 문서 허브.
 -   **`CLAUDE.md`**: (이 파일) - AI 에이전트 지침 및 프로젝트 문서 인덱스.
 
 ### 백엔드 문서 (`backend/`)
@@ -51,7 +52,7 @@ AI 기반 선생님 에이전트 서비스. Spring Boot 백엔드와 Next.js 프
 -   **`infra/doc/deploy-frontend.md`**: Vercel에 Next.js 프론트엔드를 배포하기 위한 가이드로, 환경 변수, API 프록시 구성 및 자동 배포 프로세스를 포함합니다.
 
 ### 일반 프로젝트 문서 (`doc/`)
--   **`doc/PRD.md`**: 제품 요구사항 문서. 서비스 개요, 도메인 모델, 기능 요구사항, API 목록, 주요 UX 흐름을 정의합니다.
+-   **`doc/ARCHITECTURE.md`**: 프로젝트 전체 아키텍처 + 제품 요구사항 통합 문서. 다른 AI가 이 문서만 보고 동일한 프로젝트를 재현할 수 있도록 작성됨.
 -   **`doc/AUTH.md`**: 사용자 모델, 인증 흐름, API 엔드포인트 및 보안 구성을 포함하여 백엔드의 인증 및 인가 정책을 자세히 설명합니다.
 -   **`doc/COMMIT.md`**: Conventional Commits를 따르는 프로젝트의 커밋 메시지 컨벤션을 정의합니다.
 
