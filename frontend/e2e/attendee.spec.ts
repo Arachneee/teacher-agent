@@ -5,7 +5,7 @@ async function login(page: Page) {
   await page.fill('#userId', 'admin');
   await page.fill('#password', '123');
   await page.click('button[type="submit"]');
-  await page.waitForURL('/', { timeout: 10000 });
+  await page.waitForURL('**/calendar', { timeout: 10000 });
 }
 
 async function createStudentViaAPI(page: Page, name: string, memo: string) {
@@ -15,7 +15,7 @@ async function createStudentViaAPI(page: Page, name: string, memo: string) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ name, memo }),
+        body: JSON.stringify({ name, memo, grade: 'ELEMENTARY_1' }),
       });
       return res.json();
     },
@@ -66,9 +66,10 @@ test.describe.serial('Attendee Management', () => {
     await page.waitForTimeout(1000);
 
     await page.click('button[aria-label="수강생 추가"]');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(2000);
 
-    const studentButton = page.locator(`button:has-text("${studentName}")`).first();
+    const studentButton = page.getByRole('button', { name: new RegExp(studentName) });
+    await studentButton.waitFor({ state: 'visible', timeout: 10000 });
     await studentButton.click();
     await page.waitForTimeout(500);
 
@@ -87,9 +88,14 @@ test.describe.serial('Attendee Management', () => {
 
     page.on('dialog', dialog => dialog.accept());
 
-    await page.click('button[aria-label="수업에서 제거"]');
+    const removeButton = page.locator('button[aria-label="수업에서 제거"]');
+    await removeButton.waitFor({ state: 'visible', timeout: 5000 });
+    await removeButton.click();
+    await page.waitForTimeout(500);
+
+    await page.locator('button:has-text("제거")').last().click();
     await page.waitForTimeout(1000);
 
-    await expect(page.locator(`text=${studentName}`)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(studentName, { exact: true })).not.toBeVisible({ timeout: 5000 });
   });
 });

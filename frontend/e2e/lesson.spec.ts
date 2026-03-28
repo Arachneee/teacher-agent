@@ -5,7 +5,7 @@ async function login(page: Page) {
   await page.fill('#userId', 'admin');
   await page.fill('#password', '123');
   await page.click('button[type="submit"]');
-  await page.waitForURL('/', { timeout: 10000 });
+  await page.waitForURL('**/calendar', { timeout: 10000 });
 }
 
 async function createLessonViaAPI(page: Page, title: string) {

@@ -8,7 +8,7 @@ async function login(page: Page) {
   await page.fill('#userId', 'admin');
   await page.fill('#password', '123');
   await page.click('button[type="submit"]');
-  await page.waitForURL('/', { timeout: 10000 });
+  await page.waitForURL('**/calendar', { timeout: 10000 });
 }
 
 async function goToStudents(page: Page) {
@@ -55,12 +55,14 @@ test.describe.serial('Student Management', () => {
     await goToStudents(page);
     await page.waitForTimeout(500);
 
-    page.on('dialog', dialog => dialog.accept());
-
     const card = page.locator(`text=${EDITED_NAME}`).first().locator('xpath=ancestor::div[contains(@class,"rounded-3xl")]');
     await card.locator('button[aria-label="삭제"]').click();
+    await page.waitForTimeout(500);
+
+    // ConfirmModal의 "삭제" 버튼 클릭
+    await page.locator('button:has-text("삭제")').last().click();
     await page.waitForTimeout(1000);
 
-    await expect(page.locator(`text=${EDITED_NAME}`)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(EDITED_NAME, { exact: true })).not.toBeVisible({ timeout: 5000 });
   });
 });
