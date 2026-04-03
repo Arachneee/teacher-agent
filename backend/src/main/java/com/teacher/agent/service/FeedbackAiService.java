@@ -4,7 +4,9 @@ import static com.teacher.agent.util.UsageTokenExtractor.extractCompletionTokens
 import static com.teacher.agent.util.UsageTokenExtractor.extractPromptTokens;
 
 import com.teacher.agent.domain.Feedback;
+import com.teacher.agent.domain.FeedbackLike;
 import com.teacher.agent.domain.Student;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
@@ -26,8 +28,10 @@ public class FeedbackAiService {
     this.aiGenerationLogCommandService = aiGenerationLogCommandService;
   }
 
-  public String generateFeedbackContent(Feedback feedback, Student student) {
-    String promptContent = feedbackPromptBuilder.build(feedback, student);
+  public String generateFeedbackContent(Feedback feedback, Student student, String lessonTitle,
+      String subject, List<FeedbackLike> likedExamples) {
+    String promptContent =
+        feedbackPromptBuilder.build(feedback, student, lessonTitle, subject, likedExamples);
     long startTime = System.currentTimeMillis();
 
     ChatResponse chatResponse = chatClient.prompt(promptContent).call().chatResponse();
@@ -42,8 +46,10 @@ public class FeedbackAiService {
     return completionContent;
   }
 
-  public Flux<String> streamFeedbackContent(Feedback feedback, Student student) {
-    String promptContent = feedbackPromptBuilder.build(feedback, student);
+  public Flux<String> streamFeedbackContent(Feedback feedback, Student student, String lessonTitle,
+      String subject, List<FeedbackLike> likedExamples) {
+    String promptContent =
+        feedbackPromptBuilder.build(feedback, student, lessonTitle, subject, likedExamples);
     long startTime = System.currentTimeMillis();
     StringBuilder accumulatedContent = new StringBuilder(512);
     AtomicReference<Integer> capturedPromptTokens = new AtomicReference<>(null);

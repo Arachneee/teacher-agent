@@ -1,14 +1,19 @@
 package com.teacher.agent.service;
 
 import com.teacher.agent.domain.Feedback;
+import com.teacher.agent.domain.FeedbackLike;
 import com.teacher.agent.domain.Lesson;
 import com.teacher.agent.domain.Student;
+import com.teacher.agent.domain.Teacher;
+import com.teacher.agent.domain.repository.FeedbackLikeRepository;
 import com.teacher.agent.domain.repository.FeedbackRepository;
 import com.teacher.agent.domain.repository.StudentRepository;
+import com.teacher.agent.domain.repository.TeacherRepository;
 import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.exception.BadRequestException;
 import com.teacher.agent.exception.ResourceNotFoundException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +29,8 @@ public class FeedbackCommandService {
   private final FeedbackLikeService feedbackLikeService;
   private final FeedbackRepository feedbackRepository;
   private final StudentRepository studentRepository;
+  private final TeacherRepository teacherRepository;
+  private final FeedbackLikeRepository feedbackLikeRepository;
 
   @Transactional
   public FeedbackResponse create(UserId userId, Long studentId, Long lessonId) {
@@ -64,8 +71,13 @@ public class FeedbackCommandService {
 
     Student student = studentRepository.findById(feedback.getStudentId())
         .orElseThrow(() -> ResourceNotFoundException.student(feedback.getStudentId()));
+    Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(feedback.getLessonId(), userId);
+    String subject = resolveSubject(userId);
+    List<FeedbackLike> likedExamples = feedbackLikeRepository.findRecentLikedByUserId(userId);
 
-    String aiContent = feedbackAiService.generateFeedbackContent(feedback, student);
+    String aiContent =
+        feedbackAiService.generateFeedbackContent(feedback, student, lesson.getTitle(), subject,
+            likedExamples);
 
     feedback.updateAiContent(aiContent);
     feedbackRepository.save(feedback);
@@ -83,11 +95,14 @@ public class FeedbackCommandService {
 
     Student student = studentRepository.findById(feedback.getStudentId())
         .orElseThrow(() -> ResourceNotFoundException.student(feedback.getStudentId()));
+    Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(feedback.getLessonId(), userId);
+    String subject = resolveSubject(userId);
+    List<FeedbackLike> likedExamples = feedbackLikeRepository.findRecentLikedByUserId(userId);
 
     StringBuilder fullContent = new StringBuilder();
 
     return feedbackAiService
-        .streamFeedbackContent(feedback, student)
+        .streamFeedbackContent(feedback, student, lesson.getTitle(), subject, likedExamples)
         .doOnNext(fullContent::append)
         .doOnComplete(() -> {
           feedback.updateAiContent(fullContent.toString());
@@ -102,5 +117,11 @@ public class FeedbackCommandService {
     if (!enrolled) {
       throw BadRequestException.studentNotEnrolled();
     }
+  }
+
+  private String resolveSubject(UserId userId) {
+    return teacherRepository.findByUserId(userId)
+        .map(Teacher::getSubject)
+        .orElse(null);
   }
 }

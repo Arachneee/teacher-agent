@@ -39,7 +39,7 @@ Teacher Agent — AI 기반 선생님 보조 서비스
 | 백엔드 | Spring Boot 4.0.3, Java 25 (Virtual Threads), JPA, Spring Security, Spring AI 2.0.0-M2 |
 | 프론트엔드 | Next.js 16.1.6, React 19.2.3, TypeScript 5, Tailwind CSS 4, dnd-kit |
 | DB | MySQL 8.0 (운영), H2 인메모리 (테스트) |
-| AI | OpenAI gpt-4o-mini (Spring AI ChatClient, temperature 0.9, streaming 지원) |
+| AI | OpenAI gpt-4o-mini (Spring AI ChatClient, temperature 0.7, streaming 지원) |
 | 인프라 | AWS EC2 (t3.micro) + RDS MySQL (db.t3.micro), Terraform |
 | 프론트 배포 | Vercel |
 | CI/CD | GitHub Actions |
@@ -99,8 +99,11 @@ Teacher Agent — AI 기반 선생님 보조 서비스
 - 재생성 시 이전 문자와 다른 표현 사용
 - 클립보드 복사, 수동 편집, 좋아요(♥) 보관
 - 모든 AI 호출은 AiGenerationLog에 기록 (프롬프트, 응답, 토큰, 소요시간)
+- 수업명(lesson_title)과 선생님 과목(subject)을 프롬프트에 포함하여 구체적 맥락 제공
+- 선생님이 좋아요한 최근 3개 피드백을 few-shot 예시로 프롬프트에 주입 (개인화된 스타일 학습)
 
 **AI 생성 규칙 (프롬프트 핵심):**
+- 프롬프트는 핵심 규칙(7개, 반드시 준수)과 세부 규칙(선호 수준)으로 계층화
 - 경어체 (`습니다`/`입니다`) 사용, 비격식체 금지
 - 구조: 이름 호칭 → 칭찬 → 학습 상황 안내 (마무리 인사 없음)
 - 이름 뒤 조사: 받침 유무에 따라 자동 적용

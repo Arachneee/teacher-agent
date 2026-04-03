@@ -4,6 +4,7 @@ import static com.teacher.agent.util.ErrorMessages.PROMPT_FILE_READ_ERROR;
 
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackKeyword;
+import com.teacher.agent.domain.FeedbackLike;
 import com.teacher.agent.domain.Student;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,16 +31,20 @@ public class FeedbackPromptBuilder {
     }
   }
 
-  public String build(Feedback feedback, Student student) {
+  public String build(Feedback feedback, Student student, String lessonTitle, String subject,
+      List<FeedbackLike> likedExamples) {
     Map<Boolean, List<FeedbackKeyword>> partitioned = feedback.getKeywords().stream()
         .collect(Collectors.partitioningBy(FeedbackKeyword::isRequired));
 
     return feedbackMessagePrompt
         .replace("{student_name}", student.getName())
         .replace("{grade}", student.getGrade().displayName())
+        .replace("{lesson_title}", lessonTitle != null ? lessonTitle : "수업")
+        .replace("{subject}", subject != null && !subject.isBlank() ? subject : "")
         .replace("{keywords}", resolveNormalKeywords(partitioned.get(false)))
         .replace("{required_keywords}", resolveRequiredKeywords(partitioned.get(true)))
-        .replace("{previous_content}", resolvePreviousContent(feedback));
+        .replace("{previous_content}", resolvePreviousContent(feedback))
+        .replace("{liked_examples}", resolveLikedExamples(likedExamples));
   }
 
   private String resolveNormalKeywords(List<FeedbackKeyword> keywords) {
@@ -60,5 +65,15 @@ public class FeedbackPromptBuilder {
   private String resolvePreviousContent(Feedback feedback) {
     String previousContent = feedback.getAiContent();
     return (previousContent != null && !previousContent.isBlank()) ? previousContent : "없음";
+  }
+
+  private String resolveLikedExamples(List<FeedbackLike> likedExamples) {
+    if (likedExamples == null || likedExamples.isEmpty()) {
+      return "없음";
+    }
+    return likedExamples.stream()
+        .map(like -> "키워드: " + like.getKeywordsSnapshot() + "\n문자: "
+            + like.getAiContentSnapshot())
+        .collect(Collectors.joining("\n\n"));
   }
 }

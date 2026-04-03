@@ -372,12 +372,12 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
         "성실함", false);
-    given(feedbackAiService.generateFeedbackContent(any(), any()))
+    given(feedbackAiService.generateFeedbackContent(any(), any(), any(), any(), any()))
         .willReturn("AI가 생성한 피드백");
 
     feedbackCommandService.generateAiContent(userId, created.id());
 
-    verify(feedbackAiService).generateFeedbackContent(any(), any());
+    verify(feedbackAiService).generateFeedbackContent(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -393,7 +393,7 @@ class FeedbackServiceTest {
   void AI_콘텐츠를_스트리밍으로_생성하고_DB에_저장한다() {
     FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
-    given(feedbackAiService.streamFeedbackContent(any(), any()))
+    given(feedbackAiService.streamFeedbackContent(any(), any(), any(), any(), any()))
         .willReturn(Flux.just("AI가 ", "생성한 ", "피드백"));
 
     StepVerifier.create(feedbackCommandService.streamAiContent(userId, created.id()))
