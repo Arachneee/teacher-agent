@@ -537,9 +537,9 @@ AiGenerationLog (어그리거트 루트)
 #### 사용 통계 (`/usage`)
 | Method | Path | Auth | 설명 |
 |--------|------|------|------|
-| GET | `/usage/summary` | Yes | 전체 사용 통계 요약 (KPI) |
-| GET | `/usage/daily?days=30` | Yes | 일별 사용 추이 (기본 30일, 최대 90일) |
-| GET | `/usage/keywords/top?limit=20` | Yes | 인기 키워드 Top N (기본 20, 최대 50) |
+| GET | `/usage/summary` | Yes | 로그인한 선생님의 사용 통계 요약 (KPI) |
+| GET | `/usage/daily?days=30` | Yes | 로그인한 선생님의 일별 사용 추이 (기본 30일, 최대 90일) |
+| GET | `/usage/keywords/top?limit=20` | Yes | 로그인한 선생님의 인기 키워드 Top N (기본 20, 최대 50) |
 
 ### 5.6 인증/보안 구성
 
