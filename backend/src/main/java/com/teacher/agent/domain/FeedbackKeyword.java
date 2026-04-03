@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id", callSuper = false)
+@Table(indexes = @Index(name = "idx_feedback_keyword_feedback_id", columnList = "feedback_id"))
 public class FeedbackKeyword extends BaseEntity {
 
   @Id

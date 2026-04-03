@@ -1,6 +1,7 @@
 package com.teacher.agent.domain.repository;
 
 import com.teacher.agent.domain.Feedback;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.service.vo.KeywordCountRow;
 import java.util.List;
 import java.util.Optional;
@@ -27,4 +28,18 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
       + "FROM Feedback f JOIN f.keywords fk "
       + "GROUP BY fk.keyword ORDER BY COUNT(fk) DESC")
   List<KeywordCountRow> findTopKeywords(Pageable pageable);
+
+  @Query("SELECT COUNT(f) FROM Feedback f "
+      + "WHERE f.aiContent IS NOT NULL "
+      + "AND f.studentId IN ("
+      + "SELECT s.id FROM Student s WHERE s.userId = :userId)")
+  long countByAiContentIsNotNullAndTeacherId(@Param("userId") UserId userId);
+
+  @Query("SELECT new com.teacher.agent.service.vo.KeywordCountRow(fk.keyword, COUNT(fk)) "
+      + "FROM Feedback f JOIN f.keywords fk "
+      + "WHERE f.studentId IN ("
+      + "SELECT s.id FROM Student s WHERE s.userId = :userId) "
+      + "GROUP BY fk.keyword ORDER BY COUNT(fk) DESC")
+  List<KeywordCountRow> findTopKeywordsByTeacherId(
+      @Param("userId") UserId userId, Pageable pageable);
 }

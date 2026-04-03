@@ -1,5 +1,6 @@
 package com.teacher.agent.controller;
 
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.DailyUsageResponse;
 import com.teacher.agent.dto.TopKeywordResponse;
 import com.teacher.agent.dto.UsageSummaryResponse;
@@ -24,19 +25,19 @@ public class UsageController {
   private final UsageQueryService usageQueryService;
 
   @GetMapping("/summary")
-  public ResponseEntity<UsageSummaryResponse> getSummary() {
-    return ResponseEntity.ok(usageQueryService.getUsageSummary());
+  public ResponseEntity<UsageSummaryResponse> getSummary(UserId userId) {
+    return ResponseEntity.ok(usageQueryService.getUsageSummary(userId));
   }
 
   @GetMapping("/daily")
   public ResponseEntity<List<DailyUsageResponse>> getDailyUsage(
-      @RequestParam(defaultValue = "30") @Min(1) @Max(90) int days) {
-    return ResponseEntity.ok(usageQueryService.getDailyUsage(days));
+      UserId userId, @RequestParam(defaultValue = "30") @Min(1) @Max(90) int days) {
+    return ResponseEntity.ok(usageQueryService.getDailyUsage(days, userId));
   }
 
   @GetMapping("/keywords/top")
   public ResponseEntity<List<TopKeywordResponse>> getTopKeywords(
-      @RequestParam(defaultValue = "20") @Min(1) @Max(50) int limit) {
-    return ResponseEntity.ok(usageQueryService.getTopKeywords(limit));
+      UserId userId, @RequestParam(defaultValue = "20") @Min(1) @Max(50) int limit) {
+    return ResponseEntity.ok(usageQueryService.getTopKeywords(limit, userId));
   }
 }

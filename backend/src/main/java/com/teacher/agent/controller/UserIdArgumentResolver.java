@@ -3,6 +3,7 @@ package com.teacher.agent.controller;
 import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.exception.UnauthorizedException;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,9 @@ public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
       NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-    if (authentication == null || !authentication.isAuthenticated()) {
+    if (authentication == null
+        || !authentication.isAuthenticated()
+        || authentication instanceof AnonymousAuthenticationToken) {
       throw new UnauthorizedException();
     }
 

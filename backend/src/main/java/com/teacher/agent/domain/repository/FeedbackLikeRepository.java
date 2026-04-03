@@ -19,4 +19,11 @@ public interface FeedbackLikeRepository extends JpaRepository<FeedbackLike, Long
       + "(SELECT s.id FROM Student s WHERE s.userId = :userId)) "
       + "ORDER BY fl.createdAt DESC LIMIT 3")
   List<FeedbackLike> findRecentLikedByUserId(@Param("userId") UserId userId);
+
+  @Query("SELECT COUNT(fl) FROM FeedbackLike fl "
+      + "WHERE fl.feedbackId IN ("
+      + "SELECT f.id FROM Feedback f "
+      + "WHERE f.studentId IN ("
+      + "SELECT s.id FROM Student s WHERE s.userId = :userId))")
+  long countByTeacherId(@Param("userId") UserId userId);
 }

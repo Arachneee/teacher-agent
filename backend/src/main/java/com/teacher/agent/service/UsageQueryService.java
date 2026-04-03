@@ -4,6 +4,7 @@ import com.teacher.agent.domain.repository.AiGenerationLogRepository;
 import com.teacher.agent.domain.repository.FeedbackLikeRepository;
 import com.teacher.agent.domain.repository.FeedbackRepository;
 import com.teacher.agent.domain.repository.UserEventRepository;
+import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.DailyUsageResponse;
 import com.teacher.agent.dto.TopKeywordResponse;
 import com.teacher.agent.dto.UsageSummaryResponse;
@@ -35,24 +36,33 @@ public class UsageQueryService {
   private final FeedbackRepository feedbackRepository;
   private final UserEventRepository userEventRepository;
 
-  public UsageSummaryResponse getUsageSummary() {
-    long totalAiGenerations = aiGenerationLogRepository.count();
-    long totalLikes = feedbackLikeRepository.count();
-    long aiGeneratedFeedbackCount = feedbackRepository.countByAiContentIsNotNull();
-    long totalCopyClicks = userEventRepository.countByEventType(EVENT_FEEDBACK_COPY);
-    long totalRegenerations = userEventRepository.countByEventType(EVENT_FEEDBACK_REGENERATE);
-    long totalGenerateClicks = userEventRepository.countByEventType(EVENT_FEEDBACK_GENERATE);
-    double avgGenerationDurationMs = aiGenerationLogRepository.averageDurationMs();
+  public UsageSummaryResponse getUsageSummary(UserId userId) {
+    long totalAiGenerations = aiGenerationLogRepository.countByTeacherId(userId);
+    long totalLikes = feedbackLikeRepository.countByTeacherId(userId);
+    long aiGeneratedFeedbackCount =
+        feedbackRepository.countByAiContentIsNotNullAndTeacherId(userId);
+    long totalCopyClicks = userEventRepository.countByEventTypeAndUserId(
+        EVENT_FEEDBACK_COPY, userId.value());
+    long totalRegenerations = userEventRepository.countByEventTypeAndUserId(
+        EVENT_FEEDBACK_REGENERATE, userId.value());
+    long totalGenerateClicks = userEventRepository.countByEventTypeAndUserId(
+        EVENT_FEEDBACK_GENERATE, userId.value());
+    double avgGenerationDurationMs = aiGenerationLogRepository.averageDurationMsByTeacherId(userId);
 
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime sevenDaysAgo = now.minusDays(7);
     LocalDateTime thirtyDaysAgo = now.minusDays(30);
 
-    int activeDaysLast7 = userEventRepository.countDistinctActiveDays(sevenDaysAgo, now);
-    int activeDaysLast30 = userEventRepository.countDistinctActiveDays(thirtyDaysAgo, now);
+    int activeDaysLast7 = userEventRepository.countDistinctActiveDaysByUserId(
+        sevenDaysAgo, now, userId.value());
+    int activeDaysLast30 = userEventRepository.countDistinctActiveDaysByUserId(
+        thirtyDaysAgo, now, userId.value());
 
+    // likeRate: 좋아요 수 / AI 생성된 피드백 수 (피드백 품질 만족도)
+    // copyRate: 복사 클릭 수 / AI 생성 클릭 수 (생성 → 복사 전환율, ROADMAP KPI)
+    // regenerationRate: 재생성 수 / 생성 클릭 수 (첫 생성 불만족률)
     double likeRate = calculateRate(totalLikes, aiGeneratedFeedbackCount);
-    double copyRate = calculateRate(totalCopyClicks, aiGeneratedFeedbackCount);
+    double copyRate = calculateRate(totalCopyClicks, totalGenerateClicks);
     double regenerationRate = calculateRate(totalRegenerations, totalGenerateClicks);
 
     return new UsageSummaryResponse(
@@ -68,11 +78,12 @@ public class UsageQueryService {
         activeDaysLast30);
   }
 
-  public List<DailyUsageResponse> getDailyUsage(int days) {
+  public List<DailyUsageResponse> getDailyUsage(int days, UserId userId) {
     LocalDateTime end = LocalDateTime.now();
     LocalDateTime start = end.minusDays(days);
 
-    List<DailyEventCountRow> eventCounts = userEventRepository.findDailyEventCounts(start, end);
+    List<DailyEventCountRow> eventCounts =
+        userEventRepository.findDailyEventCountsByUserId(start, end, userId.value());
 
     Map<LocalDate, Map<String, Long>> dailyEventMap = new HashMap<>();
     for (DailyEventCountRow row : eventCounts) {
@@ -99,8 +110,9 @@ public class UsageQueryService {
     return result;
   }
 
-  public List<TopKeywordResponse> getTopKeywords(int limit) {
-    List<KeywordCountRow> keywords = feedbackRepository.findTopKeywords(PageRequest.of(0, limit));
+  public List<TopKeywordResponse> getTopKeywords(int limit, UserId userId) {
+    List<KeywordCountRow> keywords =
+        feedbackRepository.findTopKeywordsByTeacherId(userId, PageRequest.of(0, limit));
 
     return keywords.stream()
         .map(row -> new TopKeywordResponse(row.keyword(), row.count()))

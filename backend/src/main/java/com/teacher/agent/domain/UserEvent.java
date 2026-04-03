@@ -22,7 +22,8 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(of = "id", callSuper = false)
 @Table(indexes = {
     @Index(name = "idx_user_event_user_id_created_at", columnList = "userId, createdAt"),
-    @Index(name = "idx_user_event_event_type_created_at", columnList = "eventType, createdAt")
+    @Index(name = "idx_user_event_event_type_created_at", columnList = "eventType, createdAt"),
+    @Index(name = "idx_user_event_user_id_event_type", columnList = "userId, eventType")
 })
 public class UserEvent extends BaseEntity {
 
