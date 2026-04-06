@@ -26,9 +26,11 @@ test.describe.serial('Student Management', () => {
 
     await page.fill('input[placeholder="학생 이름을 입력하세요"]', STUDENT_NAME);
     await page.click('button:has-text("추가하기 ✨")');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
-    await expect(page.locator(`text=${STUDENT_NAME}`).first()).toBeVisible({ timeout: 5000 });
+    const studentCard = page.locator('div.bg-white.rounded-3xl').filter({ hasText: STUDENT_NAME }).first();
+    await studentCard.scrollIntoViewIfNeeded();
+    await expect(studentCard).toBeVisible({ timeout: 10000 });
   });
 
   test('학생 이름을 수정한다', async ({ page }) => {
@@ -36,7 +38,8 @@ test.describe.serial('Student Management', () => {
     await goToStudents(page);
     await page.waitForTimeout(500);
 
-    const card = page.locator(`text=${STUDENT_NAME}`).first().locator('xpath=ancestor::div[contains(@class,"rounded-3xl")]');
+    const card = page.locator('div.bg-white.rounded-3xl').filter({ hasText: STUDENT_NAME }).first();
+    await card.scrollIntoViewIfNeeded();
     await card.locator('button[aria-label="수정"]').click();
     await page.waitForTimeout(300);
 
@@ -47,7 +50,9 @@ test.describe.serial('Student Management', () => {
     await page.locator('button:has-text("저장")').click();
     await page.waitForTimeout(1000);
 
-    await expect(page.locator(`text=${EDITED_NAME}`).first()).toBeVisible({ timeout: 5000 });
+    const editedCard = page.locator('div.bg-white.rounded-3xl').filter({ hasText: EDITED_NAME }).first();
+    await editedCard.scrollIntoViewIfNeeded();
+    await expect(editedCard).toBeVisible({ timeout: 10000 });
   });
 
   test('학생을 삭제한다', async ({ page }) => {
@@ -55,7 +60,8 @@ test.describe.serial('Student Management', () => {
     await goToStudents(page);
     await page.waitForTimeout(500);
 
-    const card = page.locator(`text=${EDITED_NAME}`).first().locator('xpath=ancestor::div[contains(@class,"rounded-3xl")]');
+    const card = page.locator('div.bg-white.rounded-3xl').filter({ hasText: EDITED_NAME }).first();
+    await card.scrollIntoViewIfNeeded();
     await card.locator('button[aria-label="삭제"]').click();
     await page.waitForTimeout(500);
 
