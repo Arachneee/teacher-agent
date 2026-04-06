@@ -257,7 +257,15 @@ export default function LessonDetailPage() {
     <div className="mx-auto px-4 md:px-6 py-6 md:py-10" style={{ maxWidth: isMobile ? '100%' : `${columnCount * 24}rem` }}>
       <header className="mb-10">
         <button
-          onClick={() => router.push('/calendar')}
+          onClick={() => {
+            if (lesson?.startTime) {
+              const date = new Date(lesson.startTime);
+              const dateString = `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`;
+              router.push(`/calendar?date=${dateString}`);
+            } else {
+              router.push('/calendar');
+            }
+          }}
           className="flex items-center gap-2 text-sm text-gray-400 hover:text-purple-500 transition-colors mb-4"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Lesson, getLessons } from '../../lib/api';
 import { padTwoDigits } from '../../lib/dateTimeUtils';
 import { useAuth } from '../../context/AuthContext';
@@ -38,6 +39,7 @@ function formatMobileDateLabel(date: Date): string {
 
 export default function CalendarPage() {
   const { user, logout } = useAuth();
+  const searchParams = useSearchParams();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -45,6 +47,12 @@ export default function CalendarPage() {
   const [pendingTime, setPendingTime] = useState<{ startTime: string; endTime: string } | null>(null);
 
   const [currentDay, setCurrentDay] = useState<Date>(() => {
+    const dateParam = searchParams.get('date');
+    if (dateParam) {
+      const date = new Date(dateParam);
+      date.setHours(0, 0, 0, 0);
+      if (!isNaN(date.getTime())) return date;
+    }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return today;

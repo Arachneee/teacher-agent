@@ -248,7 +248,7 @@ export default function WeeklyCalendarView({ lessons, weekStart, onEdit, onDelet
                 {/* Current time indicator */}
                 {isToday && currentTimeTop !== null && (
                   <div
-                    className="absolute left-0 right-0 z-10 pointer-events-none"
+                    className="absolute left-0 right-0 z-20 pointer-events-none"
                     style={{ top: `${currentTimeTop}px` }}
                   >
                     <div className="flex items-center">
