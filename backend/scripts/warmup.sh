@@ -189,6 +189,11 @@ curl -s --no-buffer -b "$COOKIE_FILE" -c "$COOKIE_FILE" \
   -o /dev/null "$APP_URL/feedbacks/$FEEDBACK_ID/generate/stream"
 log "18. GET /feedbacks/$FEEDBACK_ID/generate/stream OK"
 
+# ─── 18-1. AI 피드백 스트리밍 생성 (instruction 포함) ─────────
+curl -s --no-buffer -b "$COOKIE_FILE" -c "$COOKIE_FILE" \
+  -o /dev/null "$APP_URL/feedbacks/$FEEDBACK_ID/generate/stream?instruction=%EB%8D%94+%EB%94%B0%EB%9C%BB%ED%95%98%EA%B2%8C"
+log "18-1. GET /feedbacks/$FEEDBACK_ID/generate/stream?instruction=더+따뜻하게 OK"
+
 # ─── 19. AI 피드백 수정 ──────────────────────────────────────
 http -o /dev/null -X PATCH "$APP_URL/feedbacks/$FEEDBACK_ID" \
   -H "Content-Type: application/json" \
