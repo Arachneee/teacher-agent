@@ -97,19 +97,21 @@ Teacher Agent — AI 기반 선생님 보조 서비스
 - 키워드 기반 학부모 문자 문구 자동 생성 (150~250자)
 - 스트리밍 생성 지원 (실시간 청크 전송)
 - 재생성 시 이전 문자와 다른 표현 사용
+- 재생성 시 수정 방향(instruction) 자유 텍스트 입력 지원 (최대 200자, 선택) — 프론트엔드에서 `aiContent` 존재 시에만 노출
 - 클립보드 복사, 수동 편집, 좋아요(♥) 보관
 - 모든 AI 호출은 AiGenerationLog에 기록 (프롬프트, 응답, 토큰, 소요시간)
 - 수업명(lesson_title)과 선생님 과목(subject)을 프롬프트에 포함하여 구체적 맥락 제공
 - 선생님이 좋아요한 최근 3개 피드백을 few-shot 예시로 프롬프트에 주입 (개인화된 스타일 학습)
 
 **AI 생성 규칙 (프롬프트 핵심):**
-- 프롬프트는 핵심 규칙(7개, 반드시 준수)과 세부 규칙(선호 수준)으로 계층화
+- 프롬프트는 작성 모드 결정(모드 A/B) → 기본 규칙(7개) → 세부 규칙으로 계층화
+- 모드 A (instruction 있음): 수정 방향이 모든 기본 규칙보다 최우선 적용 (길이·구성·어조 override 가능)
+- 모드 B (instruction 없음): 이전 문자와 문장 구조·동사·배치 순서 3가지 모두 다르게 작성
 - 경어체 (`습니다`/`입니다`) 사용, 비격식체 금지
 - 구조: 이름 호칭 → 칭찬 → 학습 상황 안내 (마무리 인사 없음)
 - 이름 뒤 조사: 받침 유무에 따라 자동 적용
 - 긍정 키워드 → 담백한 칭찬, 부정 키워드 → 부드러운 순화
 - `required` 키워드는 한 글자도 바꾸지 않고 그대로 포함
-- 이전 생성 문자와 다른 문장 구조·어휘 사용 (표현 다양성)
 - 학부모에게 학습 지도 요청 금지, 칭찬 요청만 허용
 - 느낌표 금지, ^^ 이모지 최대 2회
 
@@ -527,8 +529,8 @@ AiGenerationLog (어그리거트 루트)
 | GET | `/feedbacks/{id}` | Yes | 피드백 단건 조회 |
 | PATCH | `/feedbacks/{id}` | Yes | AI 콘텐츠 수정 (aiContent) |
 | DELETE | `/feedbacks/{id}` | Yes | 피드백 삭제 |
-| POST | `/feedbacks/{id}/generate` | Yes | AI 피드백 문자 생성 (동기) |
-| GET | `/feedbacks/{id}/generate/stream` | Yes | AI 피드백 스트리밍 생성 (text/plain, Flux) |
+| POST | `/feedbacks/{id}/generate` | Yes | AI 피드백 문자 생성 (동기, `?instruction=` 선택) |
+| GET | `/feedbacks/{id}/generate/stream` | Yes | AI 피드백 스트리밍 생성 (text/plain, Flux, `?instruction=` 선택 max 200자) |
 | POST | `/feedbacks/{id}/keywords` | Yes | 키워드 추가 (keyword, required) |
 | PUT | `/feedbacks/{id}/keywords/{keywordId}` | Yes | 키워드 수정 (keyword, required) |
 | DELETE | `/feedbacks/{id}/keywords/{keywordId}` | Yes | 키워드 삭제 |
