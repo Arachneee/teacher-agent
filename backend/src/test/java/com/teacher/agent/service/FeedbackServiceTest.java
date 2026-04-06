@@ -3,6 +3,7 @@ package com.teacher.agent.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -372,12 +373,26 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
         "성실함", false);
-    given(feedbackAiService.generateFeedbackContent(any(), any(), any(), any(), any()))
+    given(feedbackAiService.generateFeedbackContent(any(), any(), any(), any(), any(), any()))
         .willReturn("AI가 생성한 피드백");
 
-    feedbackCommandService.generateAiContent(userId, created.id());
+    feedbackCommandService.generateAiContent(userId, created.id(), null);
 
-    verify(feedbackAiService).generateFeedbackContent(any(), any(), any(), any(), any());
+    verify(feedbackAiService).generateFeedbackContent(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void AI_콘텐츠_생성_시_instruction이_전달된다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
+    given(
+        feedbackAiService.generateFeedbackContent(any(), any(), any(), any(), any(), eq("더 따뜻하게")))
+        .willReturn("AI가 생성한 피드백");
+
+    feedbackCommandService.generateAiContent(userId, created.id(), "더 따뜻하게");
+
+    verify(feedbackAiService)
+        .generateFeedbackContent(any(), any(), any(), any(), any(), eq("더 따뜻하게"));
   }
 
   @Test
@@ -385,7 +400,7 @@ class FeedbackServiceTest {
     FeedbackResponse created =
         feedbackCommandService.create(userId, studentId, lessonId);
 
-    assertThatThrownBy(() -> feedbackCommandService.generateAiContent(userId, created.id()))
+    assertThatThrownBy(() -> feedbackCommandService.generateAiContent(userId, created.id(), null))
         .isInstanceOf(BadRequestException.class);
   }
 
@@ -393,10 +408,10 @@ class FeedbackServiceTest {
   void AI_콘텐츠를_스트리밍으로_생성하고_DB에_저장한다() {
     FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
-    given(feedbackAiService.streamFeedbackContent(any(), any(), any(), any(), any()))
+    given(feedbackAiService.streamFeedbackContent(any(), any(), any(), any(), any(), any()))
         .willReturn(Flux.just("AI가 ", "생성한 ", "피드백"));
 
-    StepVerifier.create(feedbackCommandService.streamAiContent(userId, created.id()))
+    StepVerifier.create(feedbackCommandService.streamAiContent(userId, created.id(), null))
         .expectNext("AI가 ", "생성한 ", "피드백")
         .verifyComplete();
 
@@ -408,7 +423,7 @@ class FeedbackServiceTest {
   void 키워드_없이_AI_콘텐츠_스트리밍_생성_시_예외가_발생한다() {
     FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
 
-    assertThatThrownBy(() -> feedbackCommandService.streamAiContent(userId, created.id()))
+    assertThatThrownBy(() -> feedbackCommandService.streamAiContent(userId, created.id(), null))
         .isInstanceOf(BadRequestException.class);
   }
 
@@ -416,7 +431,8 @@ class FeedbackServiceTest {
   void 다른_선생님_피드백의_AI_콘텐츠_스트리밍_시_예외가_발생한다() {
     FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
 
-    assertThatThrownBy(() -> feedbackCommandService.streamAiContent(otherUserId, created.id()))
+    assertThatThrownBy(
+        () -> feedbackCommandService.streamAiContent(otherUserId, created.id(), null))
         .isInstanceOf(BusinessException.class);
   }
 

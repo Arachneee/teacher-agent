@@ -12,6 +12,7 @@ import com.teacher.agent.service.FeedbackLikeService;
 import com.teacher.agent.service.FeedbackQueryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -62,13 +63,15 @@ public class FeedbackController {
 
   @PostMapping("/{id}/generate")
   public ResponseEntity<FeedbackResponse> generateAiContent(UserId userId,
-      @PathVariable @Positive Long id) {
-    return ResponseEntity.ok(feedbackCommandService.generateAiContent(userId, id));
+      @PathVariable @Positive Long id,
+      @RequestParam(required = false) @Size(max = 200) String instruction) {
+    return ResponseEntity.ok(feedbackCommandService.generateAiContent(userId, id, instruction));
   }
 
   @GetMapping(value = "/{id}/generate/stream", produces = "text/plain;charset=UTF-8")
-  public Flux<String> streamAiContent(UserId userId, @PathVariable @Positive Long id) {
-    return feedbackCommandService.streamAiContent(userId, id);
+  public Flux<String> streamAiContent(UserId userId, @PathVariable @Positive Long id,
+      @RequestParam(required = false) @Size(max = 200) String instruction) {
+    return feedbackCommandService.streamAiContent(userId, id, instruction);
   }
 
   @PostMapping("/{id}/keywords")

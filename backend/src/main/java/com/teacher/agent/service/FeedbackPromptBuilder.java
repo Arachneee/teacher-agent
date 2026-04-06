@@ -32,7 +32,7 @@ public class FeedbackPromptBuilder {
   }
 
   public String build(Feedback feedback, Student student, String lessonTitle, String subject,
-      List<FeedbackLike> likedExamples) {
+      List<FeedbackLike> likedExamples, String instruction) {
     Map<Boolean, List<FeedbackKeyword>> partitioned = feedback.getKeywords().stream()
         .collect(Collectors.partitioningBy(FeedbackKeyword::isRequired));
 
@@ -44,7 +44,8 @@ public class FeedbackPromptBuilder {
         .replace("{keywords}", resolveNormalKeywords(partitioned.get(false)))
         .replace("{required_keywords}", resolveRequiredKeywords(partitioned.get(true)))
         .replace("{previous_content}", resolvePreviousContent(feedback))
-        .replace("{liked_examples}", resolveLikedExamples(likedExamples));
+        .replace("{liked_examples}", resolveLikedExamples(likedExamples))
+        .replace("{instruction}", resolveInstruction(instruction));
   }
 
   private String resolveNormalKeywords(List<FeedbackKeyword> keywords) {
@@ -65,6 +66,10 @@ public class FeedbackPromptBuilder {
   private String resolvePreviousContent(Feedback feedback) {
     String previousContent = feedback.getAiContent();
     return (previousContent != null && !previousContent.isBlank()) ? previousContent : "없음";
+  }
+
+  private String resolveInstruction(String instruction) {
+    return (instruction != null && !instruction.isBlank()) ? instruction : "없음";
   }
 
   private String resolveLikedExamples(List<FeedbackLike> likedExamples) {

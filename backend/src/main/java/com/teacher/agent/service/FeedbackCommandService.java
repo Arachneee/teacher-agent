@@ -62,7 +62,7 @@ public class FeedbackCommandService {
     feedbackRepository.deleteById(feedbackId);
   }
 
-  public FeedbackResponse generateAiContent(UserId userId, Long feedbackId) {
+  public FeedbackResponse generateAiContent(UserId userId, Long feedbackId, String instruction) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
 
     if (feedback.getKeywords().isEmpty()) {
@@ -77,7 +77,7 @@ public class FeedbackCommandService {
 
     String aiContent =
         feedbackAiService.generateFeedbackContent(feedback, student, lesson.getTitle(), subject,
-            likedExamples);
+            likedExamples, instruction);
 
     feedback.updateAiContent(aiContent);
     feedbackRepository.save(feedback);
@@ -86,7 +86,7 @@ public class FeedbackCommandService {
         feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId));
   }
 
-  public Flux<String> streamAiContent(UserId userId, Long feedbackId) {
+  public Flux<String> streamAiContent(UserId userId, Long feedbackId, String instruction) {
     Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
 
     if (feedback.getKeywords().isEmpty()) {
@@ -102,7 +102,8 @@ public class FeedbackCommandService {
     StringBuilder fullContent = new StringBuilder();
 
     return feedbackAiService
-        .streamFeedbackContent(feedback, student, lesson.getTitle(), subject, likedExamples)
+        .streamFeedbackContent(feedback, student, lesson.getTitle(), subject, likedExamples,
+            instruction)
         .doOnNext(fullContent::append)
         .doOnComplete(() -> {
           feedback.updateAiContent(fullContent.toString());
