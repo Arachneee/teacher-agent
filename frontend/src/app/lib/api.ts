@@ -280,8 +280,9 @@ export async function generateAiContent(feedbackId: number): Promise<Feedback> {
   return res.json();
 }
 
-export async function streamAiContent(feedbackId: number, onChunk: (chunk: string) => void): Promise<void> {
-  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/generate/stream`);
+export async function streamAiContent(feedbackId: number, onChunk: (chunk: string) => void, instruction?: string): Promise<void> {
+  const params = instruction?.trim() ? `?instruction=${encodeURIComponent(instruction.trim())}` : '';
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/generate/stream${params}`);
   if (!res.ok) throw new Error('AI 문자를 생성하지 못했어요');
 
   const reader = res.body!.getReader();

@@ -9,7 +9,7 @@ interface Props {
   feedback: Feedback | null;
   aiGenerating: boolean;
   isEditingAiContent: boolean;
-  onGenerate: () => void;
+  onGenerate: (instruction?: string) => void;
   onUpdateAiContent: (content: string) => void;
   onLike: () => void;
 }
@@ -17,7 +17,16 @@ interface Props {
 export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiContent, onGenerate, onUpdateAiContent, onLike }: Props) {
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [instruction, setInstruction] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const previousAiGeneratingRef = useRef(aiGenerating);
+
+  useEffect(() => {
+    if (previousAiGeneratingRef.current && !aiGenerating) {
+      setInstruction('');
+    }
+    previousAiGeneratingRef.current = aiGenerating;
+  }, [aiGenerating]);
 
   useEffect(() => {
     if (editing && textareaRef.current) {
@@ -106,6 +115,15 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
           </button>
         </div>
       )}
+      {feedback?.aiContent !== undefined && feedback?.aiContent !== null && (
+        <input
+          type="text"
+          value={instruction}
+          onChange={event => setInstruction(event.target.value)}
+          placeholder="수정 방향을 입력하세요 (선택)"
+          className="w-full bg-indigo-50 border border-indigo-100 text-sm text-gray-500 placeholder-gray-300 rounded-2xl px-3 py-2"
+        />
+      )}
       <button
         onClick={() => {
           if (feedback?.aiContent) {
@@ -113,7 +131,7 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
           } else if (feedback) {
             trackEvent('feedback_generate', { feedbackId: feedback.id });
           }
-          onGenerate();
+          onGenerate(instruction || undefined);
         }}
         disabled={aiGenerating || isEditingAiContent || !feedback || feedback.keywords.length === 0}
         className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 disabled:opacity-50 text-indigo-500 text-sm font-medium py-2.5 rounded-2xl transition-colors duration-150 flex items-center justify-center gap-2"

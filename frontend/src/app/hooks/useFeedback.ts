@@ -197,7 +197,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     }
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (instruction?: string) => {
     if (!feedback || feedback.keywords.length === 0 || aiGenerating) return;
     const feedbackId = feedback.id;
     setAiGenerating(true);
@@ -206,7 +206,7 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     try {
       await streamAiContent(feedbackId, (chunk) => {
         setFeedback(prev => prev ? { ...prev, aiContent: (prev.aiContent ?? '') + chunk } : null);
-      });
+      }, instruction);
       setFeedback(await reloadFeedback(feedbackId));
     } catch {
       setErrorMessage('AI 문자를 생성하지 못했어요');
