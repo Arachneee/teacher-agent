@@ -37,7 +37,7 @@ public class FeedbackPromptBuilder {
         .collect(Collectors.partitioningBy(FeedbackKeyword::isRequired));
 
     return feedbackMessagePrompt
-        .replace("{student_name}", student.getName())
+        .replace("{student_name}", extractFirstName(student.getName()))
         .replace("{grade}", student.getGrade().displayName())
         .replace("{lesson_title}", lessonTitle != null ? lessonTitle : "수업")
         .replace("{subject}", subject != null && !subject.isBlank() ? subject : "")
@@ -70,6 +70,13 @@ public class FeedbackPromptBuilder {
 
   private String resolveInstruction(String instruction) {
     return (instruction != null && !instruction.isBlank()) ? instruction : "없음";
+  }
+
+  private String extractFirstName(String fullName) {
+    if (fullName == null || fullName.length() < 3) {
+      return fullName;
+    }
+    return fullName.substring(1);
   }
 
   private String resolveLikedExamples(List<FeedbackLike> likedExamples) {
