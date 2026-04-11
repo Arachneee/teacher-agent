@@ -6,6 +6,7 @@ import static com.teacher.agent.util.UsageTokenExtractor.extractPromptTokens;
 import com.teacher.agent.domain.Feedback;
 import com.teacher.agent.domain.FeedbackLike;
 import com.teacher.agent.domain.Student;
+import com.teacher.agent.service.vo.AiGenerationLogSaveCommand;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.ai.chat.client.ChatClient;
@@ -41,8 +42,9 @@ public class FeedbackAiService {
     String completionContent = chatResponse.getResult().getOutput().getText();
     Usage usage = chatResponse.getMetadata().getUsage();
 
-    aiGenerationLogCommandService.save(feedback.getId(), promptContent, completionContent,
-        durationMs, false, extractPromptTokens(usage), extractCompletionTokens(usage));
+    aiGenerationLogCommandService.save(new AiGenerationLogSaveCommand(
+        feedback.getId(), promptContent, completionContent, durationMs, false,
+        extractPromptTokens(usage), extractCompletionTokens(usage), instruction));
 
     return completionContent;
   }
@@ -78,9 +80,9 @@ public class FeedbackAiService {
         })
         .doOnComplete(() -> {
           long durationMs = System.currentTimeMillis() - startTime;
-          aiGenerationLogCommandService.save(feedback.getId(), promptContent,
-              accumulatedContent.toString(), durationMs, true,
-              capturedPromptTokens.get(), capturedCompletionTokens.get());
+          aiGenerationLogCommandService.save(new AiGenerationLogSaveCommand(
+              feedback.getId(), promptContent, accumulatedContent.toString(), durationMs, true,
+              capturedPromptTokens.get(), capturedCompletionTokens.get(), instruction));
         });
   }
 }

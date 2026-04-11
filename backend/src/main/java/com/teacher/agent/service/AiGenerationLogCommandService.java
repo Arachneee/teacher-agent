@@ -2,6 +2,7 @@ package com.teacher.agent.service;
 
 import com.teacher.agent.domain.AiGenerationLog;
 import com.teacher.agent.domain.repository.AiGenerationLogRepository;
+import com.teacher.agent.service.vo.AiGenerationLogSaveCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +14,10 @@ public class AiGenerationLogCommandService {
   private final AiGenerationLogRepository aiGenerationLogRepository;
 
   @Transactional
-  public void save(Long feedbackId, String promptContent, String completionContent,
-      long durationMs, boolean streaming, Integer promptTokens, Integer completionTokens) {
+  public void save(AiGenerationLogSaveCommand command) {
     aiGenerationLogRepository.save(
-        AiGenerationLog.create(feedbackId, promptContent, completionContent, durationMs,
-            streaming, promptTokens, completionTokens));
+        AiGenerationLog.create(command.feedbackId(), command.promptContent(),
+            command.completionContent(), command.durationMs(), command.streaming(),
+            command.promptTokens(), command.completionTokens(), command.instruction()));
   }
 }

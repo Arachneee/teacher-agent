@@ -52,9 +52,12 @@ public class AiGenerationLog extends BaseEntity {
   @Column
   private Integer completionTokens;
 
+  @Column(columnDefinition = "TEXT")
+  private String instruction;
+
   public static AiGenerationLog create(Long feedbackId, String promptContent,
       String completionContent, long durationMs, boolean streaming,
-      Integer promptTokens, Integer completionTokens) {
+      Integer promptTokens, Integer completionTokens, String instruction) {
     AiGenerationLog aiGenerationLog = new AiGenerationLog();
 
     aiGenerationLog.feedbackId = checkPositive(feedbackId, FEEDBACK_ID);
@@ -64,7 +67,15 @@ public class AiGenerationLog extends BaseEntity {
     aiGenerationLog.streaming = streaming;
     aiGenerationLog.promptTokens = promptTokens;
     aiGenerationLog.completionTokens = completionTokens;
+    aiGenerationLog.instruction = toNullIfAbsent(instruction);
 
     return aiGenerationLog;
+  }
+
+  private static String toNullIfAbsent(String instruction) {
+    if (instruction == null || instruction.isBlank() || instruction.strip().equals("없음")) {
+      return null;
+    }
+    return instruction.strip();
   }
 }

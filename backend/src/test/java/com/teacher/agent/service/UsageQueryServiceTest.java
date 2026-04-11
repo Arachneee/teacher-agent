@@ -93,9 +93,11 @@ class UsageQueryServiceTest {
     feedbackRepository.save(feedback);
 
     aiGenerationLogRepository.save(
-        AiGenerationLog.create(feedback.getId(), "prompt", "completion", 1000L, false, 10, 20));
+        AiGenerationLog.create(feedback.getId(), "prompt", "completion", 1000L, false, 10, 20,
+            null));
     aiGenerationLogRepository.save(
-        AiGenerationLog.create(feedback.getId(), "prompt2", "completion2", 2000L, false, 10, 20));
+        AiGenerationLog.create(feedback.getId(), "prompt2", "completion2", 2000L, false, 10, 20,
+            null));
 
     feedbackLikeRepository.save(FeedbackLike.create(feedback.getId(), "content", "keywords"));
 
@@ -134,9 +136,11 @@ class UsageQueryServiceTest {
     feedbackRepository.save(feedbackB);
 
     aiGenerationLogRepository.save(
-        AiGenerationLog.create(feedbackA.getId(), "prompt", "completion", 1000L, false, 10, 20));
+        AiGenerationLog.create(feedbackA.getId(), "prompt", "completion", 1000L, false, 10, 20,
+            null));
     aiGenerationLogRepository.save(
-        AiGenerationLog.create(feedbackB.getId(), "prompt", "completion", 2000L, false, 10, 20));
+        AiGenerationLog.create(feedbackB.getId(), "prompt", "completion", 2000L, false, 10, 20,
+            null));
 
     feedbackLikeRepository.save(FeedbackLike.create(feedbackA.getId(), "content", "keywords"));
     feedbackLikeRepository.save(FeedbackLike.create(feedbackB.getId(), "content", "keywords"));

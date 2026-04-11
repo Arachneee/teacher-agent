@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.teacher.agent.domain.AiGenerationLog;
 import com.teacher.agent.domain.repository.AiGenerationLogRepository;
+import com.teacher.agent.service.vo.AiGenerationLogSaveCommand;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,8 @@ class AiGenerationLogCommandServiceTest {
 
   @Test
   void 동기_AI_생성_로그를_저장한다() {
-    aiGenerationLogCommandService.save(1L, "프롬프트 내용", "응답 내용", 500L, false, 100, 200);
+    aiGenerationLogCommandService.save(
+        new AiGenerationLogSaveCommand(1L, "프롬프트 내용", "응답 내용", 500L, false, 100, 200, null));
 
     List<AiGenerationLog> logs = aiGenerationLogRepository.findAll();
     assertThat(logs).hasSize(1);
@@ -49,7 +51,8 @@ class AiGenerationLogCommandServiceTest {
 
   @Test
   void 스트리밍_AI_생성_로그를_저장한다() {
-    aiGenerationLogCommandService.save(2L, "프롬프트", "응답", 1200L, true, 80, 120);
+    aiGenerationLogCommandService.save(
+        new AiGenerationLogSaveCommand(2L, "프롬프트", "응답", 1200L, true, 80, 120, null));
 
     List<AiGenerationLog> logs = aiGenerationLogRepository.findAll();
     assertThat(logs).hasSize(1);
@@ -62,7 +65,8 @@ class AiGenerationLogCommandServiceTest {
 
   @Test
   void 토큰_정보가_없는_로그를_저장한다() {
-    aiGenerationLogCommandService.save(1L, "프롬프트", "응답", 800L, true, null, null);
+    aiGenerationLogCommandService.save(
+        new AiGenerationLogSaveCommand(1L, "프롬프트", "응답", 800L, true, null, null, null));
 
     List<AiGenerationLog> logs = aiGenerationLogRepository.findAll();
     assertThat(logs).hasSize(1);
@@ -70,5 +74,23 @@ class AiGenerationLogCommandServiceTest {
     AiGenerationLog log = logs.get(0);
     assertThat(log.getPromptTokens()).isNull();
     assertThat(log.getCompletionTokens()).isNull();
+  }
+
+  @Test
+  void instruction이_있는_로그를_저장한다() {
+    aiGenerationLogCommandService.save(
+        new AiGenerationLogSaveCommand(1L, "프롬프트", "응답", 500L, false, 100, 200, "더 짧게 써줘"));
+
+    AiGenerationLog log = aiGenerationLogRepository.findAll().get(0);
+    assertThat(log.getInstruction()).isEqualTo("더 짧게 써줘");
+  }
+
+  @Test
+  void instruction이_없음이면_null로_저장된다() {
+    aiGenerationLogCommandService.save(
+        new AiGenerationLogSaveCommand(1L, "프롬프트", "응답", 500L, false, 100, 200, "없음"));
+
+    AiGenerationLog log = aiGenerationLogRepository.findAll().get(0);
+    assertThat(log.getInstruction()).isNull();
   }
 }
