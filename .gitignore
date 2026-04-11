@@ -1,3 +1,6 @@
+# MCP 설정 (prod DB 크레덴셜 포함)
+.mcp.json
+
 # Backend (Gradle/Kotlin/Spring Boot)
 backend/build/
 backend/.gradle/

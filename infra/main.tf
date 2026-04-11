@@ -107,6 +107,14 @@ resource "aws_security_group" "rds" {
     security_groups = [aws_security_group.this.id]
   }
 
+  ingress {
+    description = "MySQL from local"
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["${var.local_ip}/32"]
+  }
+
   egress {
     description = "All outbound"
     from_port   = 0
@@ -154,8 +162,8 @@ resource "aws_db_instance" "this" {
   username = var.rds_username
   password = var.rds_password
 
-  # 퍼블릭 접근 차단 — EC2 보안 그룹을 통해서만 접근
-  publicly_accessible    = false
+  # 로컬 개발용 퍼블릭 접근 허용 (rds-sg에서 IP 제한)
+  publicly_accessible    = true
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.this.name
 

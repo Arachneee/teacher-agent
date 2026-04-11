@@ -39,3 +39,8 @@ variable "rds_password" {
   type        = string
   sensitive   = true
 }
+
+variable "local_ip" {
+  description = "로컬 개발 머신의 퍼블릭 IP (terraform.tfvars에 설정, 커밋 금지)"
+  type        = string
+}
