@@ -31,7 +31,7 @@ public class FeedbackPromptBuilder {
     }
   }
 
-  public String build(Feedback feedback, Student student, String lessonTitle, String subject,
+  public String build(Feedback feedback, Student student, String subject,
       List<FeedbackLike> likedExamples, String instruction) {
     Map<Boolean, List<FeedbackKeyword>> partitioned = feedback.getKeywords().stream()
         .collect(Collectors.partitioningBy(FeedbackKeyword::isRequired));
@@ -39,7 +39,6 @@ public class FeedbackPromptBuilder {
     return feedbackMessagePrompt
         .replace("{student_name}", extractFirstName(student.getName()))
         .replace("{grade}", student.getGrade().displayName())
-        .replace("{lesson_title}", lessonTitle != null ? lessonTitle : "수업")
         .replace("{subject}", subject != null && !subject.isBlank() ? subject : "")
         .replace("{keywords}", resolveNormalKeywords(partitioned.get(false)))
         .replace("{required_keywords}", resolveRequiredKeywords(partitioned.get(true)))

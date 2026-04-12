@@ -29,11 +29,10 @@ public class FeedbackAiService {
     this.aiGenerationLogCommandService = aiGenerationLogCommandService;
   }
 
-  public String generateFeedbackContent(Feedback feedback, Student student, String lessonTitle,
-      String subject, List<FeedbackLike> likedExamples, String instruction) {
+  public String generateFeedbackContent(Feedback feedback, Student student, String subject,
+      List<FeedbackLike> likedExamples, String instruction) {
     String promptContent =
-        feedbackPromptBuilder.build(feedback, student, lessonTitle, subject, likedExamples,
-            instruction);
+        feedbackPromptBuilder.build(feedback, student, subject, likedExamples, instruction);
     long startTime = System.currentTimeMillis();
 
     ChatResponse chatResponse = chatClient.prompt(promptContent).call().chatResponse();
@@ -49,11 +48,10 @@ public class FeedbackAiService {
     return completionContent;
   }
 
-  public Flux<String> streamFeedbackContent(Feedback feedback, Student student, String lessonTitle,
-      String subject, List<FeedbackLike> likedExamples, String instruction) {
+  public Flux<String> streamFeedbackContent(Feedback feedback, Student student, String subject,
+      List<FeedbackLike> likedExamples, String instruction) {
     String promptContent =
-        feedbackPromptBuilder.build(feedback, student, lessonTitle, subject, likedExamples,
-            instruction);
+        feedbackPromptBuilder.build(feedback, student, subject, likedExamples, instruction);
     long startTime = System.currentTimeMillis();
     StringBuilder accumulatedContent = new StringBuilder(512);
     AtomicReference<Integer> capturedPromptTokens = new AtomicReference<>(null);

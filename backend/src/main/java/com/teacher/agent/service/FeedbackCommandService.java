@@ -71,13 +71,13 @@ public class FeedbackCommandService {
 
     Student student = studentRepository.findById(feedback.getStudentId())
         .orElseThrow(() -> ResourceNotFoundException.student(feedback.getStudentId()));
-    Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(feedback.getLessonId(), userId);
+    lessonQueryService.findByIdAndVerifyOwner(feedback.getLessonId(), userId);
     String subject = resolveSubject(userId);
     List<FeedbackLike> likedExamples = feedbackLikeRepository.findRecentLikedByUserId(userId);
 
     String aiContent =
-        feedbackAiService.generateFeedbackContent(feedback, student, lesson.getTitle(), subject,
-            likedExamples, instruction);
+        feedbackAiService.generateFeedbackContent(feedback, student, subject, likedExamples,
+            instruction);
 
     feedback.updateAiContent(aiContent);
     feedbackRepository.save(feedback);
@@ -95,15 +95,14 @@ public class FeedbackCommandService {
 
     Student student = studentRepository.findById(feedback.getStudentId())
         .orElseThrow(() -> ResourceNotFoundException.student(feedback.getStudentId()));
-    Lesson lesson = lessonQueryService.findByIdAndVerifyOwner(feedback.getLessonId(), userId);
+    lessonQueryService.findByIdAndVerifyOwner(feedback.getLessonId(), userId);
     String subject = resolveSubject(userId);
     List<FeedbackLike> likedExamples = feedbackLikeRepository.findRecentLikedByUserId(userId);
 
     StringBuilder fullContent = new StringBuilder();
 
     return feedbackAiService
-        .streamFeedbackContent(feedback, student, lesson.getTitle(), subject, likedExamples,
-            instruction)
+        .streamFeedbackContent(feedback, student, subject, likedExamples, instruction)
         .doOnNext(fullContent::append)
         .doOnComplete(() -> {
           feedback.updateAiContent(fullContent.toString());
