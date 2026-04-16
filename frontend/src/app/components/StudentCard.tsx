@@ -54,6 +54,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
     handleRemoveKeyword,
     handleGenerate,
     handleUpdateAiContent,
+    handleUpdateInstructions,
     handleLike,
   } = useFeedback(student.id);
 
@@ -281,6 +282,7 @@ const StudentCard = forwardRef<StudentCardHandle, Props>((
           isEditingAiContent={isEditingAiContent}
           onGenerate={handleGenerate}
           onUpdateAiContent={handleUpdateAiContent}
+          onUpdateInstructions={handleUpdateInstructions}
           onLike={handleLike}
         />
       )}

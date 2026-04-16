@@ -64,6 +64,7 @@ export interface LessonDetailFeedback {
   studentId: number;
   lessonId: number;
   aiContent: string | null;
+  instructions: string[];
   keywords: FeedbackKeyword[];
   liked: boolean;
   createdAt: string;

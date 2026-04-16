@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Lesson, getLessons } from '../../lib/api';
 import { padTwoDigits } from '../../lib/dateTimeUtils';
 import { useAuth } from '../../context/AuthContext';
@@ -39,6 +39,7 @@ function formatMobileDateLabel(date: Date): string {
 
 export default function CalendarPage() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,11 @@ export default function CalendarPage() {
     today.setHours(0, 0, 0, 0);
     return today;
   });
+
+  useEffect(() => {
+    const dateString = toISODateString(currentDay);
+    router.replace(`/calendar?date=${dateString}`);
+  }, [currentDay, router]);
 
   const weekStart = useMemo(() => getWeekStart(currentDay), [currentDay]);
   const weekStartString = useMemo(() => toISODateString(weekStart), [weekStart]);
