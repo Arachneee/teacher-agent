@@ -27,6 +27,7 @@ export interface Feedback {
   lessonTitle: string | null;
   lessonStartTime: string | null;
   aiContent: string | null;
+  instructions: string[];
   keywords: FeedbackKeyword[];
   liked: boolean;
   createdAt: string;

@@ -262,6 +262,16 @@ export async function removeKeyword(feedbackId: number, keywordId: number): Prom
   if (!res.ok) throw new Error('키워드를 삭제하지 못했어요');
 }
 
+export async function updateFeedbackInstructions(feedbackId: number, instructions: string[]): Promise<Feedback> {
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/instructions`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ instructions }),
+  });
+  if (!res.ok) throw new Error('수정 요청을 수정하지 못했어요');
+  return res.json();
+}
+
 export async function updateFeedback(feedbackId: number, aiContent: string | null): Promise<Feedback> {
   const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}`, {
     method: 'PATCH',
@@ -281,8 +291,11 @@ export async function generateAiContent(feedbackId: number): Promise<Feedback> {
 }
 
 export async function streamAiContent(feedbackId: number, onChunk: (chunk: string) => void, instruction?: string): Promise<void> {
-  const params = instruction?.trim() ? `?instruction=${encodeURIComponent(instruction.trim())}` : '';
-  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/generate/stream${params}`);
+  const res = await fetchWithAuth(`${BASE_URL}/feedbacks/${feedbackId}/generate/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ instruction: instruction?.trim() || null }),
+  });
   if (!res.ok) throw new Error('AI 문자를 생성하지 못했어요');
 
   const reader = res.body!.getReader();

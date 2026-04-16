@@ -2,6 +2,8 @@ package com.teacher.agent.controller;
 
 import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.FeedbackCreateRequest;
+import com.teacher.agent.dto.FeedbackGenerateRequest;
+import com.teacher.agent.dto.FeedbackInstructionsUpdateRequest;
 import com.teacher.agent.dto.FeedbackKeywordCreateRequest;
 import com.teacher.agent.dto.FeedbackKeywordUpdateRequest;
 import com.teacher.agent.dto.FeedbackResponse;
@@ -12,7 +14,6 @@ import com.teacher.agent.service.FeedbackLikeService;
 import com.teacher.agent.service.FeedbackQueryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -61,17 +62,26 @@ public class FeedbackController {
     return ResponseEntity.noContent().build();
   }
 
+  @PutMapping("/{id}/instructions")
+  public ResponseEntity<FeedbackResponse> updateInstructions(UserId userId,
+      @PathVariable @Positive Long id,
+      @RequestBody @Valid FeedbackInstructionsUpdateRequest request) {
+    return ResponseEntity
+        .ok(feedbackCommandService.updateInstructions(userId, id, request.instructions()));
+  }
+
   @PostMapping("/{id}/generate")
   public ResponseEntity<FeedbackResponse> generateAiContent(UserId userId,
       @PathVariable @Positive Long id,
-      @RequestParam(required = false) @Size(max = 200) String instruction) {
-    return ResponseEntity.ok(feedbackCommandService.generateAiContent(userId, id, instruction));
+      @RequestBody @Valid FeedbackGenerateRequest request) {
+    return ResponseEntity
+        .ok(feedbackCommandService.generateAiContent(userId, id, request.instruction()));
   }
 
-  @GetMapping(value = "/{id}/generate/stream", produces = "text/plain;charset=UTF-8")
+  @PostMapping(value = "/{id}/generate/stream", produces = "text/plain;charset=UTF-8")
   public Flux<String> streamAiContent(UserId userId, @PathVariable @Positive Long id,
-      @RequestParam(required = false) @Size(max = 200) String instruction) {
-    return feedbackCommandService.streamAiContent(userId, id, instruction);
+      @RequestBody @Valid FeedbackGenerateRequest request) {
+    return feedbackCommandService.streamAiContent(userId, id, request.instruction());
   }
 
   @PostMapping("/{id}/keywords")

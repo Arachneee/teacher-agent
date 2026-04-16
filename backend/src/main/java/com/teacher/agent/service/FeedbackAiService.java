@@ -30,9 +30,9 @@ public class FeedbackAiService {
   }
 
   public String generateFeedbackContent(Feedback feedback, Student student, String subject,
-      List<FeedbackLike> likedExamples, String instruction) {
+      List<FeedbackLike> likedExamples, List<String> instructions) {
     String promptContent =
-        feedbackPromptBuilder.build(feedback, student, subject, likedExamples, instruction);
+        feedbackPromptBuilder.build(feedback, student, subject, likedExamples, instructions);
     long startTime = System.currentTimeMillis();
 
     ChatResponse chatResponse = chatClient.prompt(promptContent).call().chatResponse();
@@ -41,17 +41,18 @@ public class FeedbackAiService {
     String completionContent = chatResponse.getResult().getOutput().getText();
     Usage usage = chatResponse.getMetadata().getUsage();
 
+    String latestInstruction = instructions.isEmpty() ? null : instructions.getLast();
     aiGenerationLogCommandService.save(new AiGenerationLogSaveCommand(
         feedback.getId(), promptContent, completionContent, durationMs, false,
-        extractPromptTokens(usage), extractCompletionTokens(usage), instruction));
+        extractPromptTokens(usage), extractCompletionTokens(usage), latestInstruction));
 
     return completionContent;
   }
 
   public Flux<String> streamFeedbackContent(Feedback feedback, Student student, String subject,
-      List<FeedbackLike> likedExamples, String instruction) {
+      List<FeedbackLike> likedExamples, List<String> instructions) {
     String promptContent =
-        feedbackPromptBuilder.build(feedback, student, subject, likedExamples, instruction);
+        feedbackPromptBuilder.build(feedback, student, subject, likedExamples, instructions);
     long startTime = System.currentTimeMillis();
     StringBuilder accumulatedContent = new StringBuilder(512);
     AtomicReference<Integer> capturedPromptTokens = new AtomicReference<>(null);
@@ -78,9 +79,10 @@ public class FeedbackAiService {
         })
         .doOnComplete(() -> {
           long durationMs = System.currentTimeMillis() - startTime;
+          String latestInstruction = instructions.isEmpty() ? null : instructions.getLast();
           aiGenerationLogCommandService.save(new AiGenerationLogSaveCommand(
               feedback.getId(), promptContent, accumulatedContent.toString(), durationMs, true,
-              capturedPromptTokens.get(), capturedCompletionTokens.get(), instruction));
+              capturedPromptTokens.get(), capturedCompletionTokens.get(), latestInstruction));
         });
   }
 }

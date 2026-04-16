@@ -6,6 +6,7 @@ import static com.teacher.agent.util.Parameter.STUDENT_ID;
 import static com.teacher.agent.util.ValidationUtil.checkNotBlank;
 import static com.teacher.agent.util.ValidationUtil.checkPositive;
 
+import com.teacher.agent.domain.vo.StringListConverter;
 import com.teacher.agent.util.ErrorMessages;
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -36,6 +37,10 @@ public class Feedback extends BaseEntity {
 
   @Column(columnDefinition = "TEXT")
   private String aiContent;
+
+  @Convert(converter = StringListConverter.class)
+  @Column(columnDefinition = "TEXT")
+  private List<String> instructions = new ArrayList<>();
 
   @Column(nullable = false)
   private boolean liked;
@@ -84,6 +89,19 @@ public class Feedback extends BaseEntity {
   public void updateAiContent(String aiContent) {
     this.aiContent = checkNotBlank(aiContent, AI_CONTENT);
     this.liked = false;
+  }
+
+  public void addInstruction(String instruction) {
+    if (instruction != null && !instruction.isBlank()) {
+      instructions.add(instruction.strip());
+    }
+  }
+
+  public void updateInstructions(List<String> newInstructions) {
+    this.instructions = new ArrayList<>(newInstructions.stream()
+        .filter(instruction -> instruction != null && !instruction.isBlank())
+        .map(String::strip)
+        .toList());
   }
 
   public void clearAiContent() {

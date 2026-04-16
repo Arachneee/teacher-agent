@@ -11,6 +11,7 @@ import {
   removeKeyword,
   streamAiContent,
   updateFeedback,
+  updateFeedbackInstructions,
   updateKeyword,
 } from '../lib/api';
 
@@ -202,7 +203,13 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     const feedbackId = feedback.id;
     setAiGenerating(true);
     setErrorMessage(null);
-    setFeedback(prev => prev ? { ...prev, aiContent: null, liked: false } : null);
+    setFeedback(prev => {
+      if (!prev) return null;
+      const newInstructions = instruction?.trim()
+        ? [...prev.instructions, instruction.trim()]
+        : prev.instructions;
+      return { ...prev, aiContent: null, liked: false, instructions: newInstructions };
+    });
     try {
       await streamAiContent(feedbackId, (chunk) => {
         setFeedback(prev => prev ? { ...prev, aiContent: (prev.aiContent ?? '') + chunk } : null);
@@ -212,6 +219,24 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
       setErrorMessage('AI 문자를 생성하지 못했어요');
     } finally {
       setAiGenerating(false);
+    }
+  };
+
+  const handleUpdateInstructions = async (instructions: string[]) => {
+    if (!feedback) return;
+    const previousFeedback = feedback;
+    setFeedback(prev => prev ? { ...prev, instructions } : null);
+    try {
+      const updated = await updateFeedbackInstructions(feedback.id, instructions);
+      setFeedback(prev => {
+        if (!prev) return updated;
+        return debounceTimerRef.current !== null
+          ? { ...updated, aiContent: prev.aiContent }
+          : updated;
+      });
+    } catch {
+      setErrorMessage('수정 요청을 수정하지 못했어요');
+      setFeedback(previousFeedback);
     }
   };
 
@@ -230,5 +255,5 @@ export function useFeedback(studentId: number, initialFeedback?: Feedback | null
     }
   };
 
-  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleUpdateKeyword, handleRemoveKeyword, handleToggleKeywordRequired, handleGenerate, handleUpdateAiContent, handleLike };
+  return { feedback, aiGenerating, isEditingAiContent, errorMessage, handleAddKeyword, handleUpdateKeyword, handleRemoveKeyword, handleToggleKeywordRequired, handleGenerate, handleUpdateAiContent, handleUpdateInstructions, handleLike };
 }

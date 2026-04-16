@@ -27,27 +27,39 @@ class FeedbackPromptBuilderTest {
   }
 
   @Test
-  void instruction이_있으면_프롬프트에_포함된다() {
+  void instruction이_한_개이면_단일_텍스트로_포함된다() {
     String prompt =
-        feedbackPromptBuilder.build(feedback, student, "수학", "수학", List.of(), "더 따뜻하게");
+        feedbackPromptBuilder.build(feedback, student, "수학", List.of(), List.of("더 따뜻하게"));
 
-    assertThat(prompt).contains("<instruction>더 따뜻하게</instruction>");
-    assertThat(prompt).doesNotContain("<instruction>없음</instruction>");
+    assertThat(prompt).contains("더 따뜻하게");
   }
 
   @Test
-  void instruction이_null이면_없음으로_치환된다() {
+  void instruction이_여러_개이면_번호_목록으로_모두_포함된다() {
     String prompt =
-        feedbackPromptBuilder.build(feedback, student, "수학", "수학", List.of(), null);
+        feedbackPromptBuilder.build(feedback, student, "수학", List.of(),
+            List.of("더 따뜻하게", "더 짧게"));
 
-    assertThat(prompt).contains("<instruction>없음</instruction>");
+    assertThat(prompt).contains("1. 더 따뜻하게");
+    assertThat(prompt).contains("2. 더 짧게");
   }
 
   @Test
-  void instruction이_blank이면_없음으로_치환된다() {
+  void instruction이_세_개이면_번호_목록으로_모두_포함된다() {
     String prompt =
-        feedbackPromptBuilder.build(feedback, student, "수학", "수학", List.of(), "   ");
+        feedbackPromptBuilder.build(feedback, student, "수학", List.of(),
+            List.of("더 따뜻하게", "더 짧게", "존댓말로"));
 
-    assertThat(prompt).contains("<instruction>없음</instruction>");
+    assertThat(prompt).contains("1. 더 따뜻하게");
+    assertThat(prompt).contains("2. 더 짧게");
+    assertThat(prompt).contains("3. 존댓말로");
+  }
+
+  @Test
+  void instruction이_빈_목록이면_없음으로_치환된다() {
+    String prompt =
+        feedbackPromptBuilder.build(feedback, student, "수학", List.of(), List.of());
+
+    assertThat(prompt).contains("없음");
   }
 }

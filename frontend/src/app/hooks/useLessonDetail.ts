@@ -13,6 +13,7 @@ function toAttendee({ attendeeId, student, feedback }: LessonDetailAttendee, les
       lessonTitle: null,
       lessonStartTime: null,
       aiContent: feedback.aiContent,
+      instructions: feedback.instructions ?? [],
       keywords: feedback.keywords,
       liked: feedback.liked,
       createdAt: feedback.createdAt,

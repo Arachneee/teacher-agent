@@ -1,14 +1,21 @@
 import { NextRequest } from 'next/server';
 
-export async function GET(
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const backendUrl = process.env.API_URL || 'http://localhost:8080';
 
+  const body = await request.json().catch(() => ({}));
+
   const res = await fetch(`${backendUrl}/feedbacks/${id}/generate/stream`, {
-    headers: { cookie: request.headers.get('cookie') ?? '' },
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      cookie: request.headers.get('cookie') ?? '',
+    },
+    body: JSON.stringify({ instruction: body.instruction ?? null }),
   });
 
   if (!res.ok) {

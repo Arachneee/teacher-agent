@@ -201,4 +201,84 @@ class FeedbackTest {
     // then
     assertThat(feedbacks).isEmpty();
   }
+
+  @Test
+  void 수정_지시를_추가하면_목록에_쌓인다() {
+    // given
+    Feedback feedback = Feedback.create(1L, 1L);
+
+    // when
+    feedback.addInstruction("더 따뜻하게");
+
+    // then
+    assertThat(feedback.getInstructions()).containsExactly("더 따뜻하게");
+  }
+
+  @Test
+  void 빈_수정_지시는_추가되지_않는다() {
+    // given
+    Feedback feedback = Feedback.create(1L, 1L);
+
+    // when
+    feedback.addInstruction("  ");
+    feedback.addInstruction(null);
+    feedback.addInstruction("");
+
+    // then
+    assertThat(feedback.getInstructions()).isEmpty();
+  }
+
+  @Test
+  void 여러_수정_지시가_순서대로_쌓인다() {
+    // given
+    Feedback feedback = Feedback.create(1L, 1L);
+
+    // when
+    feedback.addInstruction("더 따뜻하게");
+    feedback.addInstruction("더 짧게");
+    feedback.addInstruction("존댓말로");
+
+    // then
+    assertThat(feedback.getInstructions()).containsExactly("더 따뜻하게", "더 짧게", "존댓말로");
+  }
+
+  @Test
+  void 수정_지시_목록을_새_목록으로_덮어쓴다() {
+    // given
+    Feedback feedback = Feedback.create(1L, 1L);
+    feedback.addInstruction("더 따뜻하게");
+    feedback.addInstruction("더 짧게");
+
+    // when
+    feedback.updateInstructions(List.of("더 따뜻하게", "존댓말로"));
+
+    // then
+    assertThat(feedback.getInstructions()).containsExactly("더 따뜻하게", "존댓말로");
+  }
+
+  @Test
+  void 수정_지시_목록_덮어쓰기_시_빈_항목은_제외된다() {
+    // given
+    Feedback feedback = Feedback.create(1L, 1L);
+    feedback.addInstruction("더 따뜻하게");
+
+    // when
+    feedback.updateInstructions(List.of("더 따뜻하게", "  ", "존댓말로"));
+
+    // then
+    assertThat(feedback.getInstructions()).containsExactly("더 따뜻하게", "존댓말로");
+  }
+
+  @Test
+  void 수정_지시_목록을_빈_목록으로_초기화한다() {
+    // given
+    Feedback feedback = Feedback.create(1L, 1L);
+    feedback.addInstruction("더 따뜻하게");
+
+    // when
+    feedback.updateInstructions(List.of());
+
+    // then
+    assertThat(feedback.getInstructions()).isEmpty();
+  }
 }

@@ -23,6 +23,7 @@ import com.teacher.agent.exception.BadRequestException;
 import com.teacher.agent.exception.BusinessException;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -373,12 +374,12 @@ class FeedbackServiceTest {
         feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(),
         "성실함", false);
-    given(feedbackAiService.generateFeedbackContent(any(), any(), any(), any(), any(), any()))
+    given(feedbackAiService.generateFeedbackContent(any(), any(), any(), any(), any()))
         .willReturn("AI가 생성한 피드백");
 
     feedbackCommandService.generateAiContent(userId, created.id(), null);
 
-    verify(feedbackAiService).generateFeedbackContent(any(), any(), any(), any(), any(), any());
+    verify(feedbackAiService).generateFeedbackContent(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -386,13 +387,14 @@ class FeedbackServiceTest {
     FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
     given(
-        feedbackAiService.generateFeedbackContent(any(), any(), any(), any(), any(), eq("더 따뜻하게")))
+        feedbackAiService.generateFeedbackContent(any(), any(), any(), any(),
+            eq(List.of("더 따뜻하게"))))
         .willReturn("AI가 생성한 피드백");
 
     feedbackCommandService.generateAiContent(userId, created.id(), "더 따뜻하게");
 
     verify(feedbackAiService)
-        .generateFeedbackContent(any(), any(), any(), any(), any(), eq("더 따뜻하게"));
+        .generateFeedbackContent(any(), any(), any(), any(), eq(List.of("더 따뜻하게")));
   }
 
   @Test
@@ -408,7 +410,7 @@ class FeedbackServiceTest {
   void AI_콘텐츠를_스트리밍으로_생성하고_DB에_저장한다() {
     FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
     feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
-    given(feedbackAiService.streamFeedbackContent(any(), any(), any(), any(), any(), any()))
+    given(feedbackAiService.streamFeedbackContent(any(), any(), any(), any(), any()))
         .willReturn(Flux.just("AI가 ", "생성한 ", "피드백"));
 
     StepVerifier.create(feedbackCommandService.streamAiContent(userId, created.id(), null))
@@ -557,5 +559,51 @@ class FeedbackServiceTest {
     FeedbackResponse fetched = feedbackQueryService.getOne(userId, created.id());
 
     assertThat(fetched.liked()).isTrue();
+  }
+
+  @Test
+  void AI_콘텐츠_생성_후_instruction이_누적된다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
+    given(feedbackAiService.generateFeedbackContent(any(), any(), any(), any(),
+        eq(List.of("더 따뜻하게"))))
+        .willReturn("AI가 생성한 피드백");
+    given(feedbackAiService.generateFeedbackContent(any(), any(), any(), any(),
+        eq(List.of("더 따뜻하게", "더 짧게"))))
+        .willReturn("AI가 생성한 피드백 v2");
+
+    feedbackCommandService.generateAiContent(userId, created.id(), "더 따뜻하게");
+    FeedbackResponse result =
+        feedbackCommandService.generateAiContent(userId, created.id(), "더 짧게");
+
+    assertThat(result.instructions()).containsExactly("더 따뜻하게", "더 짧게");
+  }
+
+  @Test
+  void 빈_instruction은_저장되지_않는다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
+    given(feedbackAiService.generateFeedbackContent(any(), any(), any(), any(), eq(List.of())))
+        .willReturn("AI가 생성한 피드백");
+
+    FeedbackResponse result = feedbackCommandService.generateAiContent(userId, created.id(), null);
+
+    assertThat(result.instructions()).isEmpty();
+  }
+
+  @Test
+  void AI_콘텐츠_스트리밍_완료_후_instruction이_누적된다() {
+    FeedbackResponse created = feedbackCommandService.create(userId, studentId, lessonId);
+    feedbackKeywordService.addKeyword(userId, created.id(), "성실함", false);
+    given(
+        feedbackAiService.streamFeedbackContent(any(), any(), any(), any(), eq(List.of("더 따뜻하게"))))
+        .willReturn(Flux.just("AI가 ", "생성한 ", "피드백"));
+
+    StepVerifier.create(feedbackCommandService.streamAiContent(userId, created.id(), "더 따뜻하게"))
+        .expectNext("AI가 ", "생성한 ", "피드백")
+        .verifyComplete();
+
+    FeedbackResponse saved = feedbackQueryService.getOne(userId, created.id());
+    assertThat(saved.instructions()).containsExactly("더 따뜻하게");
   }
 }

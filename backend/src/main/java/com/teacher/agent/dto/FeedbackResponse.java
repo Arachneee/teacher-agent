@@ -12,6 +12,7 @@ public record FeedbackResponse(
     String lessonTitle,
     LocalDateTime lessonStartTime,
     String aiContent,
+    List<String> instructions,
     List<KeywordItem> keywords,
     boolean liked,
     LocalDateTime createdAt,
@@ -22,7 +23,7 @@ public record FeedbackResponse(
         feedback.getKeywords().stream().map(KeywordItem::from).toList();
     return new FeedbackResponse(feedback.getId(), feedback.getStudentId(), feedback.getLessonId(),
         null, null,
-        feedback.getAiContent(), keywordItems, liked,
+        feedback.getAiContent(), feedback.getInstructions(), keywordItems, liked,
         feedback.getCreatedAt(), feedback.getUpdatedAt());
   }
 
@@ -32,7 +33,7 @@ public record FeedbackResponse(
         feedback.getKeywords().stream().map(KeywordItem::from).toList();
     return new FeedbackResponse(feedback.getId(), feedback.getStudentId(), feedback.getLessonId(),
         lessonTitle, lessonStartTime,
-        feedback.getAiContent(), keywordItems, liked,
+        feedback.getAiContent(), feedback.getInstructions(), keywordItems, liked,
         feedback.getCreatedAt(), feedback.getUpdatedAt());
   }
 

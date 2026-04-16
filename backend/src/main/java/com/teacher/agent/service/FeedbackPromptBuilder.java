@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -32,7 +33,7 @@ public class FeedbackPromptBuilder {
   }
 
   public String build(Feedback feedback, Student student, String subject,
-      List<FeedbackLike> likedExamples, String instruction) {
+      List<FeedbackLike> likedExamples, List<String> instructions) {
     Map<Boolean, List<FeedbackKeyword>> partitioned = feedback.getKeywords().stream()
         .collect(Collectors.partitioningBy(FeedbackKeyword::isRequired));
 
@@ -44,7 +45,7 @@ public class FeedbackPromptBuilder {
         .replace("{required_keywords}", resolveRequiredKeywords(partitioned.get(true)))
         .replace("{previous_content}", resolvePreviousContent(feedback))
         .replace("{liked_examples}", resolveLikedExamples(likedExamples))
-        .replace("{instruction}", resolveInstruction(instruction));
+        .replace("{instructions}", resolveInstructions(instructions));
   }
 
   private String resolveNormalKeywords(List<FeedbackKeyword> keywords) {
@@ -67,8 +68,16 @@ public class FeedbackPromptBuilder {
     return (previousContent != null && !previousContent.isBlank()) ? previousContent : "없음";
   }
 
-  private String resolveInstruction(String instruction) {
-    return (instruction != null && !instruction.isBlank()) ? instruction : "없음";
+  private String resolveInstructions(List<String> instructions) {
+    if (instructions == null || instructions.isEmpty()) {
+      return "없음";
+    }
+    if (instructions.size() == 1) {
+      return instructions.get(0);
+    }
+    return IntStream.range(0, instructions.size())
+        .mapToObj(i -> (i + 1) + ". " + instructions.get(i))
+        .collect(Collectors.joining("\n"));
   }
 
   private String extractFirstName(String fullName) {

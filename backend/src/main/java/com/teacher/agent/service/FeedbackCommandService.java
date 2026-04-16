@@ -13,6 +13,7 @@ import com.teacher.agent.domain.vo.UserId;
 import com.teacher.agent.dto.FeedbackResponse;
 import com.teacher.agent.exception.BadRequestException;
 import com.teacher.agent.exception.ResourceNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -75,11 +76,14 @@ public class FeedbackCommandService {
     String subject = resolveSubject(userId);
     List<FeedbackLike> likedExamples = feedbackLikeRepository.findRecentLikedByUserId(userId);
 
+    List<String> allInstructions = buildAllInstructions(feedback.getInstructions(), instruction);
+
     String aiContent =
         feedbackAiService.generateFeedbackContent(feedback, student, subject, likedExamples,
-            instruction);
+            allInstructions);
 
     feedback.updateAiContent(aiContent);
+    feedback.addInstruction(instruction);
     feedbackRepository.save(feedback);
 
     return feedbackQueryService.toResponse(
@@ -99,15 +103,26 @@ public class FeedbackCommandService {
     String subject = resolveSubject(userId);
     List<FeedbackLike> likedExamples = feedbackLikeRepository.findRecentLikedByUserId(userId);
 
+    List<String> allInstructions = buildAllInstructions(feedback.getInstructions(), instruction);
     StringBuilder fullContent = new StringBuilder();
 
     return feedbackAiService
-        .streamFeedbackContent(feedback, student, subject, likedExamples, instruction)
+        .streamFeedbackContent(feedback, student, subject, likedExamples, allInstructions)
         .doOnNext(fullContent::append)
         .doOnComplete(() -> {
           feedback.updateAiContent(fullContent.toString());
+          feedback.addInstruction(instruction);
           feedbackRepository.save(feedback);
         });
+  }
+
+  @Transactional
+  public FeedbackResponse updateInstructions(UserId userId, Long feedbackId,
+      List<String> instructions) {
+    Feedback feedback = feedbackQueryService.findByIdAndVerifyOwner(feedbackId, userId);
+    feedback.updateInstructions(instructions);
+    feedbackRepository.save(feedback);
+    return feedbackQueryService.toResponse(feedback);
   }
 
   private void verifyStudentEnrolled(Lesson lesson, Long studentId) {
@@ -117,6 +132,15 @@ public class FeedbackCommandService {
     if (!enrolled) {
       throw BadRequestException.studentNotEnrolled();
     }
+  }
+
+  private List<String> buildAllInstructions(List<String> pastInstructions,
+      String currentInstruction) {
+    List<String> allInstructions = new ArrayList<>(pastInstructions);
+    if (currentInstruction != null && !currentInstruction.isBlank()) {
+      allInstructions.add(currentInstruction.strip());
+    }
+    return allInstructions;
   }
 
   private String resolveSubject(UserId userId) {

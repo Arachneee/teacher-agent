@@ -2,6 +2,7 @@ package com.teacher.agent.service.vo;
 
 import com.teacher.agent.domain.vo.SchoolGrade;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record LessonDetailRow(
     Long attendeeId,
@@ -15,6 +16,7 @@ public record LessonDetailRow(
     Long feedbackStudentId,
     Long feedbackLessonId,
     String aiContent,
+    List<String> instructions,
     boolean liked,
     LocalDateTime feedbackCreatedAt,
     LocalDateTime feedbackUpdatedAt,

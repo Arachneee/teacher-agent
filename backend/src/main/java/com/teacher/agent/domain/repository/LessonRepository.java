@@ -50,6 +50,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
           f.studentId,
           f.lessonId,
           f.aiContent,
+          f.instructions,
           f.liked,
           f.createdAt,
           f.updatedAt,

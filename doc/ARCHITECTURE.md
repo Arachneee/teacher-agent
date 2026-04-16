@@ -529,8 +529,9 @@ AiGenerationLog (어그리거트 루트)
 | GET | `/feedbacks/{id}` | Yes | 피드백 단건 조회 |
 | PATCH | `/feedbacks/{id}` | Yes | AI 콘텐츠 수정 (aiContent) |
 | DELETE | `/feedbacks/{id}` | Yes | 피드백 삭제 |
-| POST | `/feedbacks/{id}/generate` | Yes | AI 피드백 문자 생성 (동기, `?instruction=` 선택) |
-| GET | `/feedbacks/{id}/generate/stream` | Yes | AI 피드백 스트리밍 생성 (text/plain, Flux, `?instruction=` 선택 max 200자) |
+| POST | `/feedbacks/{id}/generate` | Yes | AI 피드백 문자 생성 (동기, body: `instruction` 선택 max 200자) |
+| POST | `/feedbacks/{id}/generate/stream` | Yes | AI 피드백 스트리밍 생성 (text/plain, Flux, body: `instruction` 선택 max 200자) |
+| PUT | `/feedbacks/{id}/instructions` | Yes | 수정 지시 목록 덮어쓰기 (body: `instructions` 배열) |
 | POST | `/feedbacks/{id}/keywords` | Yes | 키워드 추가 (keyword, required) |
 | PUT | `/feedbacks/{id}/keywords/{keywordId}` | Yes | 키워드 수정 (keyword, required) |
 | DELETE | `/feedbacks/{id}/keywords/{keywordId}` | Yes | 키워드 삭제 |

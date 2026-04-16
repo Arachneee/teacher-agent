@@ -11,19 +11,28 @@ interface Props {
   isEditingAiContent: boolean;
   onGenerate: (instruction?: string) => void;
   onUpdateAiContent: (content: string) => void;
+  onUpdateInstructions: (instructions: string[]) => void;
   onLike: () => void;
 }
 
-export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiContent, onGenerate, onUpdateAiContent, onLike }: Props) {
+export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiContent, onGenerate, onUpdateAiContent, onUpdateInstructions, onLike }: Props) {
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [instruction, setInstruction] = useState('');
+  const [editingInstructionIndex, setEditingInstructionIndex] = useState<number | null>(null);
+  const [previousInstruction, setPreviousInstruction] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const previousAiGeneratingRef = useRef(aiGenerating);
 
   useEffect(() => {
+    setInstruction('');
+    setEditingInstructionIndex(null);
+  }, [feedback?.id]);
+
+  useEffect(() => {
     if (previousAiGeneratingRef.current && !aiGenerating) {
       setInstruction('');
+      setEditingInstructionIndex(null);
     }
     previousAiGeneratingRef.current = aiGenerating;
   }, [aiGenerating]);
@@ -37,6 +46,38 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
       textareaRef.current.setSelectionRange(length, length);
     }
   }, [editing, feedback?.aiContent]);
+
+  const handleStartEditInstruction = (index: number, item: string) => {
+    setPreviousInstruction(instruction);
+    setInstruction(item);
+    setEditingInstructionIndex(index);
+  };
+
+  const handleSaveInstructionEdit = () => {
+    const trimmed = instruction.trim();
+    const current = feedback?.instructions ?? [];
+    if (!trimmed) {
+      onUpdateInstructions(current.filter((_, i) => i !== editingInstructionIndex));
+    } else {
+      onUpdateInstructions(current.map((item, i) => (i === editingInstructionIndex ? trimmed : item)));
+    }
+    setEditingInstructionIndex(null);
+    setInstruction('');
+  };
+
+  const handleCancelInstructionEdit = () => {
+    setInstruction(previousInstruction);
+    setEditingInstructionIndex(null);
+  };
+
+  const handleDeleteInstruction = (index: number) => {
+    if (editingInstructionIndex === index) {
+      setEditingInstructionIndex(null);
+      setInstruction(previousInstruction);
+    }
+    const updated = (feedback?.instructions ?? []).filter((_, i) => i !== index);
+    onUpdateInstructions(updated);
+  };
 
   const handleCopy = async () => {
     if (!feedback?.aiContent) return;
@@ -53,12 +94,18 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
 
   return (
     <div className="flex flex-col gap-2">
-      {feedback?.aiContent !== undefined && feedback?.aiContent !== null && (
+      {feedback !== null && (feedback?.aiContent !== null || aiGenerating) && (
         <div className="relative bg-indigo-50 rounded-2xl p-3">
-          {editing ? (
+          {aiGenerating && feedback?.aiContent === null ? (
+            <div className="flex items-center justify-center py-6">
+              <svg className="animate-spin w-5 h-5 text-indigo-300" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40 20" />
+              </svg>
+            </div>
+          ) : editing ? (
             <textarea
               ref={textareaRef}
-              value={feedback.aiContent}
+              value={feedback.aiContent!}
               onChange={event => onUpdateAiContent(event.target.value)}
               onBlur={() => setEditing(false)}
               className="w-full text-sm text-gray-700 leading-relaxed bg-transparent outline-none resize-none pr-8 pb-8 overflow-hidden"
@@ -66,63 +113,160 @@ export default function AiFeedbackSection({ feedback, aiGenerating, isEditingAiC
           ) : (
             <div
               onClick={() => {
+                if (aiGenerating) return;
                 setEditing(true);
                 trackEvent('feedback_edit', { feedbackId: feedback.id });
               }}
-              className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words pr-8 pb-8 cursor-text"
+              className={`text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words pr-8 pb-8 ${aiGenerating ? 'cursor-default' : 'cursor-text'}`}
             >
-              {highlightKeywords(feedback.aiContent, highlightItems)}
+              {highlightKeywords(feedback.aiContent!, highlightItems)}
             </div>
           )}
-          <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
-            <span className="text-xs text-indigo-300 select-none">
-              {feedback.aiContent.length}자
-            </span>
-            <button
-              onClick={() => {
-                trackEvent('feedback_like', { feedbackId: feedback.id });
-                onLike();
-              }}
-              disabled={feedback.liked}
-              className={`w-7 h-7 flex items-center justify-center rounded-xl transition-colors duration-150 ${
-                feedback.liked
-                  ? 'bg-indigo-100 text-indigo-500'
-                  : 'bg-white hover:bg-indigo-100 text-indigo-300'
-              }`}
-              aria-label={feedback.liked ? '좋아요 완료' : '좋아요'}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill={feedback.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-                <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-              </svg>
-            </button>
-          </div>
-          <button
-            onClick={handleCopy}
-            className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-xl bg-white hover:bg-indigo-100 text-indigo-400 transition-colors duration-150"
-            aria-label="복사"
-          >
-            {copied ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-            )}
-          </button>
+          {!aiGenerating && feedback?.aiContent !== null && (
+            <>
+              <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
+                <span className="text-xs text-indigo-300 select-none">
+                  {feedback.aiContent!.length}자
+                </span>
+                <button
+                  onClick={() => {
+                    trackEvent('feedback_like', { feedbackId: feedback.id });
+                    onLike();
+                  }}
+                  disabled={feedback.liked}
+                  className={`w-7 h-7 flex items-center justify-center rounded-xl transition-colors duration-150 ${
+                    feedback.liked
+                      ? 'bg-indigo-100 text-indigo-500'
+                      : 'bg-white hover:bg-indigo-100 text-indigo-300'
+                  }`}
+                  aria-label={feedback.liked ? '좋아요 완료' : '좋아요'}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill={feedback.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+                    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                  </svg>
+                </button>
+              </div>
+              <button
+                onClick={handleCopy}
+                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-xl bg-white hover:bg-indigo-100 text-indigo-400 transition-colors duration-150"
+                aria-label="복사"
+              >
+                {copied ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                )}
+              </button>
+            </>
+          )}
         </div>
       )}
-      {feedback?.aiContent !== undefined && feedback?.aiContent !== null && (
-        <input
-          type="text"
-          value={instruction}
-          onChange={event => setInstruction(event.target.value)}
-          placeholder="수정 방향을 입력하세요 (선택)"
-          className="w-full bg-indigo-50 border border-indigo-100 text-sm text-gray-500 placeholder-gray-300 rounded-2xl px-3 py-2"
-        />
+      {feedback !== null && (feedback?.aiContent !== null || aiGenerating) && (
+        <div className="flex flex-col gap-1.5">
+          {(feedback.instructions?.length ?? 0) > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {feedback.instructions?.map((item, index) => {
+                const isBeingEdited = editingInstructionIndex === index;
+                return (
+                  <span
+                    key={index}
+                    className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${
+                      aiGenerating
+                        ? 'bg-indigo-50 text-indigo-300 cursor-default'
+                        : isBeingEdited
+                          ? 'bg-amber-100 text-amber-600 ring-2 ring-amber-300 cursor-pointer'
+                          : 'bg-indigo-50 text-indigo-400 hover:bg-indigo-100 cursor-pointer'
+                    }`}
+                    onClick={() => { if (!aiGenerating) handleStartEditInstruction(index, item); }}
+                  >
+                    {item}
+                    <button
+                      onClick={event => { event.stopPropagation(); if (!aiGenerating) handleDeleteInstruction(index); }}
+                      disabled={aiGenerating}
+                      className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-indigo-200 disabled:opacity-0 transition-colors leading-none"
+                      aria-label={`${item} 삭제`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          <div className={`flex items-center rounded-2xl border transition-colors ${
+            aiGenerating
+              ? 'bg-gray-50 border-gray-100 opacity-50'
+              : editingInstructionIndex !== null
+                ? 'bg-amber-50 border-amber-200'
+                : 'bg-indigo-50 border-indigo-100'
+          }`}>
+            <input
+              type="text"
+              value={instruction}
+              disabled={aiGenerating}
+              onChange={event => setInstruction(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  if (editingInstructionIndex !== null) {
+                    handleSaveInstructionEdit();
+                  } else if (!aiGenerating && !isEditingAiContent && feedback && feedback.keywords.length > 0) {
+                    if (feedback.aiContent) {
+                      trackEvent('feedback_regenerate', { feedbackId: feedback.id });
+                    } else {
+                      trackEvent('feedback_generate', { feedbackId: feedback.id });
+                    }
+                    onGenerate(instruction || undefined);
+                  }
+                } else if (event.key === 'Escape' && editingInstructionIndex !== null) {
+                  handleCancelInstructionEdit();
+                }
+              }}
+              placeholder={editingInstructionIndex !== null ? '수정 방향 수정' : '수정 방향을 입력하세요 (선택)'}
+              className={`flex-1 min-w-0 text-sm bg-transparent px-3 py-2 outline-none placeholder:text-gray-300 ${
+                editingInstructionIndex !== null ? 'text-amber-700' : 'text-gray-500'
+              }`}
+            />
+            <button
+              onClick={() => {
+                if (editingInstructionIndex !== null) {
+                  handleSaveInstructionEdit();
+                } else if (!aiGenerating && !isEditingAiContent && feedback && feedback.keywords.length > 0) {
+                  if (feedback.aiContent) {
+                    trackEvent('feedback_regenerate', { feedbackId: feedback.id });
+                  } else {
+                    trackEvent('feedback_generate', { feedbackId: feedback.id });
+                  }
+                  onGenerate(instruction || undefined);
+                }
+              }}
+              disabled={editingInstructionIndex === null && !instruction.trim()}
+              className={`shrink-0 w-8 h-8 mr-1 flex items-center justify-center rounded-xl transition-colors duration-150 ${
+                editingInstructionIndex !== null
+                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-500'
+                  : 'bg-indigo-100 hover:bg-indigo-200 disabled:opacity-30 text-indigo-400'
+              }`}
+              aria-label={editingInstructionIndex !== null ? '수정 완료' : '수정 방향 입력'}
+            >
+              {editingInstructionIndex !== null ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 10 4 15 9 20" />
+                  <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
       )}
       <button
         onClick={() => {
