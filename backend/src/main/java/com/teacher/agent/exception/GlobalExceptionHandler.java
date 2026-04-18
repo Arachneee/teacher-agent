@@ -7,6 +7,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 @RestControllerAdvice
 @Slf4j
@@ -82,6 +83,11 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(ErrorCode.UNAUTHORIZED.getStatus())
         .body(ErrorResponse.of(ErrorCode.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."));
+  }
+
+  @ExceptionHandler(AsyncRequestNotUsableException.class)
+  public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException exception) {
+    log.debug("SSE 클라이언트 연결 끊김: {}", exception.getMessage());
   }
 
   @ExceptionHandler(Exception.class)

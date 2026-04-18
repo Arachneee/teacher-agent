@@ -78,10 +78,14 @@ public class FeedbackAiService {
           return chunk;
         })
         .doOnComplete(() -> {
+          String content = accumulatedContent.toString();
+          if (content.isBlank()) {
+            return;
+          }
           long durationMs = System.currentTimeMillis() - startTime;
           String latestInstruction = instructions.isEmpty() ? null : instructions.getLast();
           aiGenerationLogCommandService.save(new AiGenerationLogSaveCommand(
-              feedback.getId(), promptContent, accumulatedContent.toString(), durationMs, true,
+              feedback.getId(), promptContent, content, durationMs, true,
               capturedPromptTokens.get(), capturedCompletionTokens.get(), latestInstruction));
         });
   }
